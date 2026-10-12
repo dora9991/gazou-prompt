@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src https://*.supabase.co http://127.0.0.1:* http://localhost:*; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<title>需要ダッシュボード｜プロンプト処方箋</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='8' y='34' width='10' height='22' rx='3' fill='%232a78d6'/%3E%3Crect x='27' y='20' width='10' height='36' rx='3' fill='%232a78d6'/%3E%3Crect x='46' y='8' width='10' height='48' rx='3' fill='%231f7a6d'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin">
+<header class="ad-top">
+  <div class="ad-top-in">
+    <div>
+      <p class="brand-kicker">プロンプト処方箋</p>
+      <h1 class="ad-title">需要ダッシュボード</h1>
+    </div>
+    <div class="ad-top-actions" id="top-actions" hidden>
+      <span class="ad-sync" id="sync-line"></span>
+      <button type="button" class="btn-small" id="refresh">最新にする</button>
+      <button type="button" class="btn-small" id="logout">ログアウト</button>
+    </div>
+  </div>
+</header>
+
+<main class="ad-main">
+  <section class="ad-login" id="login">
+    <h2>管理キーを入れてください</h2>
+    <p>管理キーは、Supabase の SQL Editor で <code>supabase/gazou_prompt.sql</code> を流したときに、最後に1回だけ表示されたものです（<code>gp_</code> で始まる長い文字）。</p>
+    <div class="ad-login-row">
+      <label class="sr" for="key">管理キー</label>
+      <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="gp_…">
+      <button type="button" class="btn-go" id="login-go">開く</button>
+    </div>
+    <label class="ad-remember"><input type="checkbox" id="remember"> この端末で覚える（自分だけが使う端末のときだけ）</label>
+    <p class="ad-err" id="login-err" role="alert"></p>
+    <div class="ad-demo">
+      <p>まだ記録がないときや、画面を試したいときは：</p>
+      <button type="button" class="btn-ghost" id="demo-go">見本データ（架空）で見る</button>
+    </div>
+    <p class="ad-note" id="conn-note"></p>
+  </section>
+
+  <div class="ad-dash" id="dash" hidden>
+    <p class="ad-demo-banner" id="demo-banner" hidden>いま表示しているのは <strong>見本データ（架空）</strong> です。本物の記録ではありません。</p>
+
+    <div class="ad-filters" id="filters" role="group" aria-label="しぼりこみ">
+      <div class="seg" role="radiogroup" aria-label="期間" id="range"></div>
+      <div class="ad-custom" id="custom-range" hidden>
+        <label>から <input type="date" id="from"></label>
+        <label>まで <input type="date" id="to"></label>
+      </div>
+      <label class="ad-select">講座コード
+        <select id="cohort"></select>
+      </label>
+      <label class="ad-check"><input type="checkbox" id="no-preset"> おためしの回を除く</label>
+      <div class="ad-active" id="active-filter" hidden></div>
+    </div>
+
+    <section class="kpis" id="kpis" aria-label="数字のまとめ"></section>
+
+    <section class="card ad-insights">
+      <h2 class="card-h">気づき <span class="card-sub">（数字から自動で書いています）</span></h2>
+      <ul id="insights"></ul>
+    </section>
+
+    <div class="grid2">
+      <section class="card" id="card-trouble"></section>
+      <section class="card" id="card-use"></section>
+      <section class="card" id="card-daily"></section>
+      <section class="card" id="card-area"></section>
+      <section class="card span2" id="card-matrix"></section>
+      <section class="card" id="card-tool"></section>
+      <section class="card" id="card-style"></section>
+      <section class="card" id="card-scene"></section>
+      <section class="card" id="card-look"></section>
+      <section class="card" id="card-hard"></section>
+      <section class="card" id="card-edit"></section>
+    </div>
+
+    <section class="card ad-texts" id="card-texts">
+      <h2 class="card-h">自由記述 <span class="card-sub" id="texts-count"></span></h2>
+      <div class="ad-text-tools">
+        <div class="seg" role="radiogroup" aria-label="自由記述の種類" id="text-kinds"></div>
+        <input type="search" id="text-q" placeholder="ことばで探す" aria-label="自由記述をことばで探す">
+      </div>
+      <div class="ad-words" id="words"></div>
+      <div class="ad-bulk" id="bulk" hidden>
+        <span id="bulk-count"></span>
+        <button type="button" class="btn-small" id="redact">選んだ文を消す（タグの数は残す）</button>
+        <button type="button" class="btn-small danger" id="delete">選んだ回を記録ごと消す</button>
+      </div>
+      <ol class="ad-text-list" id="text-list"></ol>
+      <button type="button" class="btn-ghost" id="more-texts" hidden>もっと見る</button>
+    </section>
+
+    <section class="card ad-newwords" id="card-newwords"></section>
+
+    <section class="card ad-share" id="card-share">
+      <h2 class="card-h">参加者に配るリンク</h2>
+      <p class="card-note">講座コードをつけたリンクを配ると、講座ごとに分けて集計できます（英数字・- ・_ の32文字まで）。</p>
+      <div class="ad-share-row">
+        <label>講座コード <input id="share-code" type="text" maxlength="32" placeholder="例：kouza-1108" autocomplete="off"></label>
+        <label class="grow">参加者用ページの URL <input id="share-base" type="url" placeholder="https://…/gazou-prompt/" autocomplete="off"></label>
+      </div>
+      <div class="ad-share-out">
+        <div class="ad-qr" id="qr" aria-label="QRコード"></div>
+        <div class="ad-share-link">
+          <p class="ad-url" id="share-url"></p>
+          <div class="ad-share-btns">
+            <button type="button" class="btn-small" id="copy-url">リンクをコピー</button>
+            <button type="button" class="btn-small" id="save-qr">QRコードを保存（PNG）</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card ad-data" id="card-data">
+      <h2 class="card-h">記録の管理</h2>
+      <div class="ad-data-grid">
+        <div>
+          <h3>書き出し</h3>
+          <p class="card-note">いまのしぼりこみの範囲を、Excel で開ける CSV にします。</p>
+          <div class="ad-btns">
+            <button type="button" class="btn-small" id="csv-gens">1回ごとの記録（CSV）</button>
+            <button type="button" class="btn-small" id="csv-tags">タグごとの数（CSV）</button>
+          </div>
+        </div>
+        <div>
+          <h3>記録の受けつけ</h3>
+          <p class="card-note" id="logging-line"></p>
+          <div class="ad-btns"><button type="button" class="btn-small" id="toggle-logging"></button></div>
+        </div>
+        <div>
+          <h3>量と上限</h3>
+          <ul class="ad-usage" id="usage"></ul>
+        </div>
+        <div>
+          <h3>講座コードごとに消す</h3>
+          <p class="card-note">講座が終わって不要になった記録を、まとめて消せます（もとに戻せません）。</p>
+          <div class="ad-btns">
+            <select id="purge-cohort" aria-label="消す講座コード"></select>
+            <button type="button" class="btn-small danger" id="purge">この講座コードの記録を消す</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="tip" id="tip" role="tooltip" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<dialog class="dlg" id="confirm" aria-labelledby="confirm-title">
+  <h2 id="confirm-title">確認</h2>
+  <div class="dlg-body"><p id="confirm-text"></p><label class="ad-confirm-input" id="confirm-type-wrap" hidden><span id="confirm-type-label"></span><input type="text" id="confirm-type" autocomplete="off"></label></div>
+  <div class="dlg-actions"><button type="button" class="btn-ghost" id="confirm-no">やめる</button><button type="button" class="btn-go danger-go" id="confirm-yes">消す</button></div>
+</dialog>
+
+<script src="config.js"></script>
+<script src="js/tags.js"></script>
+<script src="js/api.js"></script>
+<script src="js/analyze.js"></script>
+<script src="js/sample-data.js"></script>
+<script src="js/vendor/qrcode.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

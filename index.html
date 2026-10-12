@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://*.supabase.co http://127.0.0.1:* http://localhost:*; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<meta name="description" content="画像生成AIで「思った絵にならない」を、選ぶだけで解決。困りごとと作りたいイメージから、そのまま貼れる指示文（プロンプト）を作ります。">
+<meta name="theme-color" content="#1f7a6d">
+<title>プロンプト処方箋｜画像生成AIの困りごとから指示文を作る</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='6' y='22' width='52' height='20' rx='10' transform='rotate(-35 32 32)' fill='%231f7a6d'/%3E%3Cpath d='M32 32 l13.4-9.2 a10 10 0 0 1 11.3 16.4 L43.3 48.4z' fill='%23f2b134' transform='rotate(0)'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<a class="skip" href="#steps">選ぶところへ</a>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true"><g transform="rotate(-35 24 24)"><rect x="4" y="15" width="40" height="18" rx="9" class="cap-a"/><path d="M24 15h11a9 9 0 0 1 0 18H24z" class="cap-b"/></g></svg>
+      <div>
+        <p class="brand-kicker">画像生成AIの</p>
+        <h1 class="brand-name">プロンプト処方箋</h1>
+      </div>
+    </div>
+    <p class="lead">困っていることと、作りたいイメージを選ぶだけ。<br class="br-sm">生成AIにそのまま貼れる指示文（プロンプト）を出します。</p>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="picker" aria-label="選ぶところ">
+    <div class="modebar" role="tablist" aria-label="つくりかた">
+      <button type="button" role="tab" class="mode" id="mode-new" data-mode="new" aria-selected="true">新しく作る</button>
+      <button type="button" role="tab" class="mode" id="mode-edit" data-mode="edit" aria-selected="false">できた画像を直す</button>
+    </div>
+
+    <div class="presets" id="presets">
+      <p class="presets-title">おためし（押すとすぐ処方箋が出ます）</p>
+      <div class="preset-list" id="preset-list"></div>
+    </div>
+
+    <div class="finder">
+      <label class="finder-label" for="finder">タグをさがす</label>
+      <div class="finder-row">
+        <input id="finder" type="search" autocomplete="off" enterkeyhint="search" placeholder="例：文字、手、運動会、ロゴ">
+        <span class="finder-count" id="finder-count" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div id="steps" class="steps"></div>
+
+    <div class="go-row">
+      <button type="button" class="btn-go" id="go">処方箋を出す</button>
+      <button type="button" class="btn-ghost" id="reset">選んだものを全部はずす</button>
+    </div>
+  </section>
+
+  <aside class="result" id="result" aria-label="処方箋" tabindex="-1">
+    <div class="rx" id="rx">
+      <div class="rx-empty" id="rx-empty">
+        <p class="rx-empty-title">ここに処方箋が出ます</p>
+        <ol class="rx-empty-steps">
+          <li>描きたいもの・使い道を選ぶ</li>
+          <li>困っていることがあれば選ぶ</li>
+          <li>「処方箋を出す」を押す</li>
+        </ol>
+        <p class="rx-empty-note">出てきた指示文をコピーして、ChatGPT・Gemini などに貼るだけです。</p>
+      </div>
+      <div class="rx-body" id="rx-body" hidden></div>
+    </div>
+  </aside>
+</main>
+
+<div class="dock" id="dock">
+  <span class="dock-count" id="dock-count">まだ選んでいません</span>
+  <button type="button" class="btn-go btn-dock" id="go-dock">処方箋を出す</button>
+</div>
+
+<footer class="foot">
+  <p class="foot-privacy" id="privacy-line"></p>
+  <p class="foot-links"><button type="button" class="linklike" id="open-privacy">記録について</button><span class="foot-cohort" id="foot-cohort"></span></p>
+</footer>
+
+<dialog class="dlg" id="dlg-privacy" aria-labelledby="dlg-privacy-title">
+  <h2 id="dlg-privacy-title">記録について</h2>
+  <div class="dlg-body">
+    <p>このページは、画像生成講座をよりよくするために、次のものを記録します。</p>
+    <ul>
+      <li>選んだタグ（困りごと・作りたいもの など）</li>
+      <li>入力した文（描きたいもの・困っていること・画像に入れる文字）</li>
+      <li>コピーしたかどうか、「うまくいった／いまいち」の押したもの</li>
+      <li>この端末に割り当てた番号（だれかは分かりません）と、講座コード</li>
+    </ul>
+    <p>名前・メールアドレスは記録しません。<strong>入力欄には、名前・学校名など、だれかが分かることを書かないでください。</strong></p>
+    <label class="optout"><input type="checkbox" id="optout"> この端末からは記録を送らない</label>
+    <p class="dlg-small" id="log-state"></p>
+  </div>
+  <div class="dlg-actions"><button type="button" class="btn-go" id="close-privacy">閉じる</button></div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script src="js/tags.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
