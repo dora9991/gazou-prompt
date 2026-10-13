@@ -528,14 +528,38 @@
     } else if (API.optedOut()) {
       line.textContent = 'この端末からは、記録を送らない設定になっています。';
       state.textContent = '記録を送っていません。';
+    } else if (lineReady()) {
+      line.textContent = 'LINE の表示名（' + (window.GP_LINE.state().name || '表示名なし') + '）と、選んだタグ・入力した文を記録します。講座の運営が、講座づくりのために見ます。入力欄に、ほかの人の名前などは書かないでください。';
+      state.textContent = 'LINE とつないで記録を送っています（' + API.sentCount() + '件）。';
     } else {
       line.textContent = '選んだタグと入力した文は、講座をよくするために、名前なしで記録します。入力欄に名前・学校名などは書かないでください。';
       state.textContent = '記録を送っています（' + API.sentCount() + '件）。';
     }
+    var lineOn = !!(window.GP_LINE && window.GP_LINE.enabled());
+    $('#privacy-line-item').hidden = !lineOn;
+    $('#line-off-box').hidden = !lineReady();
+    $('#privacy-names').firstChild.textContent = lineOn ? 'メールアドレスは記録しません。' : '名前・メールアドレスは記録しません。';
     $('#optout').checked = API.optedOut();
     var c = API.cohort();
     $('#foot-cohort').textContent = c ? '講座コード：' + c : '';
     document.body.classList.toggle('logging', on);
+  }
+
+  // ------------------------------------------------------------ LINE とつながっているか（公式LINE の LIFF から開いたとき）
+  function lineReady() { return !!(window.GP_LINE && window.GP_LINE.state().state === 'ready'); }
+  function syncLine() {
+    var L = window.GP_LINE;
+    if (!L) return;
+    var st = L.state();
+    var text = st.state === 'loading' ? 'LINE とつないでいます…'
+      : st.state === 'ready' ? 'LINE：' + (st.name || '表示名なし') + ' さんとして記録します'
+      : st.state === 'error' ? 'LINE とつなげませんでした。名前なしで記録します' : '';
+    var b = $('#line-badge');
+    if (b.textContent !== text) b.textContent = text;
+    b.hidden = !text;
+    b.className = 'line-badge is-' + st.state;
+    $('#line-connect').hidden = !(L.enabled() && st.state === 'anon' && API.canLog());
+    syncPrivacy();
   }
 
   // ------------------------------------------------------------ つなぐ
@@ -568,6 +592,8 @@
       if (el.id === 'go' || el.id === 'go-dock') { generate(); return; }
       if (el.id === 'reset') { resetAll(); return; }
       if (el.id === 'open-privacy') { syncPrivacy(); $('#dlg-privacy').showModal(); return; }
+      if (el.id === 'line-connect') { if (window.GP_LINE) window.GP_LINE.start({ force: true }); return; }
+      if (el.id === 'line-off') { if (window.GP_LINE) window.GP_LINE.disconnect(); toast('このページでは、LINE の名前をつけずに記録します'); return; }
       if (el.id === 'close-privacy') { $('#dlg-privacy').close(); return; }
     });
 
@@ -584,7 +610,7 @@
       }
     });
 
-    $('#optout').addEventListener('change', function (e) { API.setOptOut(e.target.checked); syncPrivacy(); });
+    $('#optout').addEventListener('change', function (e) { API.setOptOut(e.target.checked); syncPrivacy(); syncLine(); });
 
     // タブを矢印キーで
     document.addEventListener('keydown', function (e) {
@@ -620,6 +646,11 @@
     syncChips();
     syncPrivacy();
     wire();
+    // 公式LINE（LIFF）から開いたときは LINE とつなぐ。記録しない設定・記録の送り先がないときは、つながない
+    if (window.GP_LINE) {
+      window.GP_LINE.on(syncLine);
+      if (API.canLog()) window.GP_LINE.start(); else syncLine();
+    }
     document.body.classList.add('ready');
   }
 

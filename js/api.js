@@ -98,9 +98,14 @@
   function log(ev) {
     if (!canLog()) return Promise.resolve({ ok: false, error: 'off' });
     var p = Object.assign({ visitor_id: visitorId(), cohort: cohort(), client: clientKind() }, ev);
+    // LINE とつながっていれば、記録用の札をつける（だれの記録かは、サーバーが札から決める）
+    var L = root.GP_LINE;
+    var sess = L && L.session ? L.session() : '';
+    if (sess) p.session = sess;
     sent++;
     return rpc('log_event', { p: p }, { keepalive: true, timeout: 10000 }).then(function (r) {
       if (!r || !r.ok) { try { console.info('[記録] 送れませんでした:', r && r.error); } catch (e) { /* 何もしない */ } }
+      else if (r.session === 'expired' && L && L.expired) L.expired();
       return r;
     });
   }

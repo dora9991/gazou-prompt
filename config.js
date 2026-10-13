@@ -2,5 +2,7 @@
 window.GP_CONFIG = {
   supabaseUrl: "https://xisijxspafqhspgexfty.supabase.co",
   supabaseKey: "sb_publishable_lCGzQSqCd0fJ8u-Ca4HXSg_eV9rBYr6",
-  cohort: ''
+  cohort: '',
+  // 公式LINE（LIFF）から開いた人の「だれが」を記録する。LIFF ID（空なら使わない）
+  liffId: ""
 };

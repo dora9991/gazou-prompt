@@ -32,6 +32,7 @@
       if (r.kind === 'generate') {
         var g = { id: r.id, gen: r.gen_id, at: Date.parse(r.created_at), visitor: r.visitor_id, cohort: r.cohort || '', mode: r.mode || 'new', tool: r.tool || '',
           preset: r.preset || '', tags: r.tags || [], wish: r.wish || '', trouble: r.trouble || '', title: r.title_text || '', client: r.client || '',
+          line: r.line_user_id || '', lineName: r.line_name || '',
           copies: [], rating: 0, comments: [] };
         gens.push(g);
         byGen[r.gen_id] = g;
@@ -59,6 +60,7 @@
       if (o.excludePresets && g.preset) return false;
       if (o.mode && g.mode !== o.mode) return false;
       if (o.tag && g.tags.indexOf(o.tag) < 0) return false;
+      if (o.user && g.line !== o.user) return false;
       return true;
     });
   }
@@ -115,9 +117,10 @@
     var n = gens.length;
 
     // ---- 数字
-    var visitors = {}, copied = 0, rated = 0, good = 0, comments = 0, texts = 0, presets = 0, edit = 0;
+    var visitors = {}, copied = 0, rated = 0, good = 0, comments = 0, texts = 0, presets = 0, edit = 0, lineUsers = {}, lineGens = 0;
     gens.forEach(function (g) {
       visitors[g.visitor] = 1;
+      if (g.line) { lineUsers[g.line] = 1; lineGens++; }
       if (g.copies.length) copied++;
       if (g.rating) { rated++; if (g.rating === 1) good++; }
       comments += g.comments.length;
@@ -127,7 +130,25 @@
     });
     var nv = Object.keys(visitors).length;
     var kpi = { gens: n, visitors: nv, perVisitor: nv ? n / nv : 0, copied: copied, copyRate: pct(copied, n), rated: rated, good: good,
-      goodRate: pct(good, rated), comments: comments, texts: texts, presets: presets, edit: edit };
+      goodRate: pct(good, rated), comments: comments, texts: texts, presets: presets, edit: edit,
+      lineUsers: Object.keys(lineUsers).length, lineGens: lineGens };
+
+    // ---- 人ごと（LINE でつながった人）
+    var users = {};
+    gens.forEach(function (g) {
+      if (!g.line) return;
+      var u = users[g.line] = users[g.line] || { id: g.line, label: g.lineName || '（表示名なし）', n: 0, last: 0, tr: {}, texts: 0, bad: 0 };
+      u.n++; u.last = Math.max(u.last, g.at);
+      if (g.lineName) u.label = g.lineName;
+      if (g.wish || g.trouble || g.comments.length) u.texts++;
+      if (g.rating === -1) u.bad++;
+      g.tags.forEach(function (id) { if (catOf(id) === 'trouble') u.tr[id] = (u.tr[id] || 0) + 1; });
+    });
+    var byUser = Object.keys(users).map(function (k) {
+      var u = users[k];
+      var top = Object.keys(u.tr).sort(function (a, b) { return u.tr[b] - u.tr[a]; }).slice(0, 3).map(label);
+      return { id: u.id, label: u.label, n: u.n, share: pct(u.n, n), last: u.last, troubles: top, texts: u.texts, bad: u.bad };
+    }).sort(function (a, b) { return b.n - a.n || b.last - a.last; });
 
     // ---- タグごと
     var counts = {}, badBy = {}, ratedBy = {};
@@ -193,10 +214,11 @@
     var list = [];
     gens.forEach(function (g) {
       var tagLabels = g.tags.filter(function (id) { var c = catOf(id); return c === 'trouble' || c === 'use' || c === 'change'; }).map(label);
-      if (g.wish) list.push({ id: g.id, at: g.at, kind: g.mode === 'edit' ? 'fix' : 'wish', text: g.wish, cohort: g.cohort, tags: tagLabels, gen: g.gen });
-      if (g.trouble) list.push({ id: g.id, at: g.at, kind: 'trouble', text: g.trouble, cohort: g.cohort, tags: tagLabels, gen: g.gen });
-      if (g.title) list.push({ id: g.id, at: g.at, kind: 'title', text: g.title, cohort: g.cohort, tags: tagLabels, gen: g.gen });
-      g.comments.forEach(function (c) { list.push({ id: c.id, at: c.at, kind: 'comment', text: c.text, cohort: g.cohort, tags: tagLabels, gen: g.gen }); });
+      var who = g.line ? (g.lineName || '（表示名なし）') : '';
+      if (g.wish) list.push({ id: g.id, at: g.at, kind: g.mode === 'edit' ? 'fix' : 'wish', text: g.wish, cohort: g.cohort, tags: tagLabels, gen: g.gen, who: who, line: g.line });
+      if (g.trouble) list.push({ id: g.id, at: g.at, kind: 'trouble', text: g.trouble, cohort: g.cohort, tags: tagLabels, gen: g.gen, who: who, line: g.line });
+      if (g.title) list.push({ id: g.id, at: g.at, kind: 'title', text: g.title, cohort: g.cohort, tags: tagLabels, gen: g.gen, who: who, line: g.line });
+      g.comments.forEach(function (c) { list.push({ id: c.id, at: c.at, kind: 'comment', text: c.text, cohort: g.cohort, tags: tagLabels, gen: g.gen, who: who, line: g.line }); });
     });
     list.sort(function (a, b) { return b.at - a.at; });
 
@@ -246,7 +268,7 @@
       insights.push({ k: 'copy', text: '処方箋を出した回のうち、指示文がコピーされたのは ' + p100(kpi.copyRate) + (kpi.rated ? '。評価があった ' + kpi.rated + '回のうち「うまくいった」は ' + p100(kpi.goodRate) + '。' : '。') });
     }
 
-    return { gens: gens, n: n, kpi: kpi, byCat: byCat, areas: areas, withTrouble: withTrouble, daily: daily,
+    return { gens: gens, n: n, kpi: kpi, byCat: byCat, areas: areas, byUser: byUser, withTrouble: withTrouble, daily: daily,
       matrix: { rows: tops, cols: topu, cells: cells }, pairs: pairs.slice(0, 12), texts: list, words: words.slice(0, 40), newWords: newWords.slice(0, 20),
       hardTroubles: hardTroubles.slice(0, 8), rising: rising.slice(0, 8), insights: insights };
   }
@@ -262,11 +284,11 @@
   }
   function jstText(t) { var d = new Date(t + JST); return d.toISOString().slice(0, 16).replace('T', ' '); }
   function gensCsv(gens) {
-    var head = ['日時（日本時間）', '講座コード', 'つくりかた', '使うAI', 'おためし', '困っていること（タグ）', '作りたいもの（タグ）', 'そのほかのタグ', '描きたいもの・直したいこと', '困っていること（自由記述）', '入れたい文字', 'コピー', '評価', 'いまいちの声', '端末の番号'];
+    var head = ['日時（日本時間）', '講座コード', 'LINE の表示名', 'つくりかた', '使うAI', 'おためし', '困っていること（タグ）', '作りたいもの（タグ）', 'そのほかのタグ', '描きたいもの・直したいこと', '困っていること（自由記述）', '入れたい文字', 'コピー', '評価', 'いまいちの声', '端末の番号'];
     var rows = gens.map(function (g) {
       var tr = [], us = [], other = [];
       g.tags.forEach(function (id) { var c = catOf(id); (c === 'trouble' ? tr : c === 'use' ? us : other).push(label(id)); });
-      return [jstText(g.at), g.cohort, g.mode === 'edit' ? '直す' : '作る', label(g.tool), g.preset ? (TAGS.PRESETS.filter(function (p) { return p.id === g.preset; })[0] || {}).label || g.preset : '',
+      return [jstText(g.at), g.cohort, g.line ? (g.lineName || '（表示名なし）') : '', g.mode === 'edit' ? '直す' : '作る', label(g.tool), g.preset ? (TAGS.PRESETS.filter(function (p) { return p.id === g.preset; })[0] || {}).label || g.preset : '',
         tr.join('／'), us.join('／'), other.join('／'), g.wish, g.trouble, g.title, g.copies.length ? 'あり' : '', g.rating === 1 ? 'うまくいった' : g.rating === -1 ? 'いまいち' : '',
         g.comments.map(function (c) { return c.text; }).join('／'), g.visitor.slice(0, 8)];
     });

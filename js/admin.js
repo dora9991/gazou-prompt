@@ -41,7 +41,7 @@
   var KEY_STORE = 'gp.adminKey';
   var S = {
     key: '', demo: false, rows: [], all: [], status: null, truncated: false, fetchedAt: 0, loading: false,
-    range: 'all', from: '', to: '', cohort: '*', noPreset: false, tag: '', tag2: '',
+    range: 'all', from: '', to: '', cohort: '*', noPreset: false, tag: '', tag2: '', user: '', userName: '',
     textKind: 'all', q: '', shown: 40, sel: new Set(), views: {}, expand: {}, sum: null
   };
   var RANGES = [['today', '今日'], ['7', '7日'], ['30', '30日'], ['all', '全期間'], ['custom', '期間を指定']];
@@ -148,7 +148,7 @@
   // ------------------------------------------------------------ しぼりこみ
   function todayStart() { return A.dayStart(A.jstDay(Date.now())); }
   function opts(shift) {
-    var o = { cohort: S.cohort, excludePresets: S.noPreset, tag: S.tag || null, tag2: S.tag2 || null, now: Date.now() };
+    var o = { cohort: S.cohort, excludePresets: S.noPreset, tag: S.tag || null, tag2: S.tag2 || null, user: S.user || null, now: Date.now() };
     var t0 = todayStart();
     var len = 0;
     if (S.range === 'today') { o.since = t0; o.until = t0 + DAY; len = 1; }
@@ -182,9 +182,12 @@
     if (sel.value !== S.cohort) { S.cohort = '*'; sel.value = '*'; }
     $('#no-preset').checked = S.noPreset;
     var act = clear($('#active-filter'));
-    act.hidden = !S.tag;
-    if (S.tag) {
-      act.appendChild(h('span', { text: 'しぼりこみ中：' + label(S.tag) + (S.tag2 ? ' × ' + label(S.tag2) : '') }));
+    act.hidden = !S.tag && !S.user;
+    if (S.tag || S.user) {
+      var parts = [];
+      if (S.user) parts.push('👤 ' + (S.userName || '（表示名なし）'));
+      if (S.tag) parts.push(label(S.tag) + (S.tag2 ? ' × ' + label(S.tag2) : ''));
+      act.appendChild(h('span', { text: 'しぼりこみ中：' + parts.join('・') }));
       act.appendChild(h('button', { type: 'button', 'data-act': 'clear-tag', 'aria-label': 'しぼりこみをやめる', text: '×' }));
     }
     $('#demo-banner').hidden = !S.demo;
@@ -230,6 +233,7 @@
     box.appendChild(tile('指示文がコピーされた', p100(k.copyRate), '', fmt(k.copied) + '回 ／ ' + fmt(k.gens) + '回'));
     box.appendChild(tile('「うまくいった」', k.rated ? p100(k.goodRate) : '—', '', k.rated ? '評価 ' + fmt(k.rated) + '回のうち ' + fmt(k.good) + '回' : 'まだ評価はありません'));
     box.appendChild(tile('自由記述のあった回', fmt(k.texts), '回', 'いまいちの声 ' + fmt(k.comments) + '件'));
+    if (lineOn() || k.lineUsers) box.appendChild(tile('LINE でつながった人', fmt(k.lineUsers), '人', 'LINE つきの回 ' + fmt(k.lineGens) + '回（' + p100(k.gens ? k.lineGens / k.gens : 0) + '）'));
   }
 
   function renderInsights(sum) {
@@ -372,7 +376,44 @@
     card.appendChild(lg);
   }
 
+  // ---- 人ごと（LINE でつながった人）
+  function lineOn() { return !!((window.GP_CONFIG || {}).liffId) || !!(S.status && S.status.line_users); }
+  function usersCard(sum) {
+    var card = clear($('#card-users'));
+    var list = sum.byUser || [];
+    card.hidden = !(lineOn() || list.length);
+    if (card.hidden) return;
+    card.appendChild(cardHead(card, '人ごと（LINE でつながった人）', '公式LINE から開いた人の記録。名前を押すと、その人の記録だけにしぼりこめます', true));
+    if (!list.length) { card.appendChild(h('p', { class: 'empty', text: 'この範囲には、LINE でつながった人の記録がまだありません。' })); return; }
+    if (isTable(card)) {
+      card.appendChild(table(['LINE の表示名', '処方箋を出した回数', 'よく選ぶ困りごと', '自由記述', 'いまいち', '最後に使った日'], list.map(function (u) { return [u.label, fmt(u.n), u.troubles.join('・'), fmt(u.texts), fmt(u.bad), jst(u.last)]; }), [1, 3, 4]));
+      return;
+    }
+    var limit = 12, key = 'card-users';
+    var shown = S.expand[key] ? list : list.slice(0, limit);
+    var max = Math.max.apply(null, list.map(function (u) { return u.n; }).concat([1]));
+    var ul = h('ul', { class: 'bars users' });
+    shown.forEach(function (u) {
+      var fill = h('span', { class: 'bar-fill' });
+      fill.style.width = Math.max(0.5, u.n / max * 100) + '%';
+      ul.appendChild(h('li', null, h('button', { type: 'button', class: 'bar-row', 'data-user': u.id, 'data-user-name': u.label, 'aria-pressed': S.user === u.id ? 'true' : 'false',
+        'data-tv': fmt(u.n) + '回', 'data-tl': u.label, 'data-ts': (u.troubles.length ? 'よく選ぶ困りごと：' + u.troubles.join('・') : '') + '　最後 ' + jst(u.last) },
+        h('span', { class: 'bar-label', text: u.label }), h('span', { class: 'bar-track' }, fill),
+        h('span', { class: 'bar-val' }, fmt(u.n), h('small', { text: u.troubles[0] || '' })))));
+    });
+    card.appendChild(ul);
+    if (list.length > limit) card.appendChild(h('button', { type: 'button', class: 'btn-small bars-more', 'data-expand': key, text: S.expand[key] ? '上位だけにする' : 'すべて見る（' + list.length + '）' }));
+    if (S.user) {
+      card.appendChild(h('div', { class: 'ad-user-actions' },
+        h('p', { class: 'card-note', text: '「' + (S.userName || '（表示名なし）') + '」さんから、記録を消してほしいと頼まれたとき：' }),
+        h('div', { class: 'ad-btns' },
+          h('button', { type: 'button', class: 'btn-small', 'data-act': 'forget-user', text: '名前から切り離す（記録は名前なしで残す）' }),
+          h('button', { type: 'button', class: 'btn-small danger', 'data-act': 'delete-user', text: 'この人の記録をすべて消す' }))));
+    }
+  }
+
   function renderCards(sum) {
+    usersCard(sum);
     var n = sum.n;
     barCard('card-trouble', '困りごと', '処方箋を出した回のうち、その困りごとが選ばれた回数（押すと、その困りごとでしぼりこみ）', sum.byCat.trouble, { clickable: true, empty: 'まだ困りごとは選ばれていません。' });
     barCard('card-use', '作りたいもの', '何に使う絵を作ろうとしているか（押すと、しぼりこみ）', sum.byCat.use, { clickable: true });
@@ -449,7 +490,7 @@
         h('input', { type: 'checkbox', 'data-sel': String(x.id), 'aria-label': '選ぶ', checked: S.sel.has(x.id) ? true : null }),
         h('div', { class: 'txt-body' },
           h('p', { class: 'txt-text' }, highlight(x.text, S.q)),
-          h('p', { class: 'txt-meta' }, h('span', { class: 'txt-kind', text: KIND_LABEL[x.kind] || x.kind }), h('span', { text: jst(x.at) }), x.cohort ? h('span', { text: x.cohort }) : null,
+          h('p', { class: 'txt-meta' }, h('span', { class: 'txt-kind', text: KIND_LABEL[x.kind] || x.kind }), x.who ? h('span', { class: 'txt-who', text: '👤 ' + x.who }) : null, h('span', { text: jst(x.at) }), x.cohort ? h('span', { text: x.cohort }) : null,
             x.tags.slice(0, 4).map(function (t) { return h('span', { class: 'txt-tag', text: t }); })))));
       void key;
     });
@@ -497,9 +538,14 @@
     } catch (e) { /* 下へ */ }
     return '';
   }
+  function liffId() { return String((window.GP_CONFIG || {}).liffId || ''); }
   function shareUrl() {
     var base = $('#share-base').value.trim() || defaultBase();
     var code = $('#share-code').value.trim();
+    // 公式LINE 用：LIFF の URL（https://liff.line.me/<LIFF ID>?c=…）。LINE の中で開き、だれが押したかが分かる
+    if (liffId() && $('#share-liff').checked) {
+      return 'https://liff.line.me/' + encodeURIComponent(liffId()) + (code ? '?c=' + encodeURIComponent(code) : '');
+    }
     if (!base) return '';
     try {
       var u = new URL(base);
@@ -510,6 +556,7 @@
   }
   var qrCanvas = null;
   function renderShare() {
+    $('#share-liff-wrap').hidden = !liffId();
     var base = $('#share-base');
     if (!base.value && defaultBase()) base.value = defaultBase();
     var code = $('#share-code').value.trim();
@@ -588,6 +635,30 @@
     });
   }
 
+  // LINE の人を忘れる（本人から頼まれたとき）。del=false：名前から切り離す／true：記録ごと消す
+  function forgetUser(del) {
+    var id = S.user, name = S.userName || '（表示名なし）';
+    if (!id) return;
+    var msg = del ? '「' + name + '」さんの記録を、すべて消します（タグの数からも消えます）。もとに戻せません。'
+      : '「' + name + '」さんの記録を、名前から切り離します（記録は名前なしで残ります）。LINE の表示名と番号は消えます。もとに戻せません。';
+    confirmBox(msg, del ? '消す' : null).then(function (ok) {
+      if (!ok) return;
+      if (S.demo) {
+        if (del) S.rows = S.rows.filter(function (r) { return r.line_user_id !== id; });
+        else S.rows.forEach(function (r) { if (r.line_user_id === id) { r.line_user_id = null; r.line_name = null; } });
+        S.all = A.prepare(S.rows); S.user = ''; S.userName = ''; render();
+        toast('見本データの中だけで変えました');
+        return;
+      }
+      API.rpc('admin_forget_user', { p_key: S.key, p_line_user_id: id, p_delete: !!del }).then(function (r) {
+        if (!r.ok) { toast(errText(r)); return; }
+        toast((del ? '記録を消しました：' : '名前から切り離しました：') + fmt(r.events) + '件');
+        S.user = ''; S.userName = '';
+        load();
+      });
+    });
+  }
+
   // ------------------------------------------------------------ ツールチップ（値が先、名前があと）
   var tipEl = null;
   function showTip(el, x, y) {
@@ -625,7 +696,9 @@
       if (el.hasAttribute('data-range')) { S.range = el.getAttribute('data-range'); S.shown = 40; render(); return; }
       if (el.hasAttribute('data-tag')) { var t = el.getAttribute('data-tag'); S.tag = S.tag === t && !S.tag2 ? '' : t; S.tag2 = ''; S.shown = 40; render(); return; }
       if (el.hasAttribute('data-pair')) { var p = el.getAttribute('data-pair').split('|'); S.tag = p[0]; S.tag2 = p[1]; S.shown = 40; render(); $('#filters').scrollIntoView({ block: 'start' }); return; }
-      if (el.getAttribute('data-act') === 'clear-tag') { S.tag = ''; S.tag2 = ''; render(); return; }
+      if (el.getAttribute('data-act') === 'clear-tag') { S.tag = ''; S.tag2 = ''; S.user = ''; S.userName = ''; render(); return; }
+      if (el.hasAttribute('data-user')) { var u = el.getAttribute('data-user'); if (S.user === u) { S.user = ''; S.userName = ''; } else { S.user = u; S.userName = el.getAttribute('data-user-name') || ''; } S.shown = 40; render(); return; }
+      if (el.getAttribute('data-act') === 'forget-user' || el.getAttribute('data-act') === 'delete-user') { forgetUser(el.getAttribute('data-act') === 'delete-user'); return; }
       if (el.hasAttribute('data-view')) { var id = el.getAttribute('data-view'); S.views[id] = S.views[id] === 'table' ? 'chart' : 'table'; render(); return; }
       if (el.hasAttribute('data-expand')) { var k = el.getAttribute('data-expand'); S.expand[k] = !S.expand[k]; render(); return; }
       if (el.hasAttribute('data-kind')) { S.textKind = el.getAttribute('data-kind'); S.shown = 40; renderTexts(S.sum); return; }
@@ -694,6 +767,7 @@
     var qTimer = null;
     $('#text-q').addEventListener('input', function (e) { clearTimeout(qTimer); var v = e.target.value; qTimer = setTimeout(function () { S.q = v; S.shown = 40; renderTexts(S.sum); }, 200); });
     ['#share-code', '#share-base'].forEach(function (s) { $(s).addEventListener('input', renderShare); });
+    $('#share-liff').addEventListener('change', renderShare);
 
     // ツールチップ：マウスでも、キーボードで選んだときも
     document.addEventListener('pointermove', function (e) {

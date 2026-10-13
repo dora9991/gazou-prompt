@@ -157,6 +157,11 @@
 .txt-tag { background: var(--sunk); border-radius: 999px; padding: 0 8px; color: var(--ink-2); }
 mark.hit { background: var(--mark-bg); color: var(--mark-ink); border-radius: 3px; padding: 0 1px; }
 .ad-newwords { margin-bottom: 14px; }
+.ad-users { margin-bottom: 14px; }
+.ad-user-actions { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+.txt-who { font-weight: 700; color: #11623a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .txt-who { color: #8fe0b0; } }
+:root[data-theme="dark"] .txt-who { color: #8fe0b0; }
 .nw-list { display: flex; flex-wrap: wrap; gap: 8px; }
 
 /* ---------- 配るリンク・記録の管理 */

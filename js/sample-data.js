@@ -76,6 +76,15 @@
     var total = opt.gens || 640;
     var visitors = [];
     for (var i = 0; i < Math.round(total / 3.6); i++) visitors.push(uuidFrom(r));
+    // 公式LINE から開いた人（見本の名前。架空）：7割の端末を、だれかの LINE に結びつける
+    var NAMES = ['さくら', 'ゆう', 'みほ', 'たける', 'あおい', 'けんじ', 'なな', 'しょう', 'りか', 'だいき', 'まい', 'こうへい', 'ちひろ', 'ひろし', 'あや', 'ゆうた', 'えみ', 'りょう', 'かな', 'しん'];
+    var lineOf = {};
+    visitors.forEach(function (v, k) {
+      if (r() < 0.7) {
+        var hex = ''; for (var j = 0; j < 32; j++) hex += Math.floor(r() * 16).toString(16);
+        lineOf[v] = { id: 'U' + hex, name: NAMES[k % NAMES.length] + (r() < 0.5 ? '先生' : '') + '（見本' + (k + 1) + '）' };
+      }
+    });
     var rows = [];
     var id = 1;
     var start = now - days * 86400000;
@@ -121,8 +130,10 @@
       }
       tags.push(tool);
       tags = tags.filter(function (x, i2, a) { return TAGS.byId(x) && a.indexOf(x) === i2; }).sort();
+      var lu = lineOf[v] || null;
       rows.push({ id: id++, created_at: new Date(at).toISOString(), kind: 'generate', visitor_id: v, gen_id: gen, cohort: cohort, mode: mode, tool: tool, preset: preset,
-        tags: tags, wish: wish, trouble: trouble, title_text: title, part: null, rating: null, client: r() < 0.55 ? 'phone' : 'pc' });
+        tags: tags, wish: wish, trouble: trouble, title_text: title, part: null, rating: null, client: r() < 0.55 ? 'phone' : 'pc',
+        line_user_id: lu ? lu.id : null, line_name: lu ? lu.name : null });
       if (r() < 0.68) rows.push({ id: id++, created_at: new Date(Math.min(at + 40000, now - 1000)).toISOString(), kind: 'copy', visitor_id: v, gen_id: gen, cohort: cohort, part: r() < 0.8 ? 'v-full' : 'v-short', tags: [] });
       if (r() < 0.12) rows.push({ id: id++, created_at: new Date(Math.min(at + 300000, now - 1000)).toISOString(), kind: 'copy', visitor_id: v, gen_id: gen, cohort: cohort, part: 'fix-0', tags: [] });
       if (r() < 0.3) {

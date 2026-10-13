@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://*.supabase.co http://127.0.0.1:* http://localhost:*; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://static.line-scdn.net; style-src 'self'; img-src 'self' data:; connect-src https://*.supabase.co https://api.line.me https://liffsdk.line-scdn.net https://access.line.me https://uts-front.line-apps.com http://127.0.0.1:* http://localhost:*; base-uri 'none'; form-action https://liff-subwindow.line.me; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex">
 <meta name="description" content="画像生成AIで「思った絵にならない」を、選ぶだけで解決。困りごとと作りたいイメージから、そのまま貼れる指示文（プロンプト）を作ります。">
 <meta name="theme-color" content="#1f7a6d">
 <title>プロンプト処方箋｜画像生成AIの困りごとから指示文を作る</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='6' y='22' width='52' height='20' rx='10' transform='rotate(-35 32 32)' fill='%231f7a6d'/%3E%3Cpath d='M32 32 l13.4-9.2 a10 10 0 0 1 11.3 16.4 L43.3 48.4z' fill='%23f2b134' transform='rotate(0)'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/app.css?v=202610130250">
 </head>
 <body>
 <a class="skip" href="#steps">選ぶところへ</a>
@@ -24,6 +24,7 @@
       </div>
     </div>
     <p class="lead">困っていることと、作りたいイメージを選ぶだけ。<br class="br-sm">生成AIにそのまま貼れる指示文（プロンプト）を出します。</p>
+    <p class="line-badge" id="line-badge" role="status" hidden></p>
   </div>
 </header>
 
@@ -78,7 +79,7 @@
 
 <footer class="foot">
   <p class="foot-privacy" id="privacy-line"></p>
-  <p class="foot-links"><button type="button" class="linklike" id="open-privacy">記録について</button><span class="foot-cohort" id="foot-cohort"></span></p>
+  <p class="foot-links"><button type="button" class="linklike" id="open-privacy">記録について</button><button type="button" class="linklike" id="line-connect" hidden>LINE でつなぐ</button><span class="foot-cohort" id="foot-cohort"></span></p>
 </footer>
 
 <dialog class="dlg" id="dlg-privacy" aria-labelledby="dlg-privacy-title">
@@ -90,8 +91,13 @@
       <li>入力した文（描きたいもの・困っていること・画像に入れる文字）</li>
       <li>コピーしたかどうか、「うまくいった／いまいち」の押したもの</li>
       <li>この端末に割り当てた番号（だれかは分かりません）と、講座コード</li>
+      <li id="privacy-line-item" hidden>公式LINE から開いたとき：LINE の表示名と、LINE の利用者を見分ける番号（講座の運営が、だれの記録かを見るため）</li>
     </ul>
-    <p>名前・メールアドレスは記録しません。<strong>入力欄には、名前・学校名など、だれかが分かることを書かないでください。</strong></p>
+    <p id="privacy-names">名前・メールアドレスは記録しません。<strong>入力欄には、名前・学校名など、だれかが分かることを書かないでください。</strong></p>
+    <div class="line-off" id="line-off-box" hidden>
+      <p>いまは LINE の表示名をつけて記録しています。<button type="button" class="linklike" id="line-off">このページでは LINE の名前をつけない</button></p>
+      <p class="dlg-small">これまでの記録を消してほしいときは、講座の運営にお知らせください。</p>
+    </div>
     <label class="optout"><input type="checkbox" id="optout"> この端末からは記録を送らない</label>
     <p class="dlg-small" id="log-state"></p>
   </div>
@@ -100,10 +106,11 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="config.js"></script>
-<script src="js/tags.js"></script>
-<script src="js/engine.js"></script>
-<script src="js/api.js"></script>
-<script src="js/app.js"></script>
+<script src="config.js?v=202610130250"></script>
+<script src="js/tags.js?v=202610130250"></script>
+<script src="js/engine.js?v=202610130250"></script>
+<script src="js/line.js?v=202610130250"></script>
+<script src="js/api.js?v=202610130250"></script>
+<script src="js/app.js?v=202610130250"></script>
 </body>
 </html>
