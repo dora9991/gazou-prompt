@@ -4,5 +4,5 @@ window.GP_CONFIG = {
   supabaseKey: "sb_publishable_lCGzQSqCd0fJ8u-Ca4HXSg_eV9rBYr6",
   cohort: '',
   // 公式LINE（LIFF）から開いた人の「だれが」を記録する。LIFF ID（空なら使わない）
-  liffId: ""
+  liffId: "2012023583-jmN82nNY"
 };
