@@ -1,4 +1,4 @@
-// ホーム：今日の時間割・予定・やること・宿題の締切、道具の入口、すでにある道具、保存とバックアップ
+// ホーム：今日の時間割・日直と当番・予定・やること・宿題の締切、道具の入口、すでにある道具、保存とバックアップ
 (function () {
   'use strict';
   const { h } = Kit;
@@ -43,13 +43,17 @@
 .hm-tool-desc{font-size:12.5px;color:var(--ink-3);line-height:1.5}
 .hm-tool-stat{font-size:13px;color:var(--ink-2);margin-top:4px;font-variant-numeric:tabular-nums}
 .hm-flow{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch}
-.hm-flow-step{flex:1 1 150px;display:grid;gap:2px;padding:10px 12px;border-radius:8px;background:var(--surface-2);border:0;color:var(--ink);font:inherit;text-align:left;cursor:pointer;min-width:0}
+.hm-flow-step{flex:1 1 calc(25% - 6px);display:grid;gap:2px;padding:10px 12px;border-radius:8px;background:var(--surface-2);border:0;color:var(--ink);font:inherit;text-align:left;cursor:pointer;min-width:0}
 .hm-flow-step:hover{background:var(--gosu-wash)}
+@media (max-width:640px){.hm-flow-step{flex-basis:calc(50% - 6px)}}
 .hm-flow-no{font-family:var(--font-display);font-weight:600;color:var(--gosu);font-size:13px}
 .hm-flow-name{font-weight:700;font-size:14px}
 .hm-flow-tool{font-size:12px;color:var(--ink-3)}
 .hm-data ul{margin:6px 0 0;padding-left:1.3em;font-size:13.5px;color:var(--ink-2)}
 .hm-data li+li{margin-top:3px}
+.hm-duty{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:10px;padding:8px 10px;border-radius:8px;background:var(--surface-2);font-size:13.5px;border:0;width:100%;text-align:left;color:var(--ink);font-family:inherit;cursor:pointer}
+.hm-duty:hover{background:var(--gosu-wash)}
+.hm-duty b{font-weight:700}
 `);
 
   // くり返しの予定が、その日にあるか
@@ -82,9 +86,12 @@
       const offC = School.onClassChange(rerender);
 
       async function render() {
-        const [profile, events, reminders, homework, classes, tt] = await Promise.all([
+        const [profile, events, reminders, homework, classes, tt, duty, letter, mine] = await Promise.all([
           Kit.profile.get(), Kit.store.list('events'), Kit.store.list('reminders'), Kit.store.list('homework'), School.classes.list(),
           window.SenseiTimetable ? window.SenseiTimetable.today() : null,
+          window.SenseiDuty ? window.SenseiDuty.today().catch(() => null) : null,
+          window.SenseiNewsletter ? window.SenseiNewsletter.latest().catch(() => null) : null,
+          Kit.appDef('templates') ? Kit.store.list('msgtemplates') : [],
         ]);
         if (!alive) return;
         const today = Kit.ymd(), tomorrow = Kit.rel(1);
@@ -120,6 +127,13 @@
               h('span', { class: 'p' }, it.p + 1), h('span', { class: 't' }, it.bell.start ? it.bell.start + '〜' : ''),
               h('span', { class: 's' }, s ? h('b', null, s) : h('span', { class: 'muted' }, '空き'), it.cell && it.cell.n ? '　' + it.cell.n : ''));
           })));
+        }
+
+        // 今日の日直・今週の給食当番（当番表を使っていれば）
+        if (duty && (duty.nicchoku.length || duty.lunch) && !School.isOff(today)) {
+          ttCard.append(h('button', { type: 'button', class: 'hm-duty', onclick: () => Kit.go('duty'), 'aria-label': '当番表を開く' },
+            duty.nicchoku.length ? h('span', null, '今日の日直：', h('b', null, duty.nicchoku.join('・'))) : null,
+            duty.lunch ? h('span', null, '今週の給食当番：', h('b', null, duty.lunch)) : null));
         }
 
         /* ── 今日・明日やること ── */
@@ -162,14 +176,17 @@
           roster: () => (classes.length ? classes.length + 'クラス・' + Kit.sum(classes, (c) => c.students.length) + '人' : 'まだありません'),
           seats: () => (cur ? cur.name + 'の席' : '名簿を入れると使えます'),
           roles: () => (cur ? cur.name + 'の係' : '名簿を入れると使えます'),
+          duty: () => (duty && duty.nicchoku.length ? '今日の日直：' + duty.nicchoku.join('・') : cur ? cur.name + 'の班と当番' : '名簿を入れると使えます'),
+          newsletter: () => (letter ? '最新：' + letter.name + ' 第' + letter.no + '号（' + Kit.fmtDate(letter.date, 'M/D') + '）' : 'まだありません'),
+          templates: () => (window.Letters ? window.Letters.TEMPLATES.length + 'のひな形' : '') + (mine.length ? '・わたしの ' + mine.length : ''),
           timetable: () => (tt && tt.grid ? tt.grid.name : 'わたしの時間割・自動作成'),
           homework: () => { const open = homework.filter((x) => !x.closed); return open.length ? '出している宿題 ' + open.length + '件' : 'まだありません'; },
           calendar: () => { let n = 0; for (let i = 0; i < 7; i++) { const d = Kit.rel(i); n += events.filter((e) => occursOn(e, d)).length; } return 'この7日の予定 ' + n + '件'; },
           reminders: () => { const open = reminders.filter((r) => !r.done); return open.length ? 'のこり ' + open.length + '件' : 'やることはありません'; },
         };
-        const LABEL = { class: 'クラス', lesson: '授業', plan: '予定' };
+        const LABEL = { class: 'クラス', lesson: '授業', plan: '予定', write: '通信・連絡' };
         const tools = h('section', { style: { marginTop: '24px' }, 'aria-label': '道具箱' }, h('h2', { class: 'section-title' }, '道具箱'));
-        for (const g of ['class', 'lesson', 'plan']) {
+        for (const g of ['class', 'lesson', 'plan', 'write']) {
           const apps = Kit.apps().filter((a) => a.group === g);
           if (!apps.length) continue;
           tools.append(h('div', { class: 'hm-group' }, h('div', { class: 'hm-group-label' }, LABEL[g]),
@@ -182,10 +199,10 @@
         root.append(tools);
 
         /* ── 1年の流れ ── */
-        const FLOW = [['名簿を入れる', '名簿', 'roster'], ['席を決める', '席替え', 'seats'], ['係を決める', '係決め', 'roles'], ['時間割をつくる', '時間割', 'timetable'], ['行事を入れる', 'カレンダー', 'calendar'], ['宿題を見守る', '宿題・提出', 'homework']];
+        const FLOW = [['名簿を入れる', '名簿', 'roster'], ['席を決める', '席替え', 'seats'], ['係を決める', '係決め', 'roles'], ['班と当番を決める', '当番表', 'duty'], ['時間割をつくる', '時間割', 'timetable'], ['行事を入れる', 'カレンダー', 'calendar'], ['宿題を見守る', '宿題・提出', 'homework'], ['通信を出す', '学級通信', 'newsletter']].filter((x) => Kit.appDef(x[2]));
         root.append(h('section', { style: { marginTop: '24px' }, 'aria-label': '使う順番の例' },
           h('h2', { class: 'section-title' }, '学級びらきの順番の例'),
-          h('p', { class: 'small ink-2', style: { marginBottom: '10px' } }, '名簿を1回入れると、席替え・係決め・宿題チェックがそのまま使えます。行事の予定と宿題の締切は、カレンダーとホームに集まります。'),
+          h('p', { class: 'small ink-2', style: { marginBottom: '10px' } }, '名簿を1回入れると、席替え・係決め・当番表・宿題チェックがそのまま使えます。行事の予定と宿題の締切は、カレンダーとホームに集まり、学級通信の予定表にも入れられます。'),
           h('div', { class: 'hm-flow' }, FLOW.map(([name, tool, id], i) => h('button', { type: 'button', class: 'hm-flow-step', onclick: () => Kit.go(id) },
             h('span', { class: 'hm-flow-no' }, String(i + 1)), h('span', { class: 'hm-flow-name' }, name), h('span', { class: 'hm-flow-tool' }, tool))))));
 
@@ -247,7 +264,7 @@
         catch (e) { Kit.toast('戻せませんでした：' + ((e && e.message) || e), { type: 'bad' }); }
       }
       async function wipe() {
-        const yes = await Kit.confirm({ title: 'すべて消しますか', body: 'すべての道具の内容（名簿・席・係・時間割・予定・リマインダー・宿題）を消して、最初の状態（サンプル表示）に戻します。元に戻せないので、先にバックアップを書き出しておくと安心です。', ok: 'すべて消す', danger: true });
+        const yes = await Kit.confirm({ title: 'すべて消しますか', body: 'すべての道具の内容（名簿・席・係・当番・時間割・予定・リマインダー・宿題・通信・わたしのひな形）を消して、最初の状態（サンプル表示）に戻します。元に戻せないので、先にバックアップを書き出しておくと安心です。', ok: 'すべて消す', danger: true });
         if (!yes) return;
         await Kit.store.wipeAll();
         Kit.pref.set('class', null);

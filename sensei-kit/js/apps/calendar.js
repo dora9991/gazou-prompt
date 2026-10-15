@@ -985,7 +985,12 @@ button.cal-dnum:hover{background:var(--surface-3)}
           untilF, repNote,
           Kit.field({ label: '場所', input: f.place }),
           Kit.field({ label: 'メモ', input: f.memo }),
-          h('div', { class: 'cal-gl' }, gl, glNote));
+          h('div', { class: 'cal-gl' }, gl, glNote,
+            !isNew && Kit.appDef('templates') ? Kit.btn('お知らせ文をつくる', () => {
+              const dt = f.date.value || d.date, L = window.Letters, tm = f.allDay.checked || !f.start.value ? '' : f.start.value + '〜' + (f.end.value || '');
+              m.close();
+              Kit.go('templates', { id: 'p-event', vals: { 行事名: f.title.value.trim(), 日時: (L ? L.jpDate(dt) : dt) + tm, 場所: f.place.value.trim() } });
+            }, { sm: true, kind: 'ghost', icon: 'mail', title: '保護者へのお知らせの文書を、連絡テンプレートでつくる' }) : null));
         sync();
         const save = async () => {
           const title = f.title.value.trim();

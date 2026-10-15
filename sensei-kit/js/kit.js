@@ -244,6 +244,7 @@
     board: 'M3 4h18v12H3zM8 20l2-4M16 20l-2-4M6 13h5',
     checks: 'M4 4h16v16H4zM8 12l3 3 5-6',
     wand: 'M4 20 15 9M14 4v3M12.5 5.5h3M19 9v3M17.5 10.5h3M18 3l1 1',
+    news: 'M4 5h13v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM17 9h3v9a2 2 0 0 1-2 2M7 9h7M7 12.5h7M7 16h4',
     hand: 'M8 13V5.5a1.5 1.5 0 0 1 3 0V11M11 10V4.5a1.5 1.5 0 0 1 3 0V11M14 10.5V6a1.5 1.5 0 0 1 3 0v8a7 7 0 0 1-7 7h-.5a6 6 0 0 1-5-2.7L3 15.5a1.5 1.5 0 0 1 2.4-1.8L8 16',
   };
   const FILLED = new Set(['play', 'stop']);
@@ -1125,6 +1126,7 @@
     { id: 'class', label: 'クラス' },
     { id: 'lesson', label: '授業' },
     { id: 'plan', label: '予定' },
+    { id: 'write', label: '通信・連絡' },
   ];
   const apps = [];
   const appMap = new Map();

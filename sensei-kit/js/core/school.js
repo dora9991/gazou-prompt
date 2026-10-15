@@ -339,14 +339,15 @@
   };
 
   /* ───────── 印刷 ─────────
-     School.print({ title, landscape, build: () => 要素 }) … 道具箱の画面は隠して、渡した中身だけを印刷する */
+     School.print({ landscape, size, margin, build: () => 要素 }) … 道具箱の画面は隠して、渡した中身だけを印刷する。
+     size は '257mm 364mm'（B4）のように紙の大きさを決めるとき（決めなければ A4） */
   let printRoot = null, pageStyle = null;
-  School.print = ({ landscape = false, build, margin = '12mm' }) => {
+  School.print = ({ landscape = false, build, margin = '12mm', size }) => {
     if (!printRoot) { printRoot = h('div', { id: 'sk-print', 'aria-hidden': 'true' }); document.body.append(printRoot); }
     Kit.clear(printRoot);
     printRoot.append(build());
     if (pageStyle) pageStyle.remove();
-    pageStyle = h('style', null, '@page { size: A4 ' + (landscape ? 'landscape' : 'portrait') + '; margin: ' + margin + '; }');
+    pageStyle = h('style', null, '@page { size: ' + (size || 'A4 ' + (landscape ? 'landscape' : 'portrait')) + '; margin: ' + margin + '; }');
     document.head.append(pageStyle);
     document.documentElement.classList.add('sk-printing');
     const done = () => { document.documentElement.classList.remove('sk-printing'); window.removeEventListener('afterprint', done); };
