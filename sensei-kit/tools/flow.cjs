@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 /* つながりの確認：道具どうしの受け渡しを、本物のブラウザで通しで試す。
    ・初めて開いた状態で、ホームに各道具のサンプルが集まっているか
-   ・名簿を貼り付けて新しいクラス → 席替え → 係決め（おすすめ＋くじ）→ 宿題のチェック
+   ・名簿を貼り付けて新しいクラス → 席替え → 係決め（おすすめ＋くじ）→ 当番表（席の近い人で班・分担表・回転盤）→ 宿題のチェック
    ・時間割を自動でつくる → わたしの時間割に写す → ホームに今日の時間割
    ・年間行事をまとめて追加 → カレンダーに出る／リマインダーの締切・宿題の締切もカレンダーに出る
    ・共有リンクを、別の人（まっさらなブラウザ）が開くと取り込める
+   ・学級通信：新しい号 → カレンダーから予定表 → 宿題から提出物 → 印刷・Word
+   ・連絡テンプレート：宿題の「まだの人」から保護者への連絡文・予定からお知らせ文
    ・「名前を隠す」で番号だけになる・印刷の中身ができる
    ・サンプルを片付けても全部の道具が開ける・バックアップ → すべて消す → 戻す
    使い方：  node tools/flow.cjs */
@@ -12,7 +14,7 @@ const fs = require('fs');
 const path = require('path');
 const { open, closeAll, OUT } = require('./check.cjs');
 
-const APPS = ['home', 'roster', 'seats', 'roles', 'timetable', 'homework', 'calendar', 'reminders'];
+const APPS = ['home', 'roster', 'seats', 'roles', 'duty', 'timetable', 'homework', 'calendar', 'reminders', 'newsletter', 'templates'];
 let failed = 0;
 const ok = (cond, msg) => { console.log((cond ? 'OK  ' : 'NG  ') + msg); if (!cond) failed++; };
 const ROSTER = ['番号\t氏名\tふりがな\t性別', '1\t青木 そら\tあおき そら\t男', '2\t井上 ゆい\tいのうえ ゆい\t女', '3\t上田 はると\tうえだ はると\t男', '4\t遠藤 さくら\tえんどう さくら\t女',
@@ -86,6 +88,30 @@ const ROSTER = ['番号\t氏名\tふりがな\t性別', '1\t青木 そら\tあ�
   ok(await page.evaluate(() => document.querySelectorAll('#sk-print .cardp').length >= 10), '掲示用の札の印刷の中身ができる');
   await page.screenshot({ path: path.join(OUT, 'flow-3-roles.png'), fullPage: true });
 
+  // 4b. 当番表（保存した席から、席の近い人で班 → 掃除の分担表・回転盤・日直）
+  await go('duty');
+  await page.click('.dt-tabs button:has-text("班")');
+  await page.click('button:has-text("席の近い人で")');
+  await wait(500);
+  const grp = await page.evaluate(async () => { const c = await School.classes.current(); const g = (await Kit.store.list('groups')).find((x) => x.classId === c.id); const sizes = Array(g.n).fill(0); for (const v of Object.values(g.of)) sizes[v]++; return { sizes, all: Object.keys(g.of).length, n: c.students.length }; });
+  ok(grp.all === grp.n && Math.max(...grp.sizes) - Math.min(...grp.sizes) <= 1, '当番表：保存した席から、席の近い人で班をつくる ' + JSON.stringify(grp.sizes));
+  await page.click('.dt-tabs button:has-text("掃除")');
+  await wait(300);
+  await page.click('button:has-text("分担表を印刷")');
+  await wait(300);
+  ok(await page.evaluate(() => document.querySelectorAll('#sk-print .dt-print tbody tr').length >= 10), '掃除の分担表の印刷の中身ができる');
+  await page.click('button:has-text("回転盤を印刷")');
+  await wait(300);
+  ok(await page.evaluate(() => document.querySelectorAll('#sk-print svg').length === 2 && document.querySelector('#sk-print svg').textContent.includes('廊下') && document.querySelectorAll('#sk-print svg')[1].textContent.includes('青')), '回転盤（外の円に場所・内の円に班とメンバー）の印刷の中身ができる');
+  await page.click('.dt-tabs button:has-text("日直")');
+  await wait(300);
+  ok(await page.$$eval('.dt-nk-row', (e) => e.length) >= 20, '日直の表ができる');
+  await page.screenshot({ path: path.join(OUT, 'flow-3b-duty.png'), fullPage: true });
+  if (!(await page.evaluate(() => School.isOff(Kit.ymd())))) {
+    await go('home');
+    ok(/今日の日直：/.test(await page.evaluate(() => (document.querySelector('.hm-duty') || {}).textContent || '')), 'ホームに今日の日直が出る');
+  }
+
   // 5. 宿題を出して、チェック
   await go('homework');
   await page.click('.app-actions button:has-text("宿題を出す")');
@@ -154,6 +180,60 @@ const ROSTER = ['番号\t氏名\tふりがな\t性別', '1\t青木 そら\tあ�
   ok(got >= 4, '別の人のカレンダーに取り込める（' + got + '件）');
   ok(other.errs.length === 0, '別の人の画面でエラーがない' + (other.errs.length ? '\n    ' + other.errs.join('\n    ') : ''));
   await other.close();
+
+  // 8b. 学級通信（新しい号 → カレンダーから予定表 → 宿題から提出物 → 印刷・Word）
+  await go('newsletter');
+  await page.click('.app-actions button:has-text("新しい号をつくる")');
+  await page.click('.modal .nl-kata-it:has-text("週の通信")');
+  await modalBtn('つくる');
+  await wait(500);
+  await page.fill('#nl-name', 'あしあと');
+  await page.click('.nl-be:has-text("予定表") button:has-text("カレンダーから入れる")');
+  await wait(300);
+  await page.evaluate(() => { const set = (id, v) => { const el = document.getElementById(id); el.value = v; el.dispatchEvent(new Event('change')); }; set('nl-imp-from', Kit.ymd()); set('nl-imp-to', Kit.rel(6)); });
+  await page.locator('.modal .modal-f button', { hasText: '入れる' }).last().click();
+  await wait(300);
+  if (await page.isVisible('.modal .modal-f button:has-text("置きかえる")')) await modalBtn('置きかえる');
+  await page.click('.nl-be:has-text("箇条書き") button:has-text("宿題・提出物から足す")');
+  await wait(900);
+  const nl = await page.evaluate(async () => { const x = (await Kit.store.list('newsletters')).find((y) => y.name === 'あしあと'); const sc = x.blocks.find((b) => b.type === 'schedule'), li = x.blocks.find((b) => b.type === 'list'); return { no: x.no, rows: sc.rows.length, hw: sc.rows.some((r) => /提出：.*ワーク P\.10/.test(r.note)), ev: sc.rows.map((r) => r.text).join(' '), list: li.body }; });
+  ok(nl.rows >= 5 && nl.hw && /避難訓練/.test(nl.ev), '学級通信：カレンダーから予定表（行事と宿題の締切が入る） ' + JSON.stringify({ rows: nl.rows, hw: nl.hw }));
+  ok(/ワーク P\.10（\d+\/\d+\(.\)まで）/.test(nl.list), '学級通信：宿題・提出物を、お知らせに足せる');
+  await page.click('.nl-bar button:has-text("印刷")');
+  await wait(500);
+  ok(await page.evaluate(() => !!document.querySelector('#sk-print .nl-page .nl-name') && document.querySelectorAll('#sk-print .nl-tbl tbody tr').length >= 5 && /size: 210mm 297mm/.test([...document.querySelectorAll('style')].map((x) => x.textContent).join(''))), '学級通信の印刷の中身ができる（A4）');
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('.nl-bar button:has-text("Word に書き出す")')]);
+  const docx = path.join(OUT, 'flow-newsletter.docx');
+  await dl.saveAs(docx);
+  const head = fs.readFileSync(docx).subarray(0, 2).toString();
+  ok(head === 'PK' && /^あしあと_第1号\.docx$/.test(dl.suggestedFilename()), '学級通信を Word（.docx）に書き出せる（' + dl.suggestedFilename() + '）');
+  await page.screenshot({ path: path.join(OUT, 'flow-5b-newsletter.png'), fullPage: false });
+
+  // 8c. 連絡テンプレート（宿題の「まだの人」から保護者への連絡文・予定からお知らせ文）
+  await go('homework');
+  await page.click('.hw-card:has-text("ワーク P.10") button:has-text("チェック")');
+  await wait(300);
+  await page.click('.modal button:has-text("保護者への連絡文")');
+  await page.waitForSelector('.app-templates');
+  await wait(400);
+  await page.selectOption('.tp-help select', { index: 2 });
+  await wait(200);
+  const msg = await page.inputValue('.tp-out textarea');
+  ok(msg.startsWith('井上 ゆいさんの保護者様') && msg.includes('ワーク P.10の提出が') && msg.includes('1年2組担任の'), '宿題の「まだの人」から、保護者への連絡文（名簿から名前）');
+  await go('calendar', { date: await page.evaluate(() => Kit.rel(1)) });
+  await page.click('.cal-bar .seg button:has-text("予定リスト")');
+  await wait(300);
+  await page.click('.cal-ag-it:has-text("三者面談")');
+  await wait(300);
+  await page.click('.modal button:has-text("お知らせ文をつくる")');
+  await page.waitForSelector('.app-templates');
+  await wait(400);
+  const letter = await page.evaluate(() => ({ name: document.getElementById('tp-v-行事名').value, paper: document.querySelector('.tp-paper').textContent }));
+  ok(letter.name === '三者面談' && /三者面談のお知らせ/.test(letter.paper) && /記/.test(letter.paper), '予定から、保護者へのお知らせの文書をつくる');
+  await page.click('.tp-out button:has-text("印刷")');
+  await wait(300);
+  ok(await page.evaluate(() => /三者面談のお知らせ/.test((document.querySelector('#sk-print .tp-letter') || {}).textContent || '')), '連絡の文書の印刷の中身ができる');
+  await page.screenshot({ path: path.join(OUT, 'flow-5c-templates.png'), fullPage: false });
 
   // 9. 名前を隠す
   await go('seats');

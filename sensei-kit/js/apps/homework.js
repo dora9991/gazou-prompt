@@ -141,7 +141,7 @@
           sum.append(h('span', null, '済 ', h('b', null, n.done)), h('span', null, '遅れ ', h('b', null, n.late)), h('span', null, '免除 ', h('b', null, n.exempt)), h('span', { style: { color: n.none ? 'var(--bad)' : 'var(--ok)' } }, 'まだ ', h('b', null, n.none)));
         };
         draw();
-        Kit.modal({
+        const m = Kit.modal({
           title: x.title || '提出のチェック', wide: true,
           body: h('div', { class: 'stack' },
             h('div', { class: 'hw-legend' }, '名前を押すたびに', STATES.map((y, i) => h('span', null, (i ? '→ ' : '') + y.label)), 'と変わります。'),
@@ -149,7 +149,8 @@
             h('div', { class: 'btn-row' },
               Kit.btn('まだの人を全員「済」に', () => { for (const s of S.cls.students) if (!x.checks[s.id]) x.checks[s.id] = 'done'; persist(); draw(); }, { sm: true, icon: 'check' }),
               Kit.btn('全部を「まだ」に戻す', () => { x.checks = {}; persist(); draw(); }, { sm: true, kind: 'ghost', icon: 'undo' }),
-              Kit.btn('まだの人をコピー', () => copyMissing(x), { sm: true, icon: 'copy' }))),
+              Kit.btn('まだの人をコピー', () => copyMissing(x), { sm: true, icon: 'copy' }),
+              Kit.appDef('templates') ? Kit.btn('保護者への連絡文', () => { persist.flush(); m.close(); Kit.go('templates', { id: 'p-teishutsu', vals: { 提出物: x.title || '', 締切: x.due && window.Letters ? window.Letters.jpDate(x.due) : '' } }); }, { sm: true, icon: 'mail', kind: 'ghost' }) : null)),
           actions: [{ label: '閉じる', kind: 'primary', onClick: () => { persist.flush(); } }],
           onClose: () => persist.flush(),
         });
