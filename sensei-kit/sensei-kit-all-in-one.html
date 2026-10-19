@@ -540,18 +540,19 @@ kbd { font-family: var(--font-mono); font-size: 12px; padding: 1px 6px; border-r
   box-shadow: 0 2px 8px rgba(40, 30, 0, .18);
 }
 @media (max-width: 999px) { .demo-ribbon { top: calc(var(--top-h) + env(safe-area-inset-top, 0px)); } .mb.is-drawer .demo-ribbon { z-index: 45; } }
-.demo-ribbon-tag { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; border-radius: 999px; background: var(--on-demo); color: var(--demo); font-weight: 700; font-size: 12.5px; letter-spacing: .06em; }
+.demo-ribbon-tag { flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; border-radius: 999px; background: var(--on-demo); color: var(--demo); font-weight: 700; font-size: 12.5px; letter-spacing: .06em; white-space: nowrap; }
 .demo-ribbon-text { min-width: 0; }
 .demo-ribbon-text b { font-weight: 700; }
-.demo-ribbon-btns { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
-.demo-ribbon-btns button { display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 4px 12px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; border: 1.5px solid var(--on-demo); background: transparent; color: var(--on-demo); }
+.demo-ribbon-btns { flex: none; margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+.demo-ribbon-btns button { display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 4px 12px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; border: 1.5px solid var(--on-demo); background: transparent; color: var(--on-demo); white-space: nowrap; }
 .demo-ribbon-btns .demo-ribbon-end { background: var(--on-demo); color: var(--demo); }
 .demo-ribbon-btns button:hover { filter: brightness(1.08); }
 @media (pointer: coarse) { .demo-ribbon-btns button { min-height: 40px; } }
 @media (max-width: 640px) {
   .demo-ribbon { flex-wrap: nowrap; gap: 8px; padding-top: 6px; padding-bottom: 6px; font-size: 12.5px; }
   .demo-ribbon-long { display: none; }
-  .demo-ribbon-text { flex: 1 1 auto; line-height: 1.35; }
+  .demo-ribbon-text { flex: 1 1 auto; min-width: 0; line-height: 1.35; font-size: 12px; }
+  .demo-ribbon-tag { letter-spacing: 0; }
   .demo-ribbon-btns button { min-height: 36px; padding: 4px 10px; font-size: 12.5px; }
   .demo-ribbon-tag { padding: 2px 8px; }
   .tour-card.docked .tour-auto span, .tour-card.docked .tour-back span { display: none; }
