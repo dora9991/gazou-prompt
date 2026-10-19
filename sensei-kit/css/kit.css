@@ -520,7 +520,6 @@ kbd { font-family: var(--font-mono); font-size: 12px; padding: 1px 6px; border-r
 .demo-btn:hover { background: color-mix(in srgb, var(--demo) 30%, var(--demo-wash)); }
 .demo-btn:active { transform: translateY(1px); }
 @media (pointer: coarse) { .demo-btn { min-height: 40px; } }
-html.is-demo .demo-btn { display: none; }
 
 .demo-ribbon {
   position: sticky; top: 0; z-index: 45;
@@ -538,7 +537,7 @@ html.is-demo .demo-btn { display: none; }
 .demo-ribbon-btns .demo-ribbon-end { background: var(--on-demo); color: var(--demo); }
 .demo-ribbon-btns button:hover { filter: brightness(1.08); }
 @media (pointer: coarse) { .demo-ribbon-btns button { min-height: 40px; } }
-@media (max-width: 640px) { .demo-ribbon { font-size: 12.5px; } .demo-ribbon-text { flex: 1 1 60%; } .demo-ribbon-again { display: none !important; } }
+@media (max-width: 640px) { .demo-ribbon { font-size: 12.5px; } .demo-ribbon-text { flex: 1 1 60%; } }
 .mb-save-state[data-mode="demo"]::before { background: var(--demo); }
 
 .tour { position: fixed; inset: 0; z-index: 160; pointer-events: none; }

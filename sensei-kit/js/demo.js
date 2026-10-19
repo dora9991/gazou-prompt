@@ -68,7 +68,6 @@
       h('span', { class: 'demo-ribbon-tag' }, Kit.icon('play', 12), 'デモ中'),
       h('span', { class: 'demo-ribbon-text' }, '架空のクラスで動かしています。', h('b', null, 'あなたのデータは変わりません。')),
       h('span', { class: 'demo-ribbon-btns' },
-        h('button', { type: 'button', class: 'demo-ribbon-again', onclick: () => Kit.demo.start(Kit.current()) }, '使い方をもう一度'),
         h('button', { type: 'button', class: 'demo-ribbon-end', onclick: () => Kit.demo.end() }, Kit.icon('close', 14), 'デモを終わる')));
     main.prepend(ribbon);
   }
