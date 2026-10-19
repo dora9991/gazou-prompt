@@ -26,6 +26,9 @@
 .hm-step-name{font-weight:700;font-size:16.5px}
 .hm-step-sub{font-size:13px;color:var(--ink-3)}
 .hm-step .demo-btn{align-self:flex-start}
+/* カードの中の「使い方を見る」は控えめに（黄色の塗りは見出しの1つだけ） */
+.hm-step .demo-btn,.hm-tools .demo-btn{background:transparent;border-color:var(--line-strong)}
+.hm-step .demo-btn:hover,.hm-tools .demo-btn:hover{background:var(--demo-wash)}
 .hm-start-foot{margin-top:14px}
 .hm-tool-wrap{position:relative;display:grid}
 .hm-tool-wrap .hm-tool{padding-bottom:50px}

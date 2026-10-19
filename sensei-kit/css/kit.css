@@ -280,6 +280,7 @@ p { margin: 0; }
 }
 .app-head .app-desc { color: var(--ink-2); margin-top: 2px; font-size: 14.5px; max-width: 46em; }
 .app-head .app-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+@media (max-width: 640px) { .app-head h1 { font-size: 21px; gap: 10px; } }
 
 /* ───────── 部品 ───────── */
 .btn {
