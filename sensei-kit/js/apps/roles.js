@@ -108,7 +108,7 @@
       const classSlot = h('div'), sampleSlot = h('div'), main = h('div');
       root.append(Kit.appHead({
         title: '係決め',
-        desc: '120ほどの係の例（学級の係・教科係・委員会・当番・行事の係）から選んで、自分の係も足せます。手で・希望で・くじで決めて、そのまま掲示用の表にできます。',
+        desc: '120ほどの例から係を選び、希望やくじで決めて、掲示用の表にします。',
         actions: [Kit.btn('新しい表', () => newBoard(), { icon: 'plus' })],
       }), classSlot, sampleSlot, main);
 

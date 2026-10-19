@@ -267,7 +267,7 @@
       const classSlot = h('div'), sampleSlot = h('div'), main = h('div');
       root.append(Kit.appHead({
         title: '学級通信',
-        desc: '題字の下に、文章・予定表・お知らせ・写真を並べて、A4・B4 に印刷します。予定はカレンダーから、提出物は宿題から入れられます。Word にも書き出せます。',
+        desc: '題字・文章・予定表・写真を並べて、A4・B4 で印刷します。',
         actions: [Kit.btn('新しい号をつくる', () => newIssue(), { kind: 'primary', icon: 'plus' })],
       }), classSlot, sampleSlot, main);
       const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => fit()) : null;

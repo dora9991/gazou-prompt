@@ -101,7 +101,7 @@
       const classSlot = h('div'), sampleSlot = h('div'), tabsBox = h('div', { class: 'dt-tabs' }), main = h('div');
       root.append(Kit.appHead({
         title: '当番表',
-        desc: '名簿から班をつくり（番号順・席の近い人・くじ）、掃除の分担・給食当番・日直を週ごとに回します。祝日はとばし、お休みの週も入れられます。',
+        desc: '班をつくって、掃除・給食・日直を週ごとに回します。',
       }), classSlot, sampleSlot, tabsBox, main);
 
       async function load() {

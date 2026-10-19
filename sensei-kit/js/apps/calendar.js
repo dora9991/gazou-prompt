@@ -581,7 +581,7 @@ button.cal-dnum:hover{background:var(--surface-3)}
       ioBtn.setAttribute('aria-label', '書き出し・読み込み');
       root.append(
         Kit.appHead({
-          title: 'カレンダー', desc: '行事・テスト・会議・締切をひとつに。リマインダーと宿題の締切も重ねて見られます。祝日つき。',
+          title: 'カレンダー', desc: '行事・テスト・会議・締切をひとつに。宿題の締切も重なって見えます。',
           actions: [
             Kit.btn('予定を追加', () => openEvent(null, { date: addDate() }), { kind: 'primary', icon: 'plus' }),
             Kit.btn('年間行事をまとめて追加', () => openBulk(), { icon: 'copy' }),

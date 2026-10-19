@@ -97,7 +97,7 @@
       const main = h('div');
       root.append(Kit.appHead({
         title: '連絡テンプレート',
-        desc: '保護者・生徒・先生への連絡のひな形です。クラス・先生の名前・日付・時候のあいさつは自動で入ります。行事はカレンダーから、生徒の名前は名簿から入れられます。',
+        desc: '保護者・生徒・先生への連絡のひな形。日付やあいさつは自動で入ります。',
         actions: [Kit.btn('新しいひな形', () => editTemplate(null), { icon: 'plus' })],
       }), main);
 

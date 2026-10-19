@@ -58,7 +58,7 @@
       const classSlot = h('div'), sampleSlot = h('div'), main = h('div');
       root.append(Kit.appHead({
         title: '宿題・提出',
-        desc: '出した宿題を、名簿で「済・遅れ・免除」とタップで記録します。まだの人がすぐ分かり、締切はカレンダーにも出ます。',
+        desc: '出した宿題を、名簿をタップしてチェック。まだの人がすぐ分かります。',
         actions: [Kit.btn('宿題を出す', () => edit(null), { kind: 'primary', icon: 'plus' }), Kit.btn('かんたん成績へ（CSV）', () => exportCsv(), { icon: 'download', kind: 'ghost' })],
       }), classSlot, sampleSlot, main);
 

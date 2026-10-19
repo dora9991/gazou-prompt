@@ -50,7 +50,7 @@
       const sampleSlot = h('div'), tabs = h('div', { class: 'ro-tabs', role: 'group', 'aria-label': 'クラス' }), body = h('div');
       root.append(Kit.appHead({
         title: '名簿',
-        desc: 'クラスの名簿を1回入れると、席替え・係決め・宿題チェックで使えます。名前を入れずに出席番号だけでも使えます。',
+        desc: '1回入れると、席替え・係・当番・宿題で使えます。番号だけでも使えます。',
         actions: [Kit.btn('クラスを追加', () => addClass(), { icon: 'plus' }), Kit.btn('名簿を貼り付ける', () => openPaste(), { kind: 'primary', icon: 'copy' })],
       }), sampleSlot, tabs, body);
 

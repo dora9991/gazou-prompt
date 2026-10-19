@@ -117,7 +117,7 @@
       const sampleSlot = h('div'), notice = h('div'), body = h('div');
       root.append(Kit.appHead({
         title: 'リマインダー',
-        desc: '「明日 8時 学年通信を印刷」のように書くと、日付と時刻を読み取ります。時刻が来ると知らせます（このページを開いている間）。',
+        desc: '「明日 8時 学年通信を印刷」のように書くだけ。時刻が来ると知らせます。',
         actions: [Kit.btn('追加', () => edit(null), { kind: 'primary', icon: 'plus' }), Kit.btn('共有', () => share(), { icon: 'share' }), Kit.btn('スマホのカレンダーへ', () => exportIcs(), { icon: 'download', kind: 'ghost' })],
       }), sampleSlot, quick(), notice, body);
 

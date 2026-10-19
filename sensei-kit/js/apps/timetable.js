@@ -181,7 +181,7 @@ button.tt-c:hover{background:var(--surface-2)}
       const tabsBox = h('div', { class: 'tt-tabs' }), sampleSlot = h('div'), main = h('div');
       root.append(Kit.appHead({
         title: '時間割',
-        desc: '「わたしの時間割」は、自分やクラスの時間割をつくって印刷できます（ホームに今日の時間割が出ます）。「学校の時間割をつくる」は、担当と条件を入れると、先生が重ならないように自動で組みます。',
+        desc: '自分の時間割をつくって印刷。学校の時間割を自動で組むこともできます。',
       }), tabsBox, sampleSlot, main);
 
       async function load() {

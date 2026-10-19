@@ -130,6 +130,20 @@
     },
   };
 
+  // 表示の明るさ（自動＝端末の設定に合わせる／明るい／暗い）。端末ごとの好み。デモ中でも本物の好みを使う
+  const THEME_KEY = 'sensei:theme';
+  const THEMES = [{ v: 'auto', label: '表示：自動', icon: 'contrast' }, { v: 'light', label: '表示：明るい', icon: 'sun' }, { v: 'dark', label: '表示：暗い', icon: 'moon' }];
+  Kit.theme = {
+    get() { try { const v = localStorage.getItem(THEME_KEY); return v === 'light' || v === 'dark' ? v : 'auto'; } catch (e) { return 'auto'; } },
+    set(v) {
+      try { if (v === 'light' || v === 'dark') localStorage.setItem(THEME_KEY, v); else localStorage.removeItem(THEME_KEY); } catch (e) { /* 保存できなくても、いまの画面は切りかわる */ }
+      Kit.theme.apply(v);
+    },
+    apply(v) { const r = document.documentElement; if (v === 'light' || v === 'dark') r.dataset.theme = v; else delete r.dataset.theme; },
+    THEMES,
+  };
+  Kit.theme.apply(Kit.theme.get());
+
   /* ───────── DOM 部品 ───────── */
   function h(tag, attrs, ...kids) {
     const el = document.createElement(tag);
@@ -231,6 +245,9 @@
     info: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 11v6M12 7.5h.01',
     warn: 'M12 4 2.5 20h19zM12 10v4.5M12 17.5h.01',
     lock: 'M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3',
+    sun: 'M12 8a4 4 0 1 0 0 8a4 4 0 0 0 0-8zM12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4',
+    moon: 'M19.5 14.5A7.5 7.5 0 0 1 9.5 4.5a7.5 7.5 0 1 0 10 10z',
+    contrast: 'M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18zM12 3v18',
     volume: 'M4 10v4h3l5 4V6l-5 4zM16 9a4 4 0 0 1 0 6',
     layers: 'M12 3l9 5-9 5-9-5zM3 13l9 5 9-5',
     palette: 'M12 3a9 9 0 0 0 0 18c1.1 0 1.5-.8 1.5-1.5 0-.9-.6-1.2-.6-2 0-.8.7-1.5 1.5-1.5H17a4 4 0 0 0 4-4c0-5-4-9-9-9zM7.5 11.5h.01M10 7.5h.01M15 7.5h.01',
@@ -319,7 +336,7 @@
 
   // サンプル表示中の帯。onClear で「サンプルを片付ける」
   Kit.sampleBar = (text, onClear) => h('div', { class: 'sample-bar', role: 'note' },
-    h('span', null, h('strong', null, 'サンプル表示中'), '　', text || 'これは架空のクラスの例です。そのまま書きかえて使えます。'),
+    h('span', null, h('strong', null, 'サンプル'), text || 'これは架空のクラスの例です。そのまま書きかえて使えます。'),
     onClear ? h('div', { class: 'btn-row' }, Kit.btn('サンプルを片付ける', onClear, { sm: true, kind: 'ghost', icon: 'trash' })) : null);
 
   /* ───────── 知らせ・ダイアログ（alert / confirm / prompt は使わない） ───────── */
@@ -1235,7 +1252,7 @@
         h('span', { class: 'kokuban-name' }, '先生の道具箱'), h('span', { class: 'kokuban-sub' }, '学級・授業・予定'),
         h('span', { class: 'kokuban-tray', 'aria-hidden': 'true' }, h('i', { class: 'c1' }), h('i', { class: 'c2' }), h('i', { class: 'c3' }))),
       nav,
-      h('div', { class: 'mb-side-foot' }, h('span', { class: 'mb-save-state', 'data-mode': 'local' }, '読み込み中…'), h('span', { class: 'mb-save-where' })));
+      h('div', { class: 'mb-side-foot' }, h('span', { class: 'mb-save-state', 'data-mode': 'local' }, '読み込み中…'), themeBtn(), h('span', { class: 'mb-save-where' })));
     const scrim = h('div', { class: 'mb-scrim', hidden: true, onclick: () => drawer(false) });
     const view = h('div', { class: 'mb-view', id: 'mb-view' });
     const main = h('main', { class: 'mb-main' }, view);
@@ -1244,6 +1261,19 @@
     shell = { mb, top, nav, side, scrim, view };
     renderNav();
     window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && mb.classList.contains('is-drawer')) drawer(false); });
+  }
+  // 表示の明るさを押すたびに 自動 → 明るい → 暗い と切りかえる
+  function themeBtn() {
+    const b = h('button', { type: 'button', class: 'mb-theme' });
+    const draw = () => {
+      const t = THEMES.find((x) => x.v === Kit.theme.get()) || THEMES[0];
+      Kit.clear(b).append(Kit.icon(t.icon), t.label.replace('表示：', ''));
+      b.title = t.label + '（押すと切りかわります。教室で映すときは「明るい」が見やすいです）';
+      b.setAttribute('aria-label', t.label + '。押すと切りかわります');
+    };
+    b.addEventListener('click', () => { const i = THEMES.findIndex((x) => x.v === Kit.theme.get()); Kit.theme.set(THEMES[(i + 1) % THEMES.length].v); draw(); });
+    draw();
+    return b;
   }
   function renderNav() {
     Kit.clear(shell.nav);
@@ -1265,7 +1295,7 @@
     if (!shell) return;
     const el = shell.side.querySelector('.mb-save-state');
     el.dataset.mode = store.demo ? 'demo' : store.mode === 'db' ? 'db' : 'local';
-    el.textContent = store.demo ? 'デモ中（保存しません）' : s === 'saving' ? '保存中…' : s === 'error' ? '保存できませんでした' : store.mode === 'db' ? 'アカウントに保存済み' : store.mode === 'memory' ? '保存できない環境です' : 'このブラウザに保存済み';
+    el.textContent = store.demo ? 'デモ中（保存しません）' : s === 'saving' ? '保存中…' : s === 'error' ? '保存できませんでした' : store.mode === 'db' ? 'アカウントに保存済み' : store.mode === 'memory' ? '保存できない環境です' : 'このブラウザに保存';
   }
   function saveWhere() {
     const el = shell.side.querySelector('.mb-save-where');

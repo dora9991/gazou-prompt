@@ -212,11 +212,11 @@
     const hide = h('input', { type: 'checkbox', id: 'sk-hide-names', checked: School.hidden(), onchange: () => School.setHidden(hide.checked) });
     Kit.add(bar, [
       h('label', { for: 'sk-class-select', class: 'sk-classbar-l' }, 'クラス'), sel,
-      h('span', { class: 'small muted num' }, cur.students.length + '人'),
+      h('span', { class: 'small muted num sk-classbar-n' }, cur.students.length + '人'),
       cur.sample ? h('span', { class: 'chip sample' }, '架空') : null,
       h('span', { class: 'grow' }),
       h('label', { class: 'check small', for: 'sk-hide-names', title: '教室で画面を映すときに' }, hide, '名前を隠す'),
-      Kit.btn('名簿', () => Kit.go('roster'), { sm: true, kind: 'ghost', icon: 'users' }),
+      Kit.btn('名簿', () => Kit.go('roster'), { sm: true, kind: 'ghost', icon: 'users', class: 'sk-classbar-roster' }),
       extra || null]);
     return bar;
   };
@@ -357,8 +357,9 @@
 
   /* ───────── 共通の見た目 ───────── */
   Kit.css('school', `
-.sk-classbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:8px 12px;margin-bottom:16px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
-.sk-classbar select{width:auto;min-width:9em;max-width:100%}
+.sk-classbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:6px 8px 6px 12px;margin-bottom:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.sk-classbar select{width:auto;min-width:8em;max-width:100%;font-weight:700}
+@media (max-width:640px){.sk-classbar{gap:6px}.sk-classbar-l,.sk-classbar-n{display:none}.sk-classbar .sk-classbar-roster span{display:none}.sk-classbar .sk-classbar-roster{padding:0;width:40px}}
 .sk-classbar-l{font-weight:700;color:var(--ink-2)}
 .sk-note{font-size:12.5px;color:var(--ink-2);background:var(--surface-2);border-radius:8px;padding:8px 10px}
 .sk-share-qrbox{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
