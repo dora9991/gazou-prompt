@@ -50,7 +50,7 @@
 .st-aisle{width:var(--aisle)}
 .st-seat{position:relative;display:grid;align-content:center;justify-items:center;gap:1px;width:var(--seat-w,90px);min-height:var(--seat-h);padding:4px 3px;border-radius:8px;border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);font:inherit;text-align:center;cursor:pointer;transition:transform .08s,border-color .1s,background .1s}
 .st-seat:hover{border-color:var(--gosu)}
-.st-seat .no{font-size:11px;color:var(--ink-3);line-height:1.1;font-variant-numeric:tabular-nums}
+.st-seat .no{font-size:12px;color:var(--ink-3);line-height:1.1;font-variant-numeric:tabular-nums}
 .st-seat .nm{font-size:14px;font-weight:700;line-height:1.25;max-width:100%;overflow-wrap:anywhere}
 .st-seat .nm .sei,.st-seat .nm .mei{white-space:nowrap}
 .st-seat .nm .mei{font-weight:500}
@@ -66,7 +66,7 @@
 .st-mk{position:absolute;top:3px;display:flex;gap:2px}
 .st-mk.l{left:4px}.st-mk.r{right:4px}
 .st-mk svg{width:12px;height:12px;color:var(--gosu)}
-.st-mk b{font-size:10px;line-height:1.2;padding:0 3px;border-radius:3px;background:var(--surface-2);color:var(--ink-2);font-weight:700}
+.st-mk b{font-size:12px;line-height:1.2;padding:0 3px;border-radius:3px;background:var(--surface-2);color:var(--ink-2);font-weight:700}
 .st-mk b.fr{background:var(--warn-wash);color:var(--warn)}
 @keyframes st-pop{from{transform:scale(.85);opacity:.3}to{transform:none;opacity:1}}
 .st-issues{display:grid;gap:6px;margin-top:10px}

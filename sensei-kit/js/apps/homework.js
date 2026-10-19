@@ -34,7 +34,7 @@
 .hw-acts{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px}
 .hw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:6px}
 .hw-st{display:grid;gap:1px;justify-items:center;align-content:center;min-height:62px;padding:4px;border-radius:8px;border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);font:inherit;cursor:pointer;text-align:center}
-.hw-st .no{font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.hw-st .no{font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
 .hw-st .nm{font-size:13.5px;font-weight:700;line-height:1.2;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hw-st .s{font-size:12px;font-weight:700}
 .hw-st.done{background:var(--ok-wash);border-color:var(--ok)}.hw-st.done .s{color:var(--ok)}
