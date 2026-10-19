@@ -428,7 +428,7 @@ button.cal-dnum:hover{background:var(--surface-3)}
   .cal-title{font-size:18px}
   .cal-quick-idle{display:none}
   .cal-quick-pre:has(.cal-quick-idle){min-height:0}
-  .cal-filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-left:calc(-1 * var(--gutter-l));margin-right:calc(-1 * var(--gutter-r));padding:2px var(--gutter-r) 4px var(--gutter-l)}
+  .cal-filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-left:calc(-1 * var(--gutter-l));margin-right:calc(-1 * var(--gutter-r));padding:2px var(--gutter-r) 4px var(--gutter-l);-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent)}
   .cal-filters::-webkit-scrollbar{display:none}
   .cal-filters .chip,.cal-others{min-height:36px;flex:none}
   .cal-wk-row{grid-template-columns:38px repeat(var(--n),minmax(0,1fr))}

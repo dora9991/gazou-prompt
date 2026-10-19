@@ -13,7 +13,8 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+// Playwright の場所：既定はクラウドの作業場所。手元の Mac では PLAYWRIGHT=…/node_modules/playwright-core と CHROME=…/Google Chrome を渡す
+const { chromium } = require(process.env.PLAYWRIGHT || '/opt/node22/lib/node_modules/playwright');
 
 const ROOT = path.resolve(__dirname, '..');
 const OUT = path.join(__dirname, '_out');
@@ -36,7 +37,7 @@ function serve() {
 
 let browser = null;
 // 日本語のファイル名を正しく扱えるよう、UTF-8 の言語設定で起動する
-async function getBrowser() { if (!browser) browser = await chromium.launch({ env: Object.assign({}, process.env, { LANG: 'C.UTF-8', LC_ALL: 'C.UTF-8' }) }); return browser; }
+async function getBrowser() { if (!browser) browser = await chromium.launch({ executablePath: process.env.CHROME || undefined, env: Object.assign({}, process.env, { LANG: 'C.UTF-8', LC_ALL: 'C.UTF-8' }) }); return browser; }
 
 // 1画面を開く。外部への通信（Google Fonts など）は止めて、手元の字体で表示する
 async function open(o = {}) {
