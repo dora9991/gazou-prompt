@@ -117,9 +117,17 @@
   };
 
   // 端末ごとの好み（最後に開いたタブなど）。消えても困らないものだけ
+  // デモ中（Kit.demo）は、手元の好みを読まず書かず、メモリの中だけで覚える（終わると捨てる）
   Kit.pref = {
-    get(k, d) { try { const v = localStorage.getItem('sensei:pref:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
-    set(k, v) { try { localStorage.setItem('sensei:pref:' + k, JSON.stringify(v)); } catch (e) { /* 保存できなくても動く */ } },
+    demo: null,
+    get(k, d) {
+      if (Kit.pref.demo) return Kit.pref.demo.has(k) ? clone(Kit.pref.demo.get(k)) : d;
+      try { const v = localStorage.getItem('sensei:pref:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; }
+    },
+    set(k, v) {
+      if (Kit.pref.demo) { Kit.pref.demo.set(k, clone(v)); return; }
+      try { localStorage.setItem('sensei:pref:' + k, JSON.stringify(v)); } catch (e) { /* 保存できなくても動く */ }
+    },
   };
 
   /* ───────── DOM 部品 ───────── */
@@ -275,9 +283,17 @@
     onclick: onClick, disabled: !!o.disabled,
   }, o.icon ? Kit.icon(o.icon) : null, label ? h('span', null, label) : null);
 
-  Kit.appHead = ({ title, desc, actions }) => h('header', { class: 'app-head' },
-    h('div', { class: 'app-title' }, h('h1', null, title), desc ? h('p', { class: 'app-desc' }, desc) : null),
-    actions && actions.length ? h('div', { class: 'app-actions' }, actions) : null);
+  // 見出し。道具に使い方のデモ（Kit.tour）があれば、見出しの横に「使い方を見る」を出す
+  Kit.appHead = ({ title, desc, actions, demo }) => {
+    const id = demo === false ? null : demo || (current && current.id);
+    const canDemo = id && Kit.demo && Kit.demo.has(id);
+    return h('header', { class: 'app-head' },
+      h('div', { class: 'app-title' },
+        h('div', { class: 'app-title-row' }, h('h1', null, title),
+          canDemo ? h('button', { type: 'button', class: 'demo-btn', onclick: () => Kit.demo.start(id), title: '架空のクラスで、操作の流れを見られます（あなたのデータは変わりません）' }, Kit.icon('play', 14), h('span', null, '使い方を見る')) : null),
+        desc ? h('p', { class: 'app-desc' }, desc) : null),
+      actions && actions.length ? h('div', { class: 'app-actions' }, actions) : null);
+  };
 
   Kit.field = ({ label, hint, input, id, class: cls }) => {
     if (id && input && !input.id) input.id = id;
@@ -331,6 +347,7 @@
       if (onClose) onClose(v);
     };
     const onKey = (e) => { if (e.key === 'Escape' && dismissable && modalStack[modalStack.length - 1] === back) { e.stopPropagation(); close(undefined); } };
+    back.closeModal = close;
     if (title) box.append(h('div', { class: 'modal-h' }, h('h2', null, title), dismissable ? Kit.btn('', () => close(undefined), { icon: 'close', title: '閉じる', kind: 'ghost', sm: true }) : null));
     const b = h('div', { class: 'modal-b' });
     if (body != null) add(b, [typeof body === 'string' ? h('p', null, body) : body]);
@@ -353,6 +370,10 @@
     }, 30);
     return { el: box, body: b, close };
   };
+
+  // 開いているダイアログをすべて閉じる（デモを終えるときなど）
+  Kit.closeModals = () => { for (const b of modalStack.slice().reverse()) if (b.closeModal) b.closeModal(undefined); };
+  Kit.modalOpen = () => modalStack.length > 0;
 
   Kit.confirm = ({ title, body, ok = 'OK', cancel = 'やめる', danger = false }) => new Promise((resolve) => {
     Kit.modal({ title, body, onClose: (v) => resolve(v === true), actions: [{ label: cancel, value: false, kind: 'ghost' }, { label: ok, value: true, kind: danger ? 'danger' : 'primary' }] });
@@ -427,7 +448,7 @@
       async clearColl(name) { write('c:' + name, undefined); },
       watch() {
         window.addEventListener('storage', (e) => {
-          if (!e.key || !e.key.startsWith(P)) return;
+          if (!e.key || !e.key.startsWith(P) || store.demo) return;
           const rest = e.key.slice(P.length);
           if (rest.startsWith('d:')) { const key = rest.slice(2); cache.docs.delete(key); if (key === META) meta = Object.assign({ samplesOff: false, touched: {} }, read('d:' + META)); emit('doc:' + key); }
           else if (rest.startsWith('c:')) { const name = rest.slice(2); cache.colls.delete(name); emit('coll:' + name); }
@@ -658,7 +679,49 @@
       for (const name of known.colls) emit('coll:' + name);
     },
     async flush() { await Promise.all([...jobs.keys()].map((k) => run(k))); await Promise.all([...jobs.values()].map((j) => j.running).filter(Boolean)); },
+
+    // デモ用の砂場：on のあいだは、架空のクラスの例だけが見えるメモリの中で動く。本物のデータは読まず・書かず、off で元どおり
+    demo: false,
+    async sandbox(on) {
+      await store.init();
+      on = !!on;
+      if (on === store.demo) return;
+      await store.flush();                                   // 待っている書き込みを、いまの保存先に書き終えてから切りかえる
+      if (on) {
+        real = { backend, docs: cache.docs, colls: cache.colls, virtual: new Map(virtual), meta };
+        backend = memoryBackend();
+        cache.docs = new Map(); cache.colls = new Map();
+        virtual.clear();
+        meta = { samplesOff: false, touched: {} };
+      } else {
+        backend = real.backend; cache.docs = real.docs; cache.colls = real.colls;
+        virtual.clear(); for (const [k, v] of real.virtual) virtual.set(k, v);
+        meta = real.meta;
+        real = null;
+      }
+      store.demo = on;
+      saveState('saved');
+      for (const key of known.docs) emit('doc:' + key);
+      for (const name of known.colls) emit('coll:' + name);
+    },
   });
+  let real = null; // デモのあいだ、本物の保存先をあずかる
+
+  function memoryBackend() {
+    const docs = new Map(), colls = new Map();
+    const coll = (n) => { if (!colls.has(n)) colls.set(n, new Map()); return colls.get(n); };
+    return {
+      mode: 'demo',
+      async getDoc(key) { return clone(docs.get(key)); },
+      async setDoc(key, v) { if (v === undefined) docs.delete(key); else docs.set(key, clone(v)); },
+      async delDoc(key) { docs.delete(key); },
+      async listColl(name) { return [...coll(name).values()].map(clone); },
+      async putItem(name, item) { coll(name).set(item.id, clone(item)); },
+      async delItem(name, id) { coll(name).delete(id); },
+      async clearColl(name) { colls.delete(name); },
+      watch() {},
+    };
+  }
 
   async function touch(name) {
     if (meta.touched[name]) return;
@@ -1155,6 +1218,9 @@
       setTimeout(() => { if (!current || current.id !== id) mount(id); }, 60);
     } else mount(id);
   };
+  // いま開いている画面を描き終えるまで待つ（デモの手順から使う）
+  Kit.mounted = () => mounting;
+  let mounting = Promise.resolve();
 
   function buildShell() {
     const root = document.getElementById('kit') || document.body.appendChild(h('div', { id: 'kit' }));
@@ -1198,8 +1264,8 @@
   function saveState(s) {
     if (!shell) return;
     const el = shell.side.querySelector('.mb-save-state');
-    el.dataset.mode = store.mode === 'db' ? 'db' : 'local';
-    el.textContent = s === 'saving' ? '保存中…' : s === 'error' ? '保存できませんでした' : store.mode === 'db' ? 'アカウントに保存済み' : store.mode === 'memory' ? '保存できない環境です' : 'このブラウザに保存済み';
+    el.dataset.mode = store.demo ? 'demo' : store.mode === 'db' ? 'db' : 'local';
+    el.textContent = store.demo ? 'デモ中（保存しません）' : s === 'saving' ? '保存中…' : s === 'error' ? '保存できませんでした' : store.mode === 'db' ? 'アカウントに保存済み' : store.mode === 'memory' ? '保存できない環境です' : 'このブラウザに保存済み';
   }
   function saveWhere() {
     const el = shell.side.querySelector('.mb-save-where');
@@ -1209,7 +1275,8 @@
           : 'ときどきホームからバックアップを。';
   }
 
-  async function mount(id) {
+  function mount(id) { mounting = mountNow(id); return mounting; }
+  async function mountNow(id) {
     const def = appMap.get(id) || appMap.get('home') || apps[0];
     if (!def) return;
     const seq = ++mountSeq;
@@ -1237,7 +1304,7 @@
   Kit.current = () => (current ? current.id : null);
   // ハッシュを先に受け取る係：fn(ハッシュ) → 開く画面の id（自分の担当でなければ null）
   Kit.hashHandlers = [];
-  Kit.remount = () => { if (current) mount(current.id); };
+  Kit.remount = () => (current ? mount(current.id) : Promise.resolve());
 
   Kit.start = async () => {
     buildShell();
