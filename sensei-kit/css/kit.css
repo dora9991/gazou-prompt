@@ -528,7 +528,7 @@ kbd { font-family: var(--font-mono); font-size: 12px; padding: 1px 6px; border-r
   background: var(--demo); color: var(--on-demo); font-size: 13.5px; line-height: 1.5;
   box-shadow: 0 2px 8px rgba(40, 30, 0, .18);
 }
-@media (max-width: 999px) { .demo-ribbon { top: calc(var(--top-h) + env(safe-area-inset-top, 0px)); } }
+@media (max-width: 999px) { .demo-ribbon { top: calc(var(--top-h) + env(safe-area-inset-top, 0px)); } .mb.is-drawer .demo-ribbon { z-index: 45; } }
 .demo-ribbon-tag { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; border-radius: 999px; background: var(--on-demo); color: var(--demo); font-weight: 700; font-size: 12.5px; letter-spacing: .06em; }
 .demo-ribbon-text { min-width: 0; }
 .demo-ribbon-text b { font-weight: 700; }
