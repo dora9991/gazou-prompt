@@ -139,7 +139,7 @@
       root.append(Kit.appHead({
         title: '席替え',
         desc: '条件をつけて、くじで席を決めます。発表と座席表の印刷も。',
-        actions: [runBtn, Kit.btn('発表する', () => show(), { icon: 'eye' }), Kit.btn('印刷', () => printDlg(), { icon: 'printer', kind: 'ghost' })],
+        actions: [runBtn, Kit.btn('発表する', () => show(), { icon: 'eye' }), Kit.btn('印刷', () => printDlg(), { icon: 'printer' })],
       }), classSlot, sampleSlot, main);
 
       /* ── 読み込み ── */

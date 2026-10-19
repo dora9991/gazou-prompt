@@ -583,7 +583,7 @@ button.cal-dnum:hover{background:var(--surface-3)}
         Kit.appHead({
           title: 'カレンダー', desc: '行事・テスト・会議・締切をひとつに。宿題の締切も重なって見えます。',
           actions: [
-            Kit.btn('予定を追加', () => openEvent(null, { date: addDate() }), { kind: 'primary', icon: 'plus' }),
+            Kit.btn('予定を追加', () => openEvent(null, { date: addDate() }), { icon: 'plus' }),
             Kit.btn('年間行事をまとめて追加', () => openBulk(), { icon: 'copy' }),
             Kit.btn('共有', () => openShare(), { icon: 'share' }),
             ioBtn,
