@@ -22,7 +22,7 @@
   --line-strong: #aab8a8;
   --ink: #17221c;
   --ink-2: #425147;
-  --ink-3: #627168;
+  --ink-3: #56645b;
   --gosu: #1f6b52;
   --gosu-hi: #26805f;
   --gosu-wash: #daeee3;
@@ -40,6 +40,9 @@
   --bad: #b3261e;
   --bad-wash: #f8dcda;
   --focus: #26805f;
+  --demo: #f3cf4a;
+  --demo-wash: #fbf1c9;
+  --on-demo: #2b2306;
   --scrim: rgba(12, 24, 18, .42);
   --shadow-1: 0 1px 2px rgba(20, 40, 30, .06);
   --shadow-2: 0 2px 4px rgba(20, 40, 30, .05), 0 12px 32px rgba(20, 40, 30, .12);
@@ -68,10 +71,10 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0e1512;
-    --surface: #141e19;
-    --surface-2: #1a2721;
-    --surface-3: #22322a;
-    --line: #293a31;
+    --surface: #17231d;
+    --surface-2: #1e2c25;
+    --surface-3: #26372e;
+    --line: #2e4136;
     --line-strong: #3c5346;
     --ink: #e5eee8;
     --ink-2: #b2c3b8;
@@ -93,6 +96,9 @@
     --bad: #ff8d84;
     --bad-wash: #47201d;
     --focus: #9fdec1;
+    --demo: #e9c54e;
+    --demo-wash: #3a3214;
+    --on-demo: #1f1904;
     --scrim: rgba(0, 0, 0, .55);
     --shadow-1: 0 1px 2px rgba(0, 0, 0, .3);
     --shadow-2: 0 2px 4px rgba(0, 0, 0, .3), 0 12px 32px rgba(0, 0, 0, .45);
@@ -111,10 +117,10 @@
 }
 :root[data-theme="dark"] {
   --bg: #0e1512;
-  --surface: #141e19;
-  --surface-2: #1a2721;
-  --surface-3: #22322a;
-  --line: #293a31;
+  --surface: #17231d;
+  --surface-2: #1e2c25;
+  --surface-3: #26372e;
+  --line: #2e4136;
   --line-strong: #3c5346;
   --ink: #e5eee8;
   --ink-2: #b2c3b8;
@@ -136,6 +142,9 @@
   --bad: #ff8d84;
   --bad-wash: #47201d;
   --focus: #9fdec1;
+  --demo: #e9c54e;
+  --demo-wash: #3a3214;
+  --on-demo: #1f1904;
   --scrim: rgba(0, 0, 0, .55);
   --shadow-1: 0 1px 2px rgba(0, 0, 0, .3);
   --shadow-2: 0 2px 4px rgba(0, 0, 0, .3), 0 12px 32px rgba(0, 0, 0, .45);
@@ -205,7 +214,7 @@ p { margin: 0; }
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   padding-left: env(safe-area-inset-left, 0px);
-  overflow-y: auto;
+  overflow-y: auto; scrollbar-width: thin;
 }
 .mb.is-drawer .mb-side { transform: none; box-shadow: var(--shadow-2); }
 .mb-scrim { position: fixed; inset: 0; z-index: 55; background: var(--scrim); }
@@ -216,32 +225,46 @@ p { margin: 0; }
 
 /* 黒板の看板（木の枠とチョーク受け）。押すとホームへ */
 .kokuban {
-  position: relative; display: block; margin: 16px 14px 6px; padding: 16px 12px 22px;
+  position: relative; display: block; margin: 14px 14px 8px; padding: 12px 12px 16px;
   color: var(--on-board); text-align: center; text-decoration: none;
   background: radial-gradient(120% 90% at 30% 20%, color-mix(in srgb, var(--board) 82%, #fff) 0%, var(--board) 60%);
   border: 5px solid var(--frame); border-radius: 6px;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18), var(--shadow-1);
 }
 .kokuban:hover { color: var(--on-board); filter: brightness(1.05); }
-.kokuban .kokuban-name { font-family: var(--font-display); font-weight: 600; font-size: 22px; letter-spacing: .12em; line-height: 1.25; display: block; text-shadow: 0 0 1px rgba(255, 255, 255, .35); }
-.kokuban .kokuban-sub { display: block; font-size: 11px; letter-spacing: .2em; opacity: .82; margin-top: 4px; }
+.kokuban .kokuban-name { font-family: var(--font-display); font-weight: 600; font-size: 21px; letter-spacing: .12em; line-height: 1.25; display: block; text-shadow: 0 0 1px rgba(255, 255, 255, .35); }
+.kokuban .kokuban-sub { display: block; font-size: 12px; letter-spacing: .18em; opacity: .85; margin-top: 2px; }
 .kokuban .kokuban-tray { position: absolute; left: -5px; right: -5px; bottom: -11px; height: 7px; background: var(--frame); border-radius: 2px; display: flex; justify-content: flex-end; align-items: flex-start; gap: 5px; padding: 0 14px; }
 .kokuban .kokuban-tray i { display: block; width: 14px; height: 4px; margin-top: -3px; border-radius: 2px; background: #f7f4ec; }
 .kokuban .kokuban-tray i.c2 { width: 10px; background: #f3cf4a; }
 .kokuban .kokuban-tray i.c3 { width: 12px; background: #ef8fa6; }
 
-.mb-nav { padding: 24px 10px 12px; display: grid; gap: 14px; }
-.mb-nav-group > .mb-nav-label { font-size: 11px; letter-spacing: .16em; color: var(--ink-3); padding: 0 10px 4px; font-weight: 700; }
+.mb-nav { padding: 18px 10px 10px; display: grid; gap: 10px; }
+.mb-nav-group > .mb-nav-label { font-size: 12px; letter-spacing: .14em; color: var(--ink-3); padding: 0 10px 2px; font-weight: 700; }
 .mb-nav-item {
   display: flex; align-items: center; gap: 10px; width: 100%;
-  padding: 7px 10px; border-radius: 8px; border: 0; background: transparent;
-  color: var(--ink-2); font: inherit; font-size: 14px; text-align: left; cursor: pointer; text-decoration: none;
+  min-height: 40px; padding: 0 10px; border-radius: 8px; border: 0; background: transparent;
+  color: var(--ink-2); font: inherit; font-size: 15px; font-weight: 500; text-align: left; cursor: pointer; text-decoration: none;
 }
 .mb-nav-item svg { flex: none; width: 18px; height: 18px; color: var(--ink-3); }
 .mb-nav-item:hover { background: var(--surface-2); color: var(--ink); }
 .mb-nav-item[aria-current="page"] { background: var(--gosu-wash); color: var(--ink); font-weight: 700; }
 .mb-nav-item[aria-current="page"] svg { color: var(--gosu); }
-.mb-side-foot { margin-top: auto; padding: 12px 20px 18px; font-size: 12px; color: var(--ink-3); border-top: 1px solid var(--line); display: grid; gap: 6px; }
+.mb-side-foot { margin-top: auto; padding: 8px 12px 10px 20px; font-size: 12.5px; color: var(--ink-3); border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
+.mb-side-foot .mb-save-where { flex-basis: 100%; }
+.mb-theme { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--ink-2); font: inherit; font-size: 12.5px; cursor: pointer; white-space: nowrap; }
+.mb-theme:hover { background: var(--surface-2); color: var(--ink); }
+.mb-theme svg { width: 15px; height: 15px; }
+/* 背の低い画面（Chromebook など）：メニューを1画面に収める。グループの見出しは細い線に、看板は小さく */
+@media (min-width: 1000px) and (max-height: 760px) {
+  .kokuban { margin: 10px 14px 6px; padding: 8px 12px 12px; }
+  .kokuban .kokuban-name { font-size: 19px; }
+  .kokuban .kokuban-sub { display: none; }
+  .mb-nav { padding: 12px 10px 8px; gap: 0; }
+  .mb-nav-group + .mb-nav-group { border-top: 1px solid var(--line); margin-top: 5px; padding-top: 5px; }
+  .mb-nav-group > .mb-nav-label { display: none; }
+  .mb-side-foot .mb-save-where { display: none; }
+}
 .mb-save-state { display: flex; align-items: center; gap: 6px; }
 .mb-save-state::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); flex: none; }
 .mb-save-state[data-mode="db"]::before { background: var(--ok); }
@@ -250,30 +273,31 @@ p { margin: 0; }
 .mb-main { min-width: 0; }
 .mb-view {
   padding-left: var(--gutter-l); padding-right: var(--gutter-r);
-  padding-block: 22px 72px;
+  padding-block: 18px 72px;
   max-width: 1240px; margin: 0 auto;
 }
 .mb-view.is-wide { max-width: none; padding-block: 0; padding-left: 0; padding-right: 0; }
 
 /* ───────── アプリの見出し ───────── */
-.app-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 20px; margin-bottom: 20px; }
+.app-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; margin-bottom: 14px; }
 .app-head .app-title { min-width: 0; flex: 1 1 320px; }
-.app-head h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(22px, 3.2vw, 30px); letter-spacing: .04em; display: flex; align-items: center; gap: 12px; }
+.app-head h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(23px, 3vw, 29px); letter-spacing: .04em; display: flex; align-items: center; gap: 12px; }
 /* 見出しの頭に、チョーク1本 */
 .app-head h1::before {
   content: ""; flex: none; width: 20px; height: 7px; border-radius: 4px;
   background: linear-gradient(90deg, var(--shu) 0 72%, color-mix(in srgb, var(--shu) 55%, var(--surface)) 72%);
   transform: rotate(-24deg);
 }
-.app-head .app-desc { color: var(--ink-2); margin-top: 6px; font-size: 14px; max-width: 64ch; }
+.app-head .app-desc { color: var(--ink-2); margin-top: 2px; font-size: 14.5px; max-width: 46em; }
 .app-head .app-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+@media (max-width: 640px) { .app-head h1 { font-size: 21px; gap: 10px; } }
 
 /* ───────── 部品 ───────── */
 .btn {
   --btn-bg: var(--surface); --btn-fg: var(--ink); --btn-line: var(--line-strong);
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  min-height: 38px; padding: 7px 14px;
-  border: 1px solid var(--btn-line); border-radius: 8px;
+  min-height: 40px; padding: 7px 15px;
+  border: 1px solid var(--btn-line); border-radius: 9px;
   background: var(--btn-bg); color: var(--btn-fg);
   font: inherit; font-size: 14px; font-weight: 500; line-height: 1.2;
   cursor: pointer; text-decoration: none; white-space: nowrap;
@@ -291,17 +315,20 @@ p { margin: 0; }
 .btn.ghost:hover { --btn-bg: var(--surface-2); color: var(--ink); }
 .btn.danger { --btn-fg: var(--bad); --btn-line: color-mix(in srgb, var(--bad) 45%, var(--line)); }
 .btn.danger:hover { --btn-bg: var(--bad-wash); }
-.btn.sm { min-height: 30px; padding: 4px 10px; font-size: 13px; border-radius: 7px; }
-.btn.icon { padding: 0; width: 38px; min-width: 38px; }
-.btn.icon.sm { width: 30px; min-width: 30px; }
+.btn.sm { min-height: 34px; padding: 4px 12px; font-size: 13.5px; border-radius: 8px; }
+.btn.icon { padding: 0; width: 40px; min-width: 40px; }
+.btn.icon.sm { width: 34px; min-width: 34px; }
 .btn.ai { --btn-line: color-mix(in srgb, var(--gosu) 40%, var(--line)); color: var(--gosu); }
 .btn.ai svg { color: var(--gosu); }
 .btn-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 /* 指で押す画面では、小さいボタンも 36px 以上に */
 @media (pointer: coarse) {
-  .btn.sm { min-height: 36px; }
-  .btn.icon.sm { width: 36px; min-width: 36px; }
-  .seg > button { min-height: 36px; }
+  .btn { min-height: 44px; }
+  .btn.icon { width: 44px; min-width: 44px; }
+  .btn.sm { min-height: 40px; }
+  .btn.icon.sm { width: 40px; min-width: 40px; }
+  .seg > button { min-height: 40px; }
+  input[type="checkbox"], input[type="radio"] { width: 22px; height: 22px; }
 }
 
 label { font-size: 13px; color: var(--ink-2); font-weight: 500; }
@@ -309,7 +336,7 @@ input[type="text"], input[type="email"], input[type="tel"], input[type="url"], i
 input[type="date"], input[type="time"], input[type="datetime-local"], input[type="month"], input[type="search"],
 input[type="password"], input:not([type]), select, textarea {
   width: 100%; min-width: 0;
-  min-height: 38px; padding: 7px 10px;
+  min-height: 40px; padding: 7px 10px;
   border: 1px solid var(--line-strong); border-radius: 8px;
   background: var(--surface); color: var(--ink);
   font: inherit; font-size: 15px; line-height: 1.5;
@@ -317,7 +344,7 @@ input[type="password"], input:not([type]), select, textarea {
 textarea { min-height: 84px; resize: vertical; }
 select { padding-right: 28px; }
 input:focus, select:focus, textarea:focus { outline: 2px solid var(--focus); outline-offset: 0; border-color: var(--focus); }
-input[type="checkbox"], input[type="radio"] { accent-color: var(--gosu); width: 17px; height: 17px; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--gosu); width: 19px; height: 19px; flex: none; }
 input[type="color"] { width: 44px; height: 36px; padding: 2px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); cursor: pointer; }
 input[type="range"] { accent-color: var(--gosu); width: 100%; }
 ::placeholder { color: var(--ink-3); opacity: 1; }
@@ -351,7 +378,7 @@ input[type="range"] { accent-color: var(--gosu); width: 100%; }
 .muted { color: var(--ink-3); }
 .ink-2 { color: var(--ink-2); }
 .small { font-size: 13px; }
-.tiny { font-size: 11.5px; }
+.tiny { font-size: 12px; }
 .num { font-variant-numeric: tabular-nums; }
 .mono { font-family: var(--font-mono); font-size: .92em; }
 .display { font-family: var(--font-display); }
@@ -366,7 +393,7 @@ input[type="range"] { accent-color: var(--gosu); width: 100%; }
   font-size: 12px; font-weight: 500; line-height: 1.6;
   background: var(--surface-2); color: var(--ink-2); border: 1px solid transparent; white-space: nowrap;
 }
-.chip.sample { background: var(--shu-wash); color: var(--shu); font-weight: 700; letter-spacing: .04em; }
+.chip.sample { background: var(--gosu-wash); color: var(--gosu); font-weight: 700; letter-spacing: .04em; }
 .chip.blue { background: var(--gosu-wash); color: var(--gosu); }
 .chip.shu { background: var(--shu-wash); color: var(--shu); font-weight: 700; }
 .chip.ok { background: var(--ok-wash); color: var(--ok); }
@@ -379,18 +406,20 @@ button.chip[aria-pressed="true"] { background: var(--gosu); color: var(--on-gosu
 
 /* サンプル表示中の帯 */
 .sample-bar {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
-  padding: 10px 14px; margin-bottom: 16px;
-  border-radius: var(--r); border: 1px dashed color-mix(in srgb, var(--shu) 55%, var(--line));
-  background: color-mix(in srgb, var(--shu-wash) 55%, var(--surface));
-  font-size: 13.5px; color: var(--ink-2);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px;
+  padding: 6px 8px 6px 10px; margin-bottom: 12px;
+  border-radius: var(--r); border: 1px solid var(--line);
+  background: var(--surface-2);
+  font-size: 13.5px; line-height: 1.55; color: var(--ink-2);
 }
-.sample-bar strong { color: var(--shu); }
+.sample-bar > span { flex: 1 1 260px; min-width: 0; }
+.sample-bar strong { display: inline-block; margin-right: 6px; padding: 0 9px; border-radius: 999px; background: var(--gosu-wash); color: var(--gosu); font-size: 12.5px; letter-spacing: .04em; }
 .sample-bar .btn-row { margin-left: auto; }
+html.is-demo .sample-bar { display: none; }
 
 /* 切り替えボタン（セグメント） */
 .seg { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--line); }
-.seg > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; background: transparent; color: var(--ink-2); font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 6px; cursor: pointer; min-height: 30px; white-space: nowrap; }
+.seg > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; background: transparent; color: var(--ink-2); font: inherit; font-size: 13.5px; padding: 5px 12px; border-radius: 6px; cursor: pointer; min-height: 34px; white-space: nowrap; }
 .seg > button svg { flex: none; }
 .seg > button:hover { color: var(--ink); }
 .seg > button[aria-pressed="true"] { background: var(--surface); color: var(--ink); font-weight: 700; box-shadow: var(--shadow-1); }
@@ -454,7 +483,7 @@ table.tbl tbody tr:hover td { background: color-mix(in srgb, var(--surface-2) 60
 @keyframes mb-fade { from { opacity: 0; } to { opacity: 1; } }
 
 /* 知らせ */
-.mb-toasts { position: fixed; z-index: 120; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 8px; width: min(440px, calc(100% - 32px)); pointer-events: none; }
+.mb-toasts { position: fixed; z-index: 170; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 8px; width: min(440px, calc(100% - 32px)); pointer-events: none; }
 .toast { pointer-events: auto; background: var(--ink); color: var(--surface); padding: 10px 14px; border-radius: 10px; box-shadow: var(--shadow-2); font-size: 14px; display: flex; gap: 10px; align-items: center; animation: mb-rise .18s ease-out; }
 .toast.bad { background: var(--bad); color: #fff; }
 .toast .btn { --btn-bg: transparent; --btn-fg: inherit; --btn-line: currentColor; min-height: 28px; padding: 3px 10px; font-size: 13px; margin-left: auto; }
@@ -488,7 +517,109 @@ kbd { font-family: var(--font-mono); font-size: 12px; padding: 1px 6px; border-r
 .chart .chart-tip .tip-row b { font-variant-numeric: tabular-nums; margin-left: auto; padding-left: 10px; }
 .chart .chart-tip .tip-row i { width: 12px; height: 2px; border-radius: 2px; display: inline-block; }
 .chart .chart-table-toggle { margin-top: 6px; }
-.chart text { fill: var(--ink-3); font-size: 11px; font-family: var(--font-body); }
+.chart text { fill: var(--ink-3); font-size: 12px; font-family: var(--font-body); }
+
+/* ───────── 使い方のデモ（js/demo.js） ───────── */
+.app-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
+.demo-btn {
+  display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 4px 14px 4px 5px;
+  border-radius: 999px; border: 1px solid color-mix(in srgb, var(--demo) 70%, var(--line));
+  background: var(--demo-wash); color: var(--ink); font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  transition: background .12s, transform .06s;
+}
+.demo-btn svg { box-sizing: content-box; width: 12px; height: 12px; padding: 6px; border-radius: 50%; background: var(--demo); color: var(--on-demo); }
+.demo-btn:hover { background: color-mix(in srgb, var(--demo) 30%, var(--demo-wash)); }
+.demo-btn:active { transform: translateY(1px); }
+@media (pointer: coarse) { .demo-btn { min-height: 40px; } }
+
+.demo-ribbon {
+  position: sticky; top: 0; z-index: 165; /* 使い方の吹き出し（160）より上：説明の途中でも「デモを終わる」を押せる */
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px;
+  padding: 8px var(--gutter-r) 8px var(--gutter-l);
+  background: var(--demo); color: var(--on-demo); font-size: 13.5px; line-height: 1.5;
+  box-shadow: 0 2px 8px rgba(40, 30, 0, .18);
+}
+@media (max-width: 999px) { .demo-ribbon { top: calc(var(--top-h) + env(safe-area-inset-top, 0px)); } .mb.is-drawer .demo-ribbon { z-index: 45; } }
+.demo-ribbon-tag { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; border-radius: 999px; background: var(--on-demo); color: var(--demo); font-weight: 700; font-size: 12.5px; letter-spacing: .06em; }
+.demo-ribbon-text { min-width: 0; }
+.demo-ribbon-text b { font-weight: 700; }
+.demo-ribbon-btns { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+.demo-ribbon-btns button { display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 4px 12px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; border: 1.5px solid var(--on-demo); background: transparent; color: var(--on-demo); }
+.demo-ribbon-btns .demo-ribbon-end { background: var(--on-demo); color: var(--demo); }
+.demo-ribbon-btns button:hover { filter: brightness(1.08); }
+@media (pointer: coarse) { .demo-ribbon-btns button { min-height: 40px; } }
+@media (max-width: 640px) {
+  .demo-ribbon { flex-wrap: nowrap; gap: 8px; padding-top: 6px; padding-bottom: 6px; font-size: 12.5px; }
+  .demo-ribbon-long { display: none; }
+  .demo-ribbon-text { flex: 1 1 auto; line-height: 1.35; }
+  .demo-ribbon-btns button { min-height: 36px; padding: 4px 10px; font-size: 12.5px; }
+  .demo-ribbon-tag { padding: 2px 8px; }
+  .tour-card.docked .tour-auto span, .tour-card.docked .tour-back span { display: none; }
+  .tour-card.docked .tour-foot { flex-wrap: nowrap; }
+}
+.mb-save-state[data-mode="demo"]::before { background: var(--demo); }
+
+.tour { position: fixed; inset: 0; z-index: 160; pointer-events: none; }
+.tour-block { position: fixed; pointer-events: auto; background: transparent; }
+.tour.no-spot .tour-block:first-child { background: rgba(8, 16, 12, .45); }
+.tour-spot {
+  position: fixed; pointer-events: none; border-radius: 10px;
+  box-shadow: 0 0 0 3px var(--demo), 0 0 0 9999px rgba(8, 16, 12, .45);
+  transition: left .28s ease, top .28s ease, width .28s ease, height .28s ease;
+}
+.tour-spot::after { content: ""; position: absolute; inset: -3px; border-radius: 12px; box-shadow: 0 0 0 0 color-mix(in srgb, var(--demo) 70%, transparent); animation: tour-pulse 1.8s ease-out infinite; }
+@keyframes tour-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--demo) 70%, transparent); } 70%, 100% { box-shadow: 0 0 0 12px color-mix(in srgb, var(--demo) 0%, transparent); } }
+.tour-card {
+  position: fixed; pointer-events: auto; width: min(380px, calc(100vw - 24px));
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-top: 4px solid var(--demo);
+  border-radius: 14px; box-shadow: var(--shadow-2); padding: 12px 16px 14px;
+  transition: left .28s ease, top .28s ease;
+}
+.tour-card.docked { left: 12px !important; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); top: auto !important; width: auto; max-height: 46vh; overflow: auto; }
+.tour-card.nudge { animation: tour-nudge .32s ease; }
+@keyframes tour-nudge { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+.tour-top { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.tour-count { font-size: 12.5px; color: var(--ink-3); font-weight: 700; white-space: nowrap; }
+.tour-count b { color: var(--ink); }
+.tour-dots { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
+.tour-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line-strong); }
+.tour-dots i.done { background: color-mix(in srgb, var(--demo) 60%, var(--line-strong)); }
+.tour-dots i.now { background: var(--demo); box-shadow: 0 0 0 2px color-mix(in srgb, var(--demo) 35%, transparent); width: 16px; border-radius: 4px; }
+.tour-x { margin-left: auto; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 8px; border: 0; background: transparent; color: var(--ink-3); cursor: pointer; }
+.tour-x:hover { background: var(--surface-2); color: var(--ink); }
+.tour-title { font-size: 17px; font-weight: 700; line-height: 1.45; }
+.tour-text { margin-top: 4px; font-size: 15px; color: var(--ink-2); line-height: 1.7; }
+.tour-note, .tour-hint { margin-top: 6px; font-size: 12.5px; color: var(--ink-3); }
+.tour-bar { margin-top: 10px; height: 4px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.tour-bar i { display: block; height: 100%; width: 100%; background: var(--demo); transform-origin: left; animation: tour-bar linear forwards; }
+@keyframes tour-bar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.tour-foot { display: flex; align-items: center; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+.tour-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 6px 14px; border-radius: 9px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.tour-btn:hover { background: var(--surface-2); }
+.tour-btn:disabled { opacity: .45; cursor: default; }
+.tour-btn.ghost { border-color: transparent; background: transparent; color: var(--ink-2); font-weight: 500; padding-inline: 10px; }
+.tour-btn.ghost:hover { background: var(--surface-2); }
+.tour-btn.primary { background: var(--demo); border-color: var(--demo); color: var(--on-demo); }
+.tour-btn.primary:hover { filter: brightness(1.05); }
+.tour-auto[aria-pressed="true"] { color: var(--ink); background: var(--demo-wash); }
+.tour-finger {
+  position: fixed; left: -21px; top: -21px; width: 42px; height: 42px; border-radius: 50%; pointer-events: none; opacity: 0;
+  background: rgba(255, 255, 255, .55); border: 3px solid rgba(20, 30, 25, .78); box-shadow: 0 4px 14px rgba(0, 0, 0, .3);
+  transition: transform .5s cubic-bezier(.3, .7, .2, 1), opacity .2s; z-index: 2;
+}
+.tour-finger.on { opacity: 1; }
+.tour-finger::after { content: ""; position: absolute; inset: -3px; border-radius: 50%; border: 3px solid var(--demo); opacity: 0; }
+.tour-finger.tap { animation: tour-press .32s ease; }
+.tour-finger.tap::after { animation: tour-ripple .5s ease-out; }
+@keyframes tour-press { 50% { scale: .82; } }
+@keyframes tour-ripple { from { opacity: 1; transform: scale(.6); } to { opacity: 0; transform: scale(1.9); } }
+/* 説明のあいだ：知らせは上に出す（下の吹き出しのボタンに重ならないように）。スマホは、ページの下の部品も吹き出しの上まで送れるように余白を足す */
+html.is-touring .mb-toasts { bottom: auto; top: calc(env(safe-area-inset-top, 0px) + 64px); }
+@media (max-width: 999px) { html.is-touring .mb-toasts { top: calc(env(safe-area-inset-top, 0px) + var(--top-h) + 52px); } }
+@media (max-width: 639px) { html.is-touring .mb-view { padding-bottom: 52vh; } }
+/* ダイアログが開いているときは、帯をダイアログの下に（題名が隠れないように） */
+body:has(.modal-back) .demo-ribbon { z-index: 45; }
+@media print { .demo-ribbon, .tour, .demo-btn { display: none !important; } }
 
 /* 印刷（手元のブラウザで開いたときだけ使える） */
 @media print {
@@ -2922,10 +3053,32 @@ var qrcode = function() {
   };
 
   // 端末ごとの好み（最後に開いたタブなど）。消えても困らないものだけ
+  // デモ中（Kit.demo）は、手元の好みを読まず書かず、メモリの中だけで覚える（終わると捨てる）
   Kit.pref = {
-    get(k, d) { try { const v = localStorage.getItem('sensei:pref:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
-    set(k, v) { try { localStorage.setItem('sensei:pref:' + k, JSON.stringify(v)); } catch (e) { /* 保存できなくても動く */ } },
+    demo: null,
+    get(k, d) {
+      if (Kit.pref.demo) return Kit.pref.demo.has(k) ? clone(Kit.pref.demo.get(k)) : d;
+      try { const v = localStorage.getItem('sensei:pref:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; }
+    },
+    set(k, v) {
+      if (Kit.pref.demo) { Kit.pref.demo.set(k, clone(v)); return; }
+      try { localStorage.setItem('sensei:pref:' + k, JSON.stringify(v)); } catch (e) { /* 保存できなくても動く */ }
+    },
   };
+
+  // 表示の明るさ（自動＝端末の設定に合わせる／明るい／暗い）。端末ごとの好み。デモ中でも本物の好みを使う
+  const THEME_KEY = 'sensei:theme';
+  const THEMES = [{ v: 'auto', label: '表示：自動', icon: 'contrast' }, { v: 'light', label: '表示：明るい', icon: 'sun' }, { v: 'dark', label: '表示：暗い', icon: 'moon' }];
+  Kit.theme = {
+    get() { try { const v = localStorage.getItem(THEME_KEY); return v === 'light' || v === 'dark' ? v : 'auto'; } catch (e) { return 'auto'; } },
+    set(v) {
+      try { if (v === 'light' || v === 'dark') localStorage.setItem(THEME_KEY, v); else localStorage.removeItem(THEME_KEY); } catch (e) { /* 保存できなくても、いまの画面は切りかわる */ }
+      Kit.theme.apply(v);
+    },
+    apply(v) { const r = document.documentElement; if (v === 'light' || v === 'dark') r.dataset.theme = v; else delete r.dataset.theme; },
+    THEMES,
+  };
+  Kit.theme.apply(Kit.theme.get());
 
   /* ───────── DOM 部品 ───────── */
   function h(tag, attrs, ...kids) {
@@ -3028,6 +3181,9 @@ var qrcode = function() {
     info: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 11v6M12 7.5h.01',
     warn: 'M12 4 2.5 20h19zM12 10v4.5M12 17.5h.01',
     lock: 'M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3',
+    sun: 'M12 8a4 4 0 1 0 0 8a4 4 0 0 0 0-8zM12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4',
+    moon: 'M19.5 14.5A7.5 7.5 0 0 1 9.5 4.5a7.5 7.5 0 1 0 10 10z',
+    contrast: 'M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18zM12 3v18',
     volume: 'M4 10v4h3l5 4V6l-5 4zM16 9a4 4 0 0 1 0 6',
     layers: 'M12 3l9 5-9 5-9-5zM3 13l9 5 9-5',
     palette: 'M12 3a9 9 0 0 0 0 18c1.1 0 1.5-.8 1.5-1.5 0-.9-.6-1.2-.6-2 0-.8.7-1.5 1.5-1.5H17a4 4 0 0 0 4-4c0-5-4-9-9-9zM7.5 11.5h.01M10 7.5h.01M15 7.5h.01',
@@ -3080,9 +3236,17 @@ var qrcode = function() {
     onclick: onClick, disabled: !!o.disabled,
   }, o.icon ? Kit.icon(o.icon) : null, label ? h('span', null, label) : null);
 
-  Kit.appHead = ({ title, desc, actions }) => h('header', { class: 'app-head' },
-    h('div', { class: 'app-title' }, h('h1', null, title), desc ? h('p', { class: 'app-desc' }, desc) : null),
-    actions && actions.length ? h('div', { class: 'app-actions' }, actions) : null);
+  // 見出し。道具に使い方のデモ（Kit.tour）があれば、見出しの横に「使い方を見る」を出す
+  Kit.appHead = ({ title, desc, actions, demo }) => {
+    const id = demo === false ? null : demo || (current && current.id);
+    const canDemo = id && Kit.demo && Kit.demo.has(id);
+    return h('header', { class: 'app-head' },
+      h('div', { class: 'app-title' },
+        h('div', { class: 'app-title-row' }, h('h1', null, title),
+          canDemo ? h('button', { type: 'button', class: 'demo-btn', onclick: () => Kit.demo.start(id), title: '架空のクラスで、操作の流れを見られます（あなたのデータは変わりません）' }, Kit.icon('play', 14), h('span', null, '使い方を見る')) : null),
+        desc ? h('p', { class: 'app-desc' }, desc) : null),
+      actions && actions.length ? h('div', { class: 'app-actions' }, actions) : null);
+  };
 
   Kit.field = ({ label, hint, input, id, class: cls }) => {
     if (id && input && !input.id) input.id = id;
@@ -3108,7 +3272,7 @@ var qrcode = function() {
 
   // サンプル表示中の帯。onClear で「サンプルを片付ける」
   Kit.sampleBar = (text, onClear) => h('div', { class: 'sample-bar', role: 'note' },
-    h('span', null, h('strong', null, 'サンプル表示中'), '　', text || 'これは架空のクラスの例です。そのまま書きかえて使えます。'),
+    h('span', null, h('strong', null, 'サンプル'), text || 'これは架空のクラスの例です。そのまま書きかえて使えます。'),
     onClear ? h('div', { class: 'btn-row' }, Kit.btn('サンプルを片付ける', onClear, { sm: true, kind: 'ghost', icon: 'trash' })) : null);
 
   /* ───────── 知らせ・ダイアログ（alert / confirm / prompt は使わない） ───────── */
@@ -3136,6 +3300,7 @@ var qrcode = function() {
       if (onClose) onClose(v);
     };
     const onKey = (e) => { if (e.key === 'Escape' && dismissable && modalStack[modalStack.length - 1] === back) { e.stopPropagation(); close(undefined); } };
+    back.closeModal = close;
     if (title) box.append(h('div', { class: 'modal-h' }, h('h2', null, title), dismissable ? Kit.btn('', () => close(undefined), { icon: 'close', title: '閉じる', kind: 'ghost', sm: true }) : null));
     const b = h('div', { class: 'modal-b' });
     if (body != null) add(b, [typeof body === 'string' ? h('p', null, body) : body]);
@@ -3158,6 +3323,10 @@ var qrcode = function() {
     }, 30);
     return { el: box, body: b, close };
   };
+
+  // 開いているダイアログをすべて閉じる（デモを終えるときなど）
+  Kit.closeModals = () => { for (const b of modalStack.slice().reverse()) if (b.closeModal) b.closeModal(undefined); };
+  Kit.modalOpen = () => modalStack.length > 0;
 
   Kit.confirm = ({ title, body, ok = 'OK', cancel = 'やめる', danger = false }) => new Promise((resolve) => {
     Kit.modal({ title, body, onClose: (v) => resolve(v === true), actions: [{ label: cancel, value: false, kind: 'ghost' }, { label: ok, value: true, kind: danger ? 'danger' : 'primary' }] });
@@ -3232,7 +3401,7 @@ var qrcode = function() {
       async clearColl(name) { write('c:' + name, undefined); },
       watch() {
         window.addEventListener('storage', (e) => {
-          if (!e.key || !e.key.startsWith(P)) return;
+          if (!e.key || !e.key.startsWith(P) || store.demo) return;
           const rest = e.key.slice(P.length);
           if (rest.startsWith('d:')) { const key = rest.slice(2); cache.docs.delete(key); if (key === META) meta = Object.assign({ samplesOff: false, touched: {} }, read('d:' + META)); emit('doc:' + key); }
           else if (rest.startsWith('c:')) { const name = rest.slice(2); cache.colls.delete(name); emit('coll:' + name); }
@@ -3463,7 +3632,49 @@ var qrcode = function() {
       for (const name of known.colls) emit('coll:' + name);
     },
     async flush() { await Promise.all([...jobs.keys()].map((k) => run(k))); await Promise.all([...jobs.values()].map((j) => j.running).filter(Boolean)); },
+
+    // デモ用の砂場：on のあいだは、架空のクラスの例だけが見えるメモリの中で動く。本物のデータは読まず・書かず、off で元どおり
+    demo: false,
+    async sandbox(on) {
+      await store.init();
+      on = !!on;
+      if (on === store.demo) return;
+      await store.flush();                                   // 待っている書き込みを、いまの保存先に書き終えてから切りかえる
+      if (on) {
+        real = { backend, docs: cache.docs, colls: cache.colls, virtual: new Map(virtual), meta };
+        backend = memoryBackend();
+        cache.docs = new Map(); cache.colls = new Map();
+        virtual.clear();
+        meta = { samplesOff: false, touched: {} };
+      } else {
+        backend = real.backend; cache.docs = real.docs; cache.colls = real.colls;
+        virtual.clear(); for (const [k, v] of real.virtual) virtual.set(k, v);
+        meta = real.meta;
+        real = null;
+      }
+      store.demo = on;
+      saveState('saved');
+      for (const key of known.docs) emit('doc:' + key);
+      for (const name of known.colls) emit('coll:' + name);
+    },
   });
+  let real = null; // デモのあいだ、本物の保存先をあずかる
+
+  function memoryBackend() {
+    const docs = new Map(), colls = new Map();
+    const coll = (n) => { if (!colls.has(n)) colls.set(n, new Map()); return colls.get(n); };
+    return {
+      mode: 'demo',
+      async getDoc(key) { return clone(docs.get(key)); },
+      async setDoc(key, v) { if (v === undefined) docs.delete(key); else docs.set(key, clone(v)); },
+      async delDoc(key) { docs.delete(key); },
+      async listColl(name) { return [...coll(name).values()].map(clone); },
+      async putItem(name, item) { coll(name).set(item.id, clone(item)); },
+      async delItem(name, id) { coll(name).delete(id); },
+      async clearColl(name) { colls.delete(name); },
+      watch() {},
+    };
+  }
 
   async function touch(name) {
     if (meta.touched[name]) return;
@@ -3960,6 +4171,9 @@ var qrcode = function() {
       setTimeout(() => { if (!current || current.id !== id) mount(id); }, 60);
     } else mount(id);
   };
+  // いま開いている画面を描き終えるまで待つ（デモの手順から使う）
+  Kit.mounted = () => mounting;
+  let mounting = Promise.resolve();
 
   function buildShell() {
     const root = document.getElementById('kit') || document.body.appendChild(h('div', { id: 'kit' }));
@@ -3974,7 +4188,7 @@ var qrcode = function() {
         h('span', { class: 'kokuban-name' }, '先生の道具箱'), h('span', { class: 'kokuban-sub' }, '学級・授業・予定'),
         h('span', { class: 'kokuban-tray', 'aria-hidden': 'true' }, h('i', { class: 'c1' }), h('i', { class: 'c2' }), h('i', { class: 'c3' }))),
       nav,
-      h('div', { class: 'mb-side-foot' }, h('span', { class: 'mb-save-state', 'data-mode': 'local' }, '読み込み中…'), h('span', { class: 'mb-save-where' })));
+      h('div', { class: 'mb-side-foot' }, h('span', { class: 'mb-save-state', 'data-mode': 'local' }, '読み込み中…'), themeBtn(), h('span', { class: 'mb-save-where' })));
     const scrim = h('div', { class: 'mb-scrim', hidden: true, onclick: () => drawer(false) });
     const view = h('div', { class: 'mb-view', id: 'mb-view' });
     const main = h('main', { class: 'mb-main' }, view);
@@ -3983,6 +4197,19 @@ var qrcode = function() {
     shell = { mb, top, nav, side, scrim, view };
     renderNav();
     window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && mb.classList.contains('is-drawer')) drawer(false); });
+  }
+  // 表示の明るさを押すたびに 自動 → 明るい → 暗い と切りかえる
+  function themeBtn() {
+    const b = h('button', { type: 'button', class: 'mb-theme' });
+    const draw = () => {
+      const t = THEMES.find((x) => x.v === Kit.theme.get()) || THEMES[0];
+      Kit.clear(b).append(Kit.icon(t.icon), t.label.replace('表示：', ''));
+      b.title = t.label + '（押すと切りかわります。教室で映すときは「明るい」が見やすいです）';
+      b.setAttribute('aria-label', t.label + '。押すと切りかわります');
+    };
+    b.addEventListener('click', () => { const i = THEMES.findIndex((x) => x.v === Kit.theme.get()); Kit.theme.set(THEMES[(i + 1) % THEMES.length].v); draw(); });
+    draw();
+    return b;
   }
   function renderNav() {
     Kit.clear(shell.nav);
@@ -4003,8 +4230,8 @@ var qrcode = function() {
   function saveState(s) {
     if (!shell) return;
     const el = shell.side.querySelector('.mb-save-state');
-    el.dataset.mode = store.mode === 'db' ? 'db' : 'local';
-    el.textContent = s === 'saving' ? '保存中…' : s === 'error' ? '保存できませんでした' : store.mode === 'db' ? 'アカウントに保存済み' : store.mode === 'memory' ? '保存できない環境です' : 'このブラウザに保存済み';
+    el.dataset.mode = store.demo ? 'demo' : store.mode === 'db' ? 'db' : 'local';
+    el.textContent = store.demo ? 'デモ中（保存しません）' : s === 'saving' ? '保存中…' : s === 'error' ? '保存できませんでした' : store.mode === 'db' ? 'アカウントに保存済み' : store.mode === 'memory' ? '保存できない環境です' : 'このブラウザに保存';
   }
   function saveWhere() {
     const el = shell.side.querySelector('.mb-save-where');
@@ -4014,7 +4241,8 @@ var qrcode = function() {
           : 'ときどきホームからバックアップを。';
   }
 
-  async function mount(id) {
+  function mount(id) { mounting = mountNow(id); return mounting; }
+  async function mountNow(id) {
     const def = appMap.get(id) || appMap.get('home') || apps[0];
     if (!def) return;
     const seq = ++mountSeq;
@@ -4042,7 +4270,7 @@ var qrcode = function() {
   Kit.current = () => (current ? current.id : null);
   // ハッシュを先に受け取る係：fn(ハッシュ) → 開く画面の id（自分の担当でなければ null）
   Kit.hashHandlers = [];
-  Kit.remount = () => { if (current) mount(current.id); };
+  Kit.remount = () => (current ? mount(current.id) : Promise.resolve());
 
   Kit.start = async () => {
     buildShell();
@@ -4284,11 +4512,11 @@ var qrcode = function() {
     const hide = h('input', { type: 'checkbox', id: 'sk-hide-names', checked: School.hidden(), onchange: () => School.setHidden(hide.checked) });
     Kit.add(bar, [
       h('label', { for: 'sk-class-select', class: 'sk-classbar-l' }, 'クラス'), sel,
-      h('span', { class: 'small muted num' }, cur.students.length + '人'),
+      h('span', { class: 'small muted num sk-classbar-n' }, cur.students.length + '人'),
       cur.sample ? h('span', { class: 'chip sample' }, '架空') : null,
       h('span', { class: 'grow' }),
       h('label', { class: 'check small', for: 'sk-hide-names', title: '教室で画面を映すときに' }, hide, '名前を隠す'),
-      Kit.btn('名簿', () => Kit.go('roster'), { sm: true, kind: 'ghost', icon: 'users' }),
+      Kit.btn('名簿', () => Kit.go('roster'), { sm: true, kind: 'ghost', icon: 'users', class: 'sk-classbar-roster' }),
       extra || null]);
     return bar;
   };
@@ -4429,8 +4657,9 @@ var qrcode = function() {
 
   /* ───────── 共通の見た目 ───────── */
   Kit.css('school', `
-.sk-classbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:8px 12px;margin-bottom:16px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
-.sk-classbar select{width:auto;min-width:9em;max-width:100%}
+.sk-classbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:6px 8px 6px 12px;margin-bottom:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.sk-classbar select{width:auto;min-width:8em;max-width:100%;font-weight:700}
+@media (max-width:640px){.sk-classbar{gap:6px}.sk-classbar-l,.sk-classbar-n{display:none}.sk-classbar .sk-classbar-roster span{display:none}.sk-classbar .sk-classbar-roster{padding:0;width:40px}}
 .sk-classbar-l{font-weight:700;color:var(--ink-2)}
 .sk-note{font-size:12.5px;color:var(--ink-2);background:var(--surface-2);border-radius:8px;padding:8px 10px}
 .sk-share-qrbox{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
@@ -5704,7 +5933,26 @@ var qrcode = function() {
   Kit.css('home', `
 .hm-top{display:grid;gap:16px;grid-template-columns:1fr}
 @media (min-width:980px){.hm-top{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}}
-.hm-h2{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.hm-h2{font-size:15px;font-weight:700;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;white-space:nowrap}
+.hm-h2 .chip{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.hm-start{margin-bottom:16px;border-color:color-mix(in srgb,var(--gosu) 35%,var(--line));background:linear-gradient(180deg,color-mix(in srgb,var(--gosu-wash) 55%,var(--surface)) 0,var(--surface) 70%)}
+.hm-start-title{font-family:var(--font-display);font-size:20px;font-weight:600;letter-spacing:.03em}
+.hm-start-lead{margin-top:4px;font-size:14.5px;color:var(--ink-2);max-width:46em}
+.hm-steps{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+.hm-step{position:relative;display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line)}
+.hm-step-go{display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 12px;align-items:center;padding:0;border:0;background:transparent;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.hm-step-go:hover .hm-step-name{color:var(--gosu)}
+.hm-step-no{grid-row:span 2;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--board);color:var(--on-board);font-family:var(--font-display);font-weight:600;font-size:19px}
+.hm-step-name{font-weight:700;font-size:16.5px}
+.hm-step-sub{font-size:13px;color:var(--ink-3)}
+.hm-step .demo-btn{align-self:flex-start}
+/* カードの中の「使い方を見る」は控えめに（黄色の塗りは見出しの1つだけ） */
+.hm-step .demo-btn,.hm-tools .demo-btn{background:transparent;border-color:var(--line-strong)}
+.hm-step .demo-btn:hover,.hm-tools .demo-btn:hover{background:var(--demo-wash)}
+.hm-start-foot{margin-top:14px}
+.hm-tool-wrap{position:relative;display:grid}
+.hm-tool-wrap .hm-tool{padding-bottom:50px}
+.hm-tool-wrap .demo-btn{position:absolute;right:12px;bottom:10px}
 .hm-tt{display:grid;gap:4px;margin-top:10px}
 .hm-tt-row{display:grid;grid-template-columns:32px 74px minmax(0,1fr);gap:8px;align-items:center;padding:5px 8px;border-radius:8px;background:var(--surface-2);font-size:14px}
 .hm-tt-row.has{background:color-mix(in srgb,var(--c) 14%,var(--surface))}
@@ -5724,6 +5972,7 @@ var qrcode = function() {
 .hm-group+.hm-group{margin-top:16px}
 .hm-group-label{font-size:12px;letter-spacing:.16em;color:var(--ink-3);font-weight:700}
 .hm-tools{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr))}
+.hm-tools .demo-btn{min-height:32px;font-size:12.5px}
 .hm-tool{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 12px;align-items:start;text-align:left;padding:14px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);color:var(--ink);font:inherit;cursor:pointer;text-decoration:none;transition:border-color .12s,transform .06s}
 .hm-tool:hover{border-color:var(--gosu);color:var(--ink)}
 .hm-tool:active{transform:translateY(1px)}
@@ -5797,11 +6046,17 @@ var qrcode = function() {
         }));
 
         if (Kit.store.samplesShown() && (classes.some((c) => c.sample) || events.some((e) => e.sample))) {
-          root.append(h('div', { class: 'sample-bar', role: 'note' },
-            h('span', null, h('strong', null, 'サンプル表示中'), '　架空のクラス（2年3組）と架空の学校の例で、全部の道具を動かしています。気軽にさわってみてください。'),
-            h('div', { class: 'btn-row' },
-              Kit.btn('自分のクラスで始める', startOwn, { sm: true, kind: 'primary', icon: 'users' }),
-              Kit.btn('サンプルを片付ける', clearSamples, { sm: true, kind: 'ghost', icon: 'trash' }))));
+          // はじめての方へ：3つの手順と、それぞれの使い方のデモ。デモ中は出さない（帯が出ているので）
+          const STEPS = [['1', '名簿を入れる', 'Excel から貼るだけ。番号だけでも', 'roster'], ['2', '席替えをする', '条件つきのくじ。発表・印刷も', 'seats'], ['3', '係・当番を決める', '名簿からそのまま表に', 'roles']].filter((x) => Kit.appDef(x[3]));
+          root.append(h('section', { class: 'card pad-lg hm-start', 'aria-label': 'はじめての方へ' },
+            h('h2', { class: 'hm-start-title' }, 'はじめての方へ'),
+            h('p', { class: 'hm-start-lead' }, '架空のクラス「2年3組」で、全部の道具を試せます。「使い方を見る」を押すと、操作の流れを実際に動かして見せます（あなたのデータは変わりません）。'),
+            h('ol', { class: 'hm-steps' }, STEPS.map(([no, name, sub, id]) => h('li', { class: 'hm-step' },
+              h('button', { type: 'button', class: 'hm-step-go', onclick: () => Kit.go(id) }, h('span', { class: 'hm-step-no' }, no), h('span', { class: 'hm-step-name' }, name), h('span', { class: 'hm-step-sub' }, sub)),
+              Kit.demo && Kit.demo.has(id) ? h('button', { type: 'button', class: 'demo-btn', onclick: () => Kit.demo.start(id) }, Kit.icon('play', 12), h('span', null, '使い方を見る')) : null))),
+            Kit.store.demo ? null : h('div', { class: 'btn-row hm-start-foot' },
+              Kit.btn('自分のクラスで始める', startOwn, { kind: 'primary', icon: 'users' }),
+              Kit.btn('サンプルを片付ける', clearSamples, { kind: 'ghost', icon: 'trash' }))));
         }
 
         /* ── 今日の時間割 ── */
@@ -5881,8 +6136,13 @@ var qrcode = function() {
           const apps = Kit.apps().filter((a) => a.group === g);
           if (!apps.length) continue;
           tools.append(h('div', { class: 'hm-group' }, h('div', { class: 'hm-group-label' }, LABEL[g]),
-            h('div', { class: 'hm-tools' }, apps.map((a) => h('button', { type: 'button', class: 'hm-tool', onclick: () => Kit.go(a.id) },
-              h('span', { class: 'hm-tool-ic' }, Kit.icon(a.icon)), h('span', { class: 'hm-tool-title' }, a.title), h('span', { class: 'hm-tool-desc' }, a.desc || ''), h('span', { class: 'hm-tool-stat' }, stat[a.id] ? stat[a.id]() : ''))))));
+            h('div', { class: 'hm-tools' }, apps.map((a) => {
+              const card = h('button', { type: 'button', class: 'hm-tool', onclick: () => Kit.go(a.id) },
+                h('span', { class: 'hm-tool-ic' }, Kit.icon(a.icon)), h('span', { class: 'hm-tool-title' }, a.title), h('span', { class: 'hm-tool-desc' }, a.desc || ''), h('span', { class: 'hm-tool-stat' }, stat[a.id] ? stat[a.id]() : ''));
+              if (!(Kit.demo && Kit.demo.has(a.id))) return card;
+              return h('div', { class: 'hm-tool-wrap' }, card,
+                h('button', { type: 'button', class: 'demo-btn', onclick: () => Kit.demo.start(a.id), 'aria-label': a.title + 'の使い方を見る' }, Kit.icon('play', 12), h('span', null, '使い方を見る')));
+            }))));
         }
         tools.append(h('div', { class: 'hm-group' }, h('div', { class: 'hm-group-label' }, 'すでにある道具（別のページで開きます）'),
           h('div', { class: 'hm-tools' }, OTHER_TOOLS.map((t) => h('a', { class: 'hm-tool', href: t.url, target: '_blank', rel: 'noopener' },
@@ -5923,6 +6183,7 @@ var qrcode = function() {
       }
 
       async function startOwn() {
+        if (Kit.store.demo) { Kit.toast('デモの中ではできません。上の帯の「デモを終わる」で戻ってから使ってください'); return; }
         const p = await Kit.profile.edit();
         if (!p) return;
         const yes = await Kit.confirm({ title: 'サンプルも片付けますか', body: '架空のクラス・学校の例（名簿・席・係・時間割・予定など）を消して、空の状態から始めます。自分で入力したものは残ります。', ok: '片付ける', cancel: 'あとで' });
@@ -5930,6 +6191,7 @@ var qrcode = function() {
         render();
       }
       async function clearSamples() {
+        if (Kit.store.demo) { Kit.toast('デモの中ではできません。上の帯の「デモを終わる」で戻ってから使ってください'); return; }
         const yes = await Kit.confirm({ title: 'サンプルを片付けますか', body: 'すべての道具から、架空のクラス・学校の例を消します。自分で入力・編集したものは残ります。', ok: '片付ける' });
         if (!yes) return;
         await Kit.store.samplesOff();
@@ -5937,12 +6199,14 @@ var qrcode = function() {
         render();
       }
       async function backup() {
+        if (Kit.store.demo) { Kit.toast('デモの中ではできません。上の帯の「デモを終わる」で戻ってから使ってください'); return; }
         await Kit.store.flush();
         const data = await Kit.store.exportAll();
         const ok = await Kit.download('sensei-kit-backup-' + Kit.ymd() + '.json', JSON.stringify(data, null, 1));
         if (ok) Kit.toast('バックアップを書き出しました');
       }
       async function restore() {
+        if (Kit.store.demo) { Kit.toast('デモの中ではできません。上の帯の「デモを終わる」で戻ってから使ってください'); return; }
         const f = await Kit.img.pick('application/json,.json');
         if (!f) return;
         let data;
@@ -5955,6 +6219,7 @@ var qrcode = function() {
         catch (e) { Kit.toast('戻せませんでした：' + ((e && e.message) || e), { type: 'bad' }); }
       }
       async function wipe() {
+        if (Kit.store.demo) { Kit.toast('デモの中ではできません。上の帯の「デモを終わる」で戻ってから使ってください'); return; }
         const yes = await Kit.confirm({ title: 'すべて消しますか', body: 'すべての道具の内容（名簿・席・係・当番・時間割・予定・リマインダー・宿題・通信・わたしのひな形）を消して、最初の状態（サンプル表示）に戻します。元に戻せないので、先にバックアップを書き出しておくと安心です。', ok: 'すべて消す', danger: true });
         if (!yes) return;
         await Kit.store.wipeAll();
@@ -6002,6 +6267,12 @@ var qrcode = function() {
 .ro-paste-prev{max-height:min(40vh,320px);overflow:auto}
 .ro-paste-prev td,.ro-paste-prev th{font-size:13px;padding:5px 10px}
 .ro-help{margin-top:16px}
+.ro-danger{display:flex;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px dashed var(--line)}
+/* 空の欄は静かに（入っている欄が目立つように）。番号の上下の矢印は出さない */
+.ro-row input[type=text]:placeholder-shown{background:transparent;border-color:var(--line)}
+.ro-row input[type=text]:placeholder-shown:focus{background:var(--surface);border-color:var(--focus)}
+.ro-row input[type=number]{-moz-appearance:textfield;appearance:textfield}
+.ro-row input[type=number]::-webkit-inner-spin-button,.ro-row input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 @media (max-width:760px){
   .ro-row{grid-template-columns:50px minmax(0,1fr) minmax(0,1fr) 62px 38px;grid-template-areas:"no name name gender del" "no kana note front front";row-gap:6px;column-gap:6px;padding:8px}
   .ro-row.ro-th{display:none}
@@ -6022,7 +6293,7 @@ var qrcode = function() {
       const sampleSlot = h('div'), tabs = h('div', { class: 'ro-tabs', role: 'group', 'aria-label': 'クラス' }), body = h('div');
       root.append(Kit.appHead({
         title: '名簿',
-        desc: 'クラスの名簿を1回入れると、席替え・係決め・宿題チェックで使えます。名前を入れずに出席番号だけでも使えます。',
+        desc: '1回入れると、席替え・係・当番・宿題で使えます。番号だけでも使えます。',
         actions: [Kit.btn('クラスを追加', () => addClass(), { icon: 'plus' }), Kit.btn('名簿を貼り付ける', () => openPaste(), { kind: 'primary', icon: 'copy' })],
       }), sampleSlot, tabs, body);
 
@@ -6075,8 +6346,7 @@ var qrcode = function() {
         body.append(h('div', { class: 'ro-head' },
           Kit.field({ label: 'クラスの名前', input: nameIn }),
           h('span', { class: 'small ink-2 num', style: { paddingBottom: '8px' } }, cur.students.length + '人' + (genderN('m') + genderN('f') ? '（男 ' + genderN('m') + '・女 ' + genderN('f') + '）' : '')),
-          h('span', { class: 'grow' }),
-          Kit.btn('このクラスを消す', () => removeClass(), { sm: true, kind: 'danger', icon: 'trash' })));
+          h('span', { class: 'grow' })));
 
         const veil = h('div', { class: 'ro-veil' + (School.hidden() && !showAnyway ? ' is-veiled' : '') });
         const table = h('div', { class: 'ro-table', role: 'group', 'aria-label': (cur.name || 'クラス') + 'の名簿' });
@@ -6106,6 +6376,8 @@ var qrcode = function() {
             h('li', null, '「前の席」に印をつけた人は、席替えで前のほうの席になります。性別は、席替えの「男女を交互に」だけに使います（空欄でもかまいません）。'),
             h('li', null, '名簿はこのブラウザの中だけに保存されます。学校の決まりで名前を入れられないときは、番号だけで使ってください。'),
             h('li', null, '生徒を消すと、その人の席・係・提出の記録は表示されなくなります。'))));
+        // クラスを消すのは、いちばん下に（ふだん押さないので目立たせない）
+        body.append(h('div', { class: 'ro-danger' }, Kit.btn('このクラスを消す', () => removeClass(), { sm: true, kind: 'danger', icon: 'trash' })));
       }
 
       function row(s, i, dup) {
@@ -6430,8 +6702,8 @@ var qrcode = function() {
       const runBtn = Kit.btn('席替えする', () => run(), { kind: 'primary', icon: 'shuffle' });
       root.append(Kit.appHead({
         title: '席替え',
-        desc: '「前の席」「はなす2人」「男女」「前回と同じとなりにしない」などの条件をつけて、くじで決めます。決めたあと、手で入れかえもできます。',
-        actions: [runBtn, Kit.btn('発表する', () => show(), { icon: 'eye' }), Kit.btn('印刷', () => printDlg(), { icon: 'printer', kind: 'ghost' })],
+        desc: '条件をつけて、くじで席を決めます。発表と座席表の印刷も。',
+        actions: [runBtn, Kit.btn('発表する', () => show(), { icon: 'eye' }), Kit.btn('印刷', () => printDlg(), { icon: 'printer' })],
       }), classSlot, sampleSlot, main);
 
       /* ── 読み込み ── */
@@ -6931,7 +7203,7 @@ var qrcode = function() {
       const classSlot = h('div'), sampleSlot = h('div'), main = h('div');
       root.append(Kit.appHead({
         title: '係決め',
-        desc: '120ほどの係の例（学級の係・教科係・委員会・当番・行事の係）から選んで、自分の係も足せます。手で・希望で・くじで決めて、そのまま掲示用の表にできます。',
+        desc: '120ほどの例から係を選び、希望やくじで決めて、掲示用の表にします。',
         actions: [Kit.btn('新しい表', () => newBoard(), { icon: 'plus' })],
       }), classSlot, sampleSlot, main);
 
@@ -7408,7 +7680,7 @@ var qrcode = function() {
       const classSlot = h('div'), sampleSlot = h('div'), tabsBox = h('div', { class: 'dt-tabs' }), main = h('div');
       root.append(Kit.appHead({
         title: '当番表',
-        desc: '名簿から班をつくり（番号順・席の近い人・くじ）、掃除の分担・給食当番・日直を週ごとに回します。祝日はとばし、お休みの週も入れられます。',
+        desc: '班をつくって、掃除・給食・日直を週ごとに回します。',
       }), classSlot, sampleSlot, tabsBox, main);
 
       async function load() {
@@ -7892,7 +8164,7 @@ button.tt-c:hover{background:var(--surface-2)}
       const tabsBox = h('div', { class: 'tt-tabs' }), sampleSlot = h('div'), main = h('div');
       root.append(Kit.appHead({
         title: '時間割',
-        desc: '「わたしの時間割」は、自分やクラスの時間割をつくって印刷できます（ホームに今日の時間割が出ます）。「学校の時間割をつくる」は、担当と条件を入れると、先生が重ならないように自動で組みます。',
+        desc: '自分の時間割をつくって印刷。学校の時間割を自動で組むこともできます。',
       }), tabsBox, sampleSlot, main);
 
       async function load() {
@@ -8550,7 +8822,7 @@ button.tt-c:hover{background:var(--surface-2)}
       const classSlot = h('div'), sampleSlot = h('div'), main = h('div');
       root.append(Kit.appHead({
         title: '宿題・提出',
-        desc: '出した宿題を、名簿で「済・遅れ・免除」とタップで記録します。まだの人がすぐ分かり、締切はカレンダーにも出ます。',
+        desc: '出した宿題を、名簿をタップしてチェック。まだの人がすぐ分かります。',
         actions: [Kit.btn('宿題を出す', () => edit(null), { kind: 'primary', icon: 'plus' }), Kit.btn('かんたん成績へ（CSV）', () => exportCsv(), { icon: 'download', kind: 'ghost' })],
       }), classSlot, sampleSlot, main);
 
@@ -9143,7 +9415,7 @@ button.cal-dnum:hover{background:var(--surface-3)}
   .cal-title{font-size:18px}
   .cal-quick-idle{display:none}
   .cal-quick-pre:has(.cal-quick-idle){min-height:0}
-  .cal-filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-left:calc(-1 * var(--gutter-l));margin-right:calc(-1 * var(--gutter-r));padding:2px var(--gutter-r) 4px var(--gutter-l)}
+  .cal-filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-left:calc(-1 * var(--gutter-l));margin-right:calc(-1 * var(--gutter-r));padding:2px var(--gutter-r) 4px var(--gutter-l);-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent)}
   .cal-filters::-webkit-scrollbar{display:none}
   .cal-filters .chip,.cal-others{min-height:36px;flex:none}
   .cal-wk-row{grid-template-columns:38px repeat(var(--n),minmax(0,1fr))}
@@ -9296,9 +9568,9 @@ button.cal-dnum:hover{background:var(--surface-3)}
       ioBtn.setAttribute('aria-label', '書き出し・読み込み');
       root.append(
         Kit.appHead({
-          title: 'カレンダー', desc: '行事・テスト・会議・締切をひとつに。リマインダーと宿題の締切も重ねて見られます。祝日つき。',
+          title: 'カレンダー', desc: '行事・テスト・会議・締切をひとつに。宿題の締切も重なって見えます。',
           actions: [
-            Kit.btn('予定を追加', () => openEvent(null, { date: addDate() }), { kind: 'primary', icon: 'plus' }),
+            Kit.btn('予定を追加', () => openEvent(null, { date: addDate() }), { icon: 'plus' }),
             Kit.btn('年間行事をまとめて追加', () => openBulk(), { icon: 'copy' }),
             Kit.btn('共有', () => openShare(), { icon: 'share' }),
             ioBtn,
@@ -10013,8 +10285,8 @@ button.cal-dnum:hover{background:var(--surface-3)}
       const sampleSlot = h('div'), notice = h('div'), body = h('div');
       root.append(Kit.appHead({
         title: 'リマインダー',
-        desc: '「明日 8時 学年通信を印刷」のように書くと、日付と時刻を読み取ります。時刻が来ると知らせます（このページを開いている間）。',
-        actions: [Kit.btn('追加', () => edit(null), { kind: 'primary', icon: 'plus' }), Kit.btn('共有', () => share(), { icon: 'share' }), Kit.btn('スマホのカレンダーへ', () => exportIcs(), { icon: 'download', kind: 'ghost' })],
+        desc: '「明日 8時 学年通信を印刷」のように書くだけ。時刻が来ると知らせます。',
+        actions: [Kit.btn('追加', () => edit(null), { icon: 'plus' }), Kit.btn('共有', () => share(), { icon: 'share' }), Kit.btn('スマホのカレンダーへ', () => exportIcs(), { icon: 'download', kind: 'ghost' })],
       }), sampleSlot, quick(), notice, body);
 
       function quick() {
@@ -10451,7 +10723,7 @@ button.cal-dnum:hover{background:var(--surface-3)}
       const classSlot = h('div'), sampleSlot = h('div'), main = h('div');
       root.append(Kit.appHead({
         title: '学級通信',
-        desc: '題字の下に、文章・予定表・お知らせ・写真を並べて、A4・B4 に印刷します。予定はカレンダーから、提出物は宿題から入れられます。Word にも書き出せます。',
+        desc: '題字・文章・予定表・写真を並べて、A4・B4 で印刷します。',
         actions: [Kit.btn('新しい号をつくる', () => newIssue(), { kind: 'primary', icon: 'plus' })],
       }), classSlot, sampleSlot, main);
       const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => fit()) : null;
@@ -10989,7 +11261,7 @@ button.cal-dnum:hover{background:var(--surface-3)}
       const main = h('div');
       root.append(Kit.appHead({
         title: '連絡テンプレート',
-        desc: '保護者・生徒・先生への連絡のひな形です。クラス・先生の名前・日付・時候のあいさつは自動で入ります。行事はカレンダーから、生徒の名前は名簿から入れられます。',
+        desc: '保護者・生徒・先生への連絡のひな形。日付やあいさつは自動で入ります。',
         actions: [Kit.btn('新しいひな形', () => editTemplate(null), { icon: 'plus' })],
       }), main);
 
@@ -11231,6 +11503,980 @@ button.cal-dnum:hover{background:var(--surface-3)}
       return () => { alive = false; offC(); offP(); };
     },
   });
+})();
+
+/* ---- js/demo.js ---- */
+/* 使い方のデモ：道具ごとの「操作の流れ」を、架空のクラスで実際に動かして見せる。
+   デモのあいだは Kit.store が砂場（メモリ）に切りかわり、Kit.pref もメモリだけになる。本物のデータは読まず・書かない。
+   上に「デモ中」の帯が出て、「デモを終わる」で元のデータに戻る（ページを読み込み直しても戻る）。
+
+   手順の書き方（js/tours/<道具>.js）：
+     Kit.tour('seats', [
+       { el: '#sk-class-select', title: 'クラスを選ぶ', text: '…' },
+       { el: Kit.demo.btn('席替えする'), title: 'くじで決める', text: '…', click: true, after: 2400 },
+       { el: '.st-board', title: '…', text: '…', do: async (d) => { await d.click(d.q('.st-seat')); } },
+     ]);
+     el     … CSS セレクタか、要素を返す関数（Kit.demo.btn / q / text）。見つかるまで少し待つ。省くと説明だけを真ん中に出す
+     click  … 「やってみる」で、その要素を押す（指が動いて押す）。利用者が自分で押しても進む
+     do     … 自分で動かす。d.click(el) / d.type(input, '文字') / d.pick(select, 値) / d.check(input, true) / d.wait(ms) / d.q(sel)
+     after  … 動かしたあと、次の説明を出すまで待つミリ秒（演出のある操作に）
+     before … 説明を出す前に、見せたい場所を準備する（タブを開く・下までスクロール、など）。指は出さない
+     wide   … 囲みを要素より大きくする（px） */
+(function () {
+  'use strict';
+  const { h } = Kit;
+  const tours = new Map();
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms * speed()));
+  const speed = () => (typeof Kit.demo.speed === 'number' ? Kit.demo.speed : 1);
+  const reduced = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const narrow = () => window.innerWidth < 640;
+
+  Kit.tour = (id, steps) => { tours.set(id, steps); };
+
+  /* ── 要素をさがす小物 ── */
+  const visible = (e) => {
+    if (!e || !e.isConnected) return false;
+    const r = e.getBoundingClientRect();
+    if (r.width <= 0 || r.height <= 0) return false;
+    const cs = getComputedStyle(e);
+    return cs.visibility !== 'hidden' && cs.display !== 'none';
+  };
+  const textOf = (e) => String(e.innerText || e.value || e.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim();
+  const scopeOf = (scope) => (typeof scope === 'string' ? document.querySelector(scope) : scope) || document.getElementById('mb-view') || document;
+  // ボタン・タブ・リンクを文字でさがす（同じ文字なら、ぴったり一致を先に）
+  const btn = (text, scope) => () => {
+    const root = scopeOf(scope);
+    const all = [...root.querySelectorAll('button, a, [role="tab"], [role="button"], label, summary')].filter(visible);
+    return all.find((e) => textOf(e) === text) || all.find((e) => textOf(e).startsWith(text)) || all.find((e) => textOf(e).includes(text)) || null;
+  };
+  const q = (sel, scope) => () => [...scopeOf(scope).querySelectorAll(sel)].find(visible) || null;
+  // セレクタに合う要素のうち、文字をふくむもの
+  const text = (sel, t, scope) => () => [...scopeOf(scope).querySelectorAll(sel)].filter(visible).find((e) => textOf(e).includes(t)) || null;
+  const modal = (sel) => () => { const m = [...document.querySelectorAll('.modal')].pop(); if (!m) return null; return sel ? [...m.querySelectorAll(sel)].find(visible) || null : m; };
+  const modalBtn = (t) => () => { const m = [...document.querySelectorAll('.modal')].pop(); return m ? btn(t, m)() : null; };
+
+  async function resolve(target, ms = 2500) {
+    if (!target) return null;
+    const t0 = Date.now();
+    for (;;) {
+      let el = null;
+      try { el = typeof target === 'function' ? target() : typeof target === 'string' ? q(target)() : target; } catch (e) { el = null; }
+      if (el && visible(el)) return el;
+      if (Date.now() - t0 > ms) return null;
+      await new Promise((r) => setTimeout(r, 60));
+    }
+  }
+
+  /* ── 帯（デモ中） ── */
+  let ribbon = null;
+  function showRibbon() {
+    if (ribbon) return;
+    const main = document.querySelector('.mb-main') || document.body;
+    ribbon = h('div', { class: 'demo-ribbon', role: 'status' },
+      h('span', { class: 'demo-ribbon-tag' }, Kit.icon('play', 12), 'デモ中'),
+      h('span', { class: 'demo-ribbon-text' }, h('span', { class: 'demo-ribbon-long' }, '架空のクラスで動かしています。'), h('b', null, 'あなたのデータは変わりません。')),
+      h('span', { class: 'demo-ribbon-btns' },
+        h('button', { type: 'button', class: 'demo-ribbon-end', onclick: () => Kit.demo.end() }, Kit.icon('close', 14), 'デモを終わる')));
+    main.prepend(ribbon);
+  }
+
+  /* ── 吹き出し・囲み・指 ── */
+  let T = null; // 動いているデモ { id, steps, i, auto, el, seq, busy, timer, raf, layer… }
+
+  function buildLayer() {
+    const block = () => h('div', { class: 'tour-block' });
+    const blocks = [block(), block(), block(), block()];
+    const spot = h('div', { class: 'tour-spot', 'aria-hidden': 'true' });
+    const finger = h('div', { class: 'tour-finger', 'aria-hidden': 'true' });
+    const card = h('div', { class: 'tour-card', role: 'dialog', 'aria-modal': 'false', 'aria-label': '使い方' });
+    const layer = h('div', { class: 'tour' }, blocks, spot, card, finger);
+    // 囲みの外を押したら、ほかの所が動かないように止める（囲みの中は押せる）
+    for (const b of blocks) b.addEventListener('pointerdown', (e) => { e.preventDefault(); card.classList.remove('nudge'); void card.offsetWidth; card.classList.add('nudge'); });
+    document.body.append(layer);
+    return { layer, blocks, spot, finger, card };
+  }
+
+  function place() {
+    if (!T) return;
+    const { spot, blocks, card } = T.ui;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const el = T.el && T.el.isConnected ? T.el : null;
+    let r = null;
+    if (el) {
+      const b = el.getBoundingClientRect();
+      const pad = (T.steps[T.i] && T.steps[T.i].wide) || 6;
+      r = { x: Math.max(4, b.left - pad), y: Math.max(4, b.top - pad), w: 0, h: 0 };
+      r.w = Math.min(vw - 4, b.right + pad) - r.x; r.h = Math.min(vh - 4, b.bottom + pad) - r.y;
+      if (r.w <= 0 || r.h <= 0) r = null;
+    }
+    const key = r ? [r.x, r.y, r.w, r.h].map(Math.round).join(',') + ',' + vw + ',' + vh + ',' + card.offsetHeight : 'none,' + vw + ',' + vh;
+    if (key === T.lastKey) return;
+    T.lastKey = key;
+    if (r) {
+      Object.assign(spot.style, { display: 'block', left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' });
+      // 囲みの外の4枚（上・下・左・右）
+      Object.assign(blocks[0].style, { left: '0', top: '0', width: '100%', height: r.y + 'px' });
+      Object.assign(blocks[1].style, { left: '0', top: r.y + r.h + 'px', width: '100%', height: Math.max(0, vh - r.y - r.h) + 'px' });
+      Object.assign(blocks[2].style, { left: '0', top: r.y + 'px', width: r.x + 'px', height: r.h + 'px' });
+      Object.assign(blocks[3].style, { left: r.x + r.w + 'px', top: r.y + 'px', width: Math.max(0, vw - r.x - r.w) + 'px', height: r.h + 'px' });
+      T.ui.layer.classList.remove('no-spot');
+    } else {
+      spot.style.display = 'none';
+      Object.assign(blocks[0].style, { left: '0', top: '0', width: '100%', height: '100%' });
+      for (const b of blocks.slice(1)) Object.assign(b.style, { width: '0', height: '0' });
+      T.ui.layer.classList.add('no-spot');
+    }
+    // 吹き出し：スマホは下にくっつける。パソコンは要素の下か上、入らなければ右下
+    card.classList.toggle('docked', narrow());
+    if (narrow()) { card.style.left = ''; card.style.top = ''; return; }
+    const cw = card.offsetWidth, ch = card.offsetHeight, gap = 14;
+    let x, y;
+    if (!r) { x = (vw - cw) / 2; y = (vh - ch) / 2; }
+    else {
+      x = Math.min(Math.max(12, r.x + r.w / 2 - cw / 2), vw - cw - 12);
+      if (r.y + r.h + gap + ch <= vh - 12) y = r.y + r.h + gap;
+      else if (r.y - gap - ch >= 12) y = r.y - gap - ch;
+      else if (r.x + r.w + gap + cw <= vw - 12) { x = r.x + r.w + gap; y = Math.min(Math.max(12, r.y), vh - ch - 12); }
+      else if (r.x - gap - cw >= 12) { x = r.x - gap - cw; y = Math.min(Math.max(12, r.y), vh - ch - 12); }
+      else { x = vw - cw - 16; y = vh - ch - 16; }
+    }
+    card.style.left = Math.round(x) + 'px'; card.style.top = Math.round(y) + 'px';
+  }
+  // 上にかぶさる物（スマホの上のバー・デモ中の帯）の下の端
+  function coverBottom() {
+    let y = 0;
+    for (const sel of ['.mb-top', '.demo-ribbon']) {
+      const e = document.querySelector(sel);
+      if (!e) continue;
+      const r = e.getBoundingClientRect();
+      if (r.height > 0 && getComputedStyle(e).display !== 'none' && r.top < 4 + y) y = Math.max(y, r.bottom);
+    }
+    return y;
+  }
+  // 見せたい所が、上の帯にも下の吹き出し（スマホ）にも隠れない位置まで送る
+  function keepVisible(el) {
+    if (!T || !el) return;
+    const top = coverBottom() + 10;
+    const bottom = narrow() ? window.innerHeight - T.ui.card.offsetHeight - 16 : window.innerHeight - 10;
+    const need = () => {
+      const r = el.getBoundingClientRect();
+      if (r.top < top) return r.top - top;
+      if (r.bottom > bottom) return Math.min(r.bottom - bottom, r.top - top);
+      return 0;
+    };
+    // ダイアログの中など、送れる箱の中にあれば、先にその箱を送る
+    for (let box = el.parentElement; box && box !== document.body; box = box.parentElement) {
+      const d = need();
+      if (!d) break;
+      const cs = getComputedStyle(box);
+      if (/(auto|scroll)/.test(cs.overflowY) && box.scrollHeight > box.clientHeight + 1) box.scrollTop += d;
+    }
+    const d = need();
+    if (d) window.scrollBy(0, d);
+    T.lastKey = '';
+  }
+  function loop() {
+    if (!T) return;
+    // 描きなおしで要素が入れかわったら、さがしなおす
+    const step = T.steps[T.i];
+    if (step && step.el && (!T.el || !T.el.isConnected) && Date.now() - (T.lastFind || 0) > 150) {
+      T.lastFind = Date.now();
+      try { const e = typeof step.el === 'function' ? step.el() : q(step.el)(); if (e) T.el = e; } catch (e) { /* noop */ }
+    }
+    place();
+    T.raf = requestAnimationFrame(loop);
+  }
+
+  function renderCard(step, o = {}) {
+    const { card } = T.ui;
+    Kit.clear(card);
+    const n = T.steps.length;
+    const acts = !!(step.click || step.do);
+    const last = T.i === n - 1;
+    const back = h('button', { type: 'button', class: 'tour-btn ghost tour-back', disabled: T.i === 0 || T.busy, onclick: () => prev(), 'aria-label': '戻る' }, Kit.icon('left', 16), h('span', null, '戻る'));
+    const auto = h('button', { type: 'button', class: 'tour-btn ghost tour-auto', 'aria-pressed': String(T.auto), onclick: () => toggleAuto(), title: T.auto ? '自動で進むのを止める' : '自動で最後まで進める', 'aria-label': T.auto ? '自動で進むのを止める' : '自動で最後まで進める' }, Kit.icon(T.auto ? 'pause' : 'play', 14), h('span', null, T.auto ? '止める' : '自動で'));
+    const go = h('button', { type: 'button', class: 'tour-btn primary', disabled: T.busy, onclick: () => next() },
+      acts ? [Kit.icon('play', 14), step.doLabel || 'やってみる'] : last ? ['おわる', Kit.icon('check', 16)] : ['次へ', Kit.icon('right', 16)]);
+    Kit.add(card, [
+      h('div', { class: 'tour-top' },
+        h('span', { class: 'tour-count' }, '使い方　', h('b', null, T.i + 1), ' / ' + n),
+        h('span', { class: 'tour-dots', 'aria-hidden': 'true' }, T.steps.map((_, k) => h('i', { class: k < T.i ? 'done' : k === T.i ? 'now' : '' }))),
+        h('button', { type: 'button', class: 'tour-x', 'aria-label': '使い方を閉じる', title: '閉じる（デモの画面はそのまま）', onclick: () => stopTour({ keep: true }) }, Kit.icon('close', 16))),
+      h('div', { class: 'tour-title' }, step.title || ''),
+      step.text ? h('p', { class: 'tour-text' }, step.text) : null,
+      o.note ? h('p', { class: 'tour-note' }, o.note) : null,
+      acts && !T.auto ? h('p', { class: 'tour-hint' }, step.click ? '光っている所を押しても進みます。' : '「' + (step.doLabel || 'やってみる') + '」で、指が動いて操作します。') : null,
+      T.auto ? h('div', { class: 'tour-bar' }, h('i', { style: { animationDuration: dwell(step) + 'ms' } })) : null,
+      h('div', { class: 'tour-foot' }, back, auto, h('span', { class: 'grow' }), go)]);
+    T.goBtn = go;
+  }
+  const dwell = (step) => Math.round(Math.min(7000, Math.max(2800, 1600 + String((step.title || '') + (step.text || '')).length * 55)) * speed());
+
+  async function show(i) {
+    if (!T) return;
+    const my = ++T.seq;
+    clearTimeout(T.timer);
+    T.i = i; T.el = null; T.lastKey = ''; T.ready = false;
+    const step = T.steps[i];
+    T.busy = true; renderCard(step); T.busy = false;
+    try { if (step.before) { await step.before(api); await Kit.mounted(); } } catch (e) { console.error(e); }
+    if (!T || my !== T.seq) return;
+    const el = await resolve(step.el, step.el ? 2500 : 0);
+    if (!T || my !== T.seq) return;
+    T.el = el;
+    if (el) { el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: reduced() ? 'auto' : 'smooth' }); await sleep(reduced() ? 60 : 320); }
+    if (!T || my !== T.seq) return;
+    renderCard(step, { note: step.el && !el ? '（この画面では見つかりませんでした。説明だけ出しています）' : '' });
+    T.lastKey = '';
+    place();
+    if (el) keepVisible(el);
+    T.ready = true; T.found = !!el || !step.el;
+    try { T.goBtn.focus({ preventScroll: true }); } catch (e) { /* noop */ }
+    if (T.auto) T.timer = setTimeout(() => { if (T && my === T.seq) next(); }, dwell(step));
+  }
+
+  async function next(o = {}) {
+    if (!T || T.busy) return;
+    const my = T.seq;
+    clearTimeout(T.timer);
+    T.ready = false;
+    const step = T.steps[T.i];
+    if ((step.click || step.do) && !o.done) {
+      T.busy = true; renderCard(step);
+      try {
+        if (step.do) await step.do(api);
+        else if (T.el) await api.click(T.el);
+      } catch (e) { console.error('デモの操作', e); }
+      await sleep(step.after || 700);
+      await Kit.mounted();
+      if (!T || my !== T.seq) return;
+      T.busy = false;
+    } else if (o.done) {
+      await sleep(step.after || 700);
+      await Kit.mounted();
+      if (!T || my !== T.seq) return;
+    }
+    if (T.i + 1 >= T.steps.length) return finish();
+    show(T.i + 1);
+  }
+  function prev() { if (T && !T.busy && T.i > 0) show(T.i - 1); }
+  function toggleAuto() { if (!T) return; T.auto = !T.auto; if (T.auto) next(); else { clearTimeout(T.timer); renderCard(T.steps[T.i]); } }
+
+  function finish() {
+    if (!T) return;
+    clearTimeout(T.timer);
+    const id = T.id;
+    T.i = T.steps.length - 1; T.el = null; T.lastKey = ''; T.seq++; T.done = true; T.ready = true;
+    const { card } = T.ui;
+    Kit.clear(card);
+    Kit.add(card, [
+      h('div', { class: 'tour-top' }, h('span', { class: 'tour-count' }, '使い方'), h('span', { class: 'grow' }),
+        h('button', { type: 'button', class: 'tour-x', 'aria-label': '閉じる', onclick: () => stopTour({ keep: true }) }, Kit.icon('close', 16))),
+      h('div', { class: 'tour-title' }, 'これで一通りです'),
+      h('p', { class: 'tour-text' }, 'このままデモの中で、自由にさわってみることもできます。終わるときは、上の帯の「デモを終わる」で、あなたのデータに戻ります。'),
+      h('div', { class: 'tour-foot' },
+        h('button', { type: 'button', class: 'tour-btn ghost', onclick: () => Kit.demo.start(id) }, Kit.icon('refresh', 14), 'もう一度'),
+        h('span', { class: 'grow' }),
+        h('button', { type: 'button', class: 'tour-btn', onclick: () => stopTour({ keep: true }) }, '自由にさわる'),
+        h('button', { type: 'button', class: 'tour-btn primary', onclick: () => Kit.demo.end() }, 'デモを終わる'))]);
+    place();
+    try { card.querySelector('.tour-btn.primary').focus({ preventScroll: true }); } catch (e) { /* noop */ }
+  }
+
+  // 囲みの中を利用者が自分で押したとき：click の手順なら、そのまま次へ
+  function onUserClick(e) {
+    if (!T || T.busy || !T.el || !e.isTrusted) return;
+    const step = T.steps[T.i];
+    if (!step || !step.click) return;
+    if (T.el === e.target || T.el.contains(e.target)) { T.busy = true; setTimeout(() => { if (T) { T.busy = false; next({ done: true }); } }, 0); }
+  }
+  function onKey(e) {
+    if (!T) return;
+    if (e.key === 'Escape' && !Kit.modalOpen()) { e.preventDefault(); stopTour({ keep: true }); }
+    else if (e.key === 'ArrowRight' && !T.busy && !/INPUT|TEXTAREA|SELECT/.test((e.target && e.target.tagName) || '')) { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft' && !T.busy && !/INPUT|TEXTAREA|SELECT/.test((e.target && e.target.tagName) || '')) { e.preventDefault(); prev(); }
+  }
+  const onResize = () => { if (T) T.lastKey = ''; };
+
+  function run(id) {
+    stopTour({ keep: true });
+    const steps = tours.get(id);
+    if (!steps || !steps.length) return;
+    T = { id, steps, i: 0, auto: false, el: null, seq: 0, busy: false, timer: 0, raf: 0, lastKey: '', ui: buildLayer() };
+    document.documentElement.classList.add('is-touring');
+    document.addEventListener('click', onUserClick, true);
+    document.addEventListener('keydown', onKey, true);
+    window.addEventListener('resize', onResize);
+    T.raf = requestAnimationFrame(loop);
+    show(0);
+  }
+  function stopTour() {
+    if (!T) return;
+    clearTimeout(T.timer); cancelAnimationFrame(T.raf);
+    T.seq++;
+    T.ui.layer.remove();
+    T = null;
+    document.documentElement.classList.remove('is-touring');
+    document.removeEventListener('click', onUserClick, true);
+    document.removeEventListener('keydown', onKey, true);
+    window.removeEventListener('resize', onResize);
+  }
+
+  /* ── 指で動かす（手順の do から使う） ── */
+  async function moveFinger(el) {
+    if (!T || !el) return;
+    el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' });
+    await sleep(80);
+    const r = el.getBoundingClientRect();
+    const f = T.ui.finger;
+    const x = r.left + r.width / 2, y = r.top + r.height / 2;
+    if (reduced() || speed() < 0.5) { f.style.transition = 'none'; f.style.transform = `translate(${x}px, ${y}px)`; f.classList.add('on'); await sleep(60); }
+    else {
+      if (!f.classList.contains('on')) {
+        const c = T.ui.card.getBoundingClientRect();
+        f.style.transition = 'none'; f.style.transform = `translate(${c.left + c.width / 2}px, ${c.top + 20}px)`;
+        void f.offsetWidth; f.classList.add('on');
+      }
+      f.style.transition = '';
+      f.style.transform = `translate(${x}px, ${y}px)`;
+      await sleep(520);
+    }
+    T.el = el; T.lastKey = '';
+    { const y0 = el.getBoundingClientRect().top; keepVisible(el); if (el.getBoundingClientRect().top !== y0) { await sleep(60); const r2 = el.getBoundingClientRect(); f.style.transform = `translate(${r2.left + r2.width / 2}px, ${r2.top + r2.height / 2}px)`; } }
+    f.classList.remove('tap'); void f.offsetWidth; f.classList.add('tap');
+    await sleep(140);
+  }
+  const hideFinger = () => { if (T) T.ui.finger.classList.remove('on', 'tap'); };
+  const api = {
+    q: (sel, scope) => q(sel, scope)(),
+    btn: (t, scope) => btn(t, scope)(),
+    find: (target, ms) => resolve(target, ms),
+    wait: (ms) => sleep(ms),
+    async click(target) {
+      const el = await resolve(target, 2500);
+      if (!el) throw new Error('押す所が見つかりません');
+      await moveFinger(el);
+      el.click();
+      await sleep(120);
+      hideFinger();
+      return el;
+    },
+    async type(target, value, o = {}) {
+      const el = await resolve(target, 2500);
+      if (!el) throw new Error('入力欄が見つかりません');
+      await moveFinger(el);
+      hideFinger();
+      el.focus({ preventScroll: true });
+      if (!o.append) { el.value = ''; el.dispatchEvent(new Event('input', { bubbles: true })); }
+      const per = reduced() || speed() < 0.5 ? 0 : Math.max(18, Math.min(60, 900 / String(value).length));
+      if (!per) { el.value = (o.append ? el.value : '') + value; el.dispatchEvent(new Event('input', { bubbles: true })); }
+      else for (const ch of String(value)) { el.value += ch; el.dispatchEvent(new Event('input', { bubbles: true })); await new Promise((r) => setTimeout(r, per)); }
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      if (o.enter) el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      el.blur();
+      return el;
+    },
+    async pick(target, value) {
+      const el = await resolve(target, 2500);
+      if (!el) throw new Error('選ぶ所が見つかりません');
+      await moveFinger(el);
+      hideFinger();
+      el.value = value;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      return el;
+    },
+    async check(target, on = true) {
+      const el = await resolve(target, 2500);
+      if (!el) throw new Error('チェックの所が見つかりません');
+      if (!!el.checked !== !!on) { await moveFinger(el); el.click(); hideFinger(); }
+      return el;
+    },
+    // 見せたい所まで、画面をゆっくり送る（指は出さない）
+    async scrollTo(target) {
+      const el = await resolve(target, 2500);
+      if (el) { el.scrollIntoView({ block: 'center', behavior: reduced() ? 'auto' : 'smooth' }); await sleep(380); }
+      return el;
+    },
+    closeModals() { Kit.closeModals(); },
+  };
+
+  /* ── 入口 ── */
+  Kit.demo = {
+    speed: 1,
+    has: (id) => tours.has(id) && tours.get(id).length > 0,
+    on: () => !!Kit.store.demo,
+    // いま動いているデモ（テストからも読む）。ready … 説明を出し終えた / found … 囲む所が見つかった / done … 最後まで来た
+    running: () => (T ? { id: T.id, i: T.i, n: T.steps.length, title: (T.steps[T.i] || {}).title, ready: !!T.ready, found: !!T.found, busy: !!T.busy, done: !!T.done } : null),
+    btn, q, text, modal, modalBtn, api,
+    // デモを始める：砂場に切りかえて、その道具を開き直し、手順を出す
+    async start(id) {
+      if (!tours.has(id)) return;
+      stopTour();
+      if (!Kit.store.demo) {
+        Kit.closeModals();
+        Kit.pref.demo = new Map();
+        await Kit.store.sandbox(true);
+        document.documentElement.classList.add('is-demo');
+        showRibbon();
+      } else Kit.closeModals();
+      if (Kit.current() !== id) {
+        Kit.go(id);
+        for (let k = 0; k < 60 && Kit.current() !== id; k++) await new Promise((r) => setTimeout(r, 30));
+      } else Kit.remount();
+      await Kit.mounted();
+      window.scrollTo(0, 0);
+      run(id);
+    },
+    // デモを終えて、本物のデータに戻る
+    async end() {
+      stopTour();
+      Kit.closeModals();
+      if (Kit.store.demo) await Kit.store.sandbox(false);
+      Kit.pref.demo = null;
+      document.documentElement.classList.remove('is-demo');
+      if (ribbon) { ribbon.remove(); ribbon = null; }
+      await Kit.remount();
+      Kit.toast('デモを終えました。あなたのデータに戻っています');
+    },
+    stopTour,
+  };
+})();
+
+/* ---- js/tours/home.js ---- */
+// 使い方のデモ：ホーム（手順の書き方は js/demo.js の先頭）
+// ホームは保存が変わるたびに描き直すので、囲む所は毎回さがし直せる指し方（セレクタ・関数）にする
+(function () {
+  const D = Kit.demo;
+  const narrow = () => window.innerWidth < 640;
+  const room = () => {}; // スマホの下の余白は、土台（デモの説明中は .mb-view の下に余白）がつける
+  // ほかの道具を開いたあとに「戻る」などで来たときは、ホームに戻しておく
+  const goHome = async () => {
+    if (Kit.current() !== 'home') {
+      Kit.go('home');
+      for (let k = 0; k < 60 && Kit.current() !== 'home'; k++) await new Promise((r) => setTimeout(r, 30));
+      await Kit.mounted();
+    }
+    room();
+  };
+  const sec = (label) => D.q('section[aria-label="' + label + '"]');
+  // スマホでは長い箱の全体は入らないので、中の最初の1つを囲む（なければ箱ごと）
+  const first = (label, inner) => () => (narrow() && D.q('section[aria-label="' + label + '"] ' + inner)()) || sec(label)();
+  // 道具箱：パソコンは最初の段（クラスの道具）、スマホは最初のカード1枚を囲む
+  const tools = () => D.q('section[aria-label="道具箱"] ' + (narrow() ? '.hm-tool' : '.hm-group'))() || sec('道具箱')();
+  // 道具箱のカード（名前でさがして、カード全体を返す）
+  const tool = (name) => () => { const t = D.text('.hm-tool-title', name)(); return t ? t.closest('.hm-tool') : null; };
+  // 開いた道具の見出しの「使い方を見る」。出ていなければ、上の「デモ中」の帯（#mb-view の外にあるので、ページ全体からさがす）
+  const demoBtn = () => D.q('.app-head .demo-btn')() || document.querySelector('.demo-ribbon');
+  Kit.tour('home', [
+    { before: goHome, el: () => sec('はじめての方へ')() || first('今日・明日やること', '.list-item')(), title: 'はじめの3歩', text: '名簿 → 席替え → 係・当番の順に使うと、ほかの道具にもつながります。それぞれ「使い方を見る」でデモが見られます。' },
+    { before: goHome, el: first('今日・明日やること', '.list-item'), title: '今日・明日やること', text: '予定・リマインダー・宿題の締切から、今日と明日の分がここに集まります。押すと、その道具が開きます。' },
+    { before: goHome, el: sec('今日の時間割'), title: '今日の時間割と当番', text: '「時間割」でつくった今日の授業と、今日の日直・今週の給食当番が出ます。' },
+    { before: goHome, el: tools, title: '道具箱', text: 'クラス・授業・予定・通信の道具が並びます。カードの下に、いまの様子（何件あるか など）が出ます。' },
+    { before: goHome, el: tool('席替え'), title: '道具を開く', text: 'カードを押すと、その道具が開きます。例として「席替え」を開いてみます。', doLabel: '開いてみる', do: async (d) => { await d.click(tool('席替え')); }, after: 900 },
+    { el: demoBtn, title: 'どの道具にもデモ', text: 'どの道具も、見出しの横の「使い方を見る」で、いまのようなデモが見られます。あなたのデータは変わりません。' },
+    { before: goHome, el: sec('データの扱い'), title: 'データの扱い', text: 'どこに保存しているかと、名前の扱いの注意がまとめてあります。一度読んでおくと安心です。' },
+    { before: goHome, el: '#hm-backup', title: 'バックアップ', text: 'ときどき「バックアップを書き出す」で保存しておくと安心です。上の「バックアップ」からも来られます。' },
+  ]);
+})();
+
+/* ---- js/tours/roster.js ---- */
+// 使い方のデモ：名簿（手順の書き方は js/demo.js の先頭）
+(function () {
+  const D = Kit.demo;
+  // Excel の名簿を選んでコピーしたときの文字（列はタブ区切り・1行目は見出し）
+  const PASTE = [
+    '番号\t氏名\tふりがな\t性別',
+    '1\t青木 そら\tあおき そら\t男',
+    '2\t石田 ゆい\tいしだ ゆい\t女',
+    '3\t内田 はると\tうちだ はると\t男',
+    '4\t江口 さくら\tえぐち さくら\t女',
+    '5\t小川 りく\tおがわ りく\t男',
+  ].join('\n');
+  const firstRow = '.ro-table .ro-row:not(.ro-th)';
+  Kit.tour('roster', [
+    {
+      el: D.btn('名簿を貼り付ける', '.app-head'), title: 'Excel から貼り付ける',
+      text: 'Excel の名簿を選んでコピーし、ここに貼り付けるだけで入ります。1行に1人です。', click: true, after: 500,
+    },
+    {
+      el: D.modal('#ro-paste'), title: 'コピーした行を貼る',
+      text: '番号・氏名・ふりがな・性別の列を、そのまま貼れます。見出しの行があっても大丈夫です。', doLabel: '貼り付けてみる',
+      do: async (d) => {
+        const ta = await d.click(D.modal('#ro-paste'));
+        ta.value = PASTE;
+        ta.dispatchEvent(new Event('input', { bubbles: true }));
+      },
+      after: 500,
+    },
+    {
+      el: D.modal('.ro-paste-prev'), title: '読み取りを確かめる',
+      text: '5人を、番号・氏名・ふりがな・性別に分けて読み取りました。違っていたら、上の文を直します。',
+    },
+    {
+      el: D.modal('.seg'), title: '入れ方を選んで入れる',
+      text: 'いまのクラスを置きかえるか、新しいクラスにするかを選びます。ここでは新しい「2年4組」にします。', doLabel: '入れてみる',
+      do: async (d) => {
+        await d.click(D.modalBtn('新しいクラスにする'));
+        await d.type(D.modal('#ro-paste-name'), '2年4組');
+        await d.click(D.modalBtn('名簿に入れる'));
+      },
+      after: 900,
+    },
+    {
+      el: firstRow, title: 'ふりがな・性別も入る',
+      text: 'ふりがなと性別も、そのまま入りました。性別は席替えの男女の並びだけに使います（空欄でもかまいません）。',
+    },
+    {
+      el: firstRow, title: '前の席・メモ', doLabel: '印をつけてみる',
+      text: '「前の席」に印をつけた人は、席替えで前のほうの席になります。メモには配慮などを書けます。',
+      do: async (d) => {
+        await d.check('#ro-0-front', true);
+        await d.type('#ro-0-note', '視力（前の席）');
+      },
+      after: 600,
+    },
+    {
+      el: D.btn('クラスを追加', '.app-head'), title: '番号だけでも使える', doLabel: '番号だけで作ってみる',
+      text: '名前を入れられないときは、人数だけで出席番号の名簿を作れます。例として30人のクラスを作ります。',
+      do: async (d) => {
+        await d.click(D.btn('クラスを追加', '.app-head'));
+        await d.type(D.modal('#ro-new-name'), '2年5組');
+        await d.type(D.modal('#ro-new-count'), '30');
+        await d.click(D.modalBtn('追加する'));
+      },
+      after: 900,
+    },
+    {
+      el: firstRow, title: '番号だけの名簿',
+      text: '1番から30番までの名簿ができました。名前が空のままでも、席替え・係決め・当番表を番号で使えます。',
+    },
+  ]);
+})();
+
+/* ---- js/tours/seats.js ---- */
+// 使い方のデモ：席替え（手順の書き方は js/demo.js の先頭）
+(function () {
+  const D = Kit.demo;
+  const seat = (n) => () => [...document.querySelectorAll('#mb-view .st-grid .st-seat:not(.is-none):not(.is-empty)')][n] || null;
+  Kit.tour('seats', [
+    { el: '.sk-classbar', title: 'クラスを選ぶ', text: '名簿に入れたクラスから選びます。デモは架空の「2年3組」（32人）です。教室で映すときは「名前を隠す」で番号だけにできます。' },
+    { el: '.st-set', title: '条件を決める', text: '机の数、「前の席」にする人、男女の並び、はなしたい2人などを決めます。決めた条件は、次の席替えにも残ります。' },
+    { el: D.text('.st-set .seg button', 'となり同士は男女'), title: '男女の並びも選べる', text: '例として「となり同士は男女」にしてみます。', click: true, after: 500 },
+    { el: D.btn('席替えする', '.app-head'), title: 'くじで席を決める', text: '条件を守るように、くじで席を決めます。気に入らなければ何度でも引き直せます。', click: true, after: 1700 },
+    { el: '.st-issues', title: '条件を守れたか確かめる', text: '条件をすべて満たしたかが、ここに出ます。守れなかったときは、どの条件かが出ます。' },
+    {
+      el: '.st-modes', title: '手で入れかえる', text: '席を2つ続けて押すと、2人が入れかわります。配慮が必要な席は「固定する」で動かないようにできます。', doLabel: '入れかえてみる',
+      do: async (d) => { await d.click(seat(0)); await d.wait(250); await d.click(seat(9)); },
+      after: 600,
+    },
+    {
+      el: D.btn('この席で決定（保存）'), title: '保存する', text: '「この席で決定」で保存します。次の席替えでは、この席で「となり」だった人どうしを避けます。', doLabel: '保存してみる',
+      do: async (d) => { await d.click(D.btn('この席で決定（保存）')); await d.click(D.modalBtn('保存する')); },
+      after: 800,
+    },
+    {
+      el: D.btn('発表する', '.app-head'), title: '1人ずつめくって発表', text: '教室で映して、1人ずつめくって発表できます。盛り上がります。', doLabel: '発表してみる',
+      do: async (d) => {
+        await d.click(D.btn('発表する', '.app-head'));
+        for (let k = 0; k < 3; k++) { await d.click(D.btn('1人めくる', '.st-show')); await d.wait(250); }
+        await d.click(D.btn('ぜんぶ見せる', '.st-show'));
+        await d.wait(1400);
+        await d.click(D.btn('閉じる', '.st-show'));
+      },
+      after: 400,
+    },
+    { el: D.btn('印刷', '.app-head'), title: '座席表を印刷', text: 'A4 横の座席表を印刷できます。「生徒から見た図」と「教卓から見た図」を選べます。' },
+  ]);
+})();
+
+/* ---- js/tours/roles.js ---- */
+// 使い方のデモ：係決め（手順の書き方は js/demo.js の先頭）
+(function () {
+  const D = Kit.demo;
+  const METHOD = 'section[aria-label="決め方"]';
+  // 希望の欄：k 番目の人の、第 rank 希望（0 から）
+  const wishSel = (k, rank) => () => {
+    const rows = [...document.querySelectorAll('#mb-view .rl-wish-row:not(.th)')];
+    return rows[k] ? rows[k].querySelectorAll('select')[rank] || null : null;
+  };
+  const optionOf = (sel, name) => { const o = [...sel.options].find((x) => x.text === name); return o ? o.value : sel.options[1] ? sel.options[1].value : ''; };
+  Kit.tour('roles', [
+    {
+      el: '.sk-steps', title: '3つの段階で進む',
+      text: '①係を選ぶ → ②人を決める → ③表にする、の順に進みます。デモは架空のクラスの「前期の係」です。',
+      before: async (d) => { const b = d.btn('係を選ぶ', '.sk-steps'); if (b && b.getAttribute('aria-current') !== 'step') { b.click(); await Kit.mounted(); } },
+    },
+    {
+      el: 'section[aria-label="係の例"]', title: '係の例から選ぶ', doLabel: '追加してみる',
+      text: '学級の係・委員会・行事の係など、120ほどの例があります。言葉でさがして「追加」すると表に入ります。',
+      do: async (d) => {
+        await d.type('#rl-q', '号令');
+        const add = await d.find(D.btn('追加', '.rl-lib-list'), 800);
+        if (add) await d.click(add);
+      },
+      after: 600,
+    },
+    {
+      el: D.btn('人を決める', '.sk-steps'), title: '次は人を決める',
+      text: '「号令係」は「この表の係」のいちばん下に入りました。人数や仕事の内容も直せます。次は②へ。', click: true, after: 500,
+    },
+    {
+      el: METHOD + ' .seg', title: '決め方を選ぶ', doLabel: '希望にしてみる',
+      text: '手で・希望で・くじで決められます。ここでは希望を聞いて、かなわなかった人はくじで決めます。',
+      do: async (d) => { await d.click(D.btn('希望で決める', METHOD + ' .seg')); },
+      after: 500,
+    },
+    {
+      el: D.text(METHOD + ' details summary', '希望を入れる'), title: '希望を入れる', doLabel: '入れてみる',
+      text: '1人ずつ第3希望まで選べます。例として3人が「黒板係」（定員2人）を第1希望にします。',
+      do: async (d) => {
+        await d.click(D.text(METHOD + ' details summary', '希望を入れる'));
+        for (let k = 0; k < 3; k++) { const s = await d.find(wishSel(k, 0)); if (s) await d.pick(s, optionOf(s, '黒板係')); }
+      },
+      after: 500,
+    },
+    {
+      el: METHOD + ' .btn-row', title: '希望とくじで決める', doLabel: '決めてみる',
+      text: '「全員を外す」でいまの係を空けてから、「希望で決める」を押します。',
+      do: async (d) => {
+        await d.click(D.btn('全員を外す', METHOD));
+        await d.click(D.modalBtn('外す'));
+        await d.wait(300);
+        await d.click(D.btn('希望で決める', METHOD + ' .btn-row'));
+      },
+      after: 900,
+    },
+    {
+      el: 'section[aria-label="決め方の記録"]', title: 'くじの結果も残る',
+      text: '希望が定員をこえた係は、くじで決めた記録が残ります。下の係のカードで、手で入れかえることもできます。',
+    },
+    { el: D.btn('表にする', '.sk-steps'), title: '表にする', text: '決まったら、③で掲示用の表にします。', click: true, after: 500 },
+    {
+      el: () => { const b = D.btn('一覧表を印刷')(); return b ? b.closest('.btn-row') : null; }, title: '掲示用の表ができる',
+      text: '係・人数・担当・仕事の内容の表です。名前の出し方を選んで、一覧表や掲示用の札を印刷できます。',
+    },
+  ]);
+})();
+
+/* ---- js/tours/duty.js ---- */
+// 使い方のデモ：当番表（手順の書き方は js/demo.js の先頭）
+(function () {
+  const D = Kit.demo;
+  const tab = (label) => D.btn(label, '.dt-tabs');
+  // 班のカード（0 から）と、その中の k 番目の名前
+  const groupCard = (i) => () => document.querySelectorAll('#mb-view .dt-groups .dt-g')[i] || null;
+  const member = (i, k) => () => { const c = groupCard(i)(); return c ? c.querySelectorAll('.dt-mem .chip')[k] || null : null; };
+  Kit.tour('duty', [
+    {
+      el: '.dt-tabs', title: '班から当番を回す',
+      text: '班をつくると、掃除・給食・日直が週ごとに回ります。デモは架空のクラス（32人・6班）です。',
+      before: async (d) => { const b = d.btn('班', '.dt-tabs'); if (b && b.getAttribute('aria-selected') !== 'true') { b.click(); await Kit.mounted(); } },
+    },
+    {
+      el: D.text('.dt-row', 'つくり方'), title: '班をつくり直す', doLabel: 'くじでつくってみる',
+      text: '番号順・席の近い人で・くじ、から選べます。席替えで保存した席から班にもできます。',
+      do: async (d) => { await d.click(D.btn('くじ', '#mb-view section.card')); },
+      after: 900,
+    },
+    {
+      el: groupCard(0), title: '1人ずつ移す', doLabel: '移してみる',
+      text: '名前を押してから、ほかの班のカードを押すと、その人が移ります。班の名前も変えられます。',
+      do: async (d) => {
+        await d.click(member(0, 0));
+        await d.wait(300);
+        await d.click(groupCard(1));
+      },
+      after: 700,
+    },
+    { el: tab('掃除'), title: '掃除の分担', text: '班ごとの掃除の場所が、1週ごとに回ります。', click: true, after: 600 },
+    {
+      el: '.dt-now', title: '今週の掃除が一目で',
+      text: '今週の分担と、先の週までの表が出ます。場所や、夏休みなどお休みの週は右（下）で変えられます。',
+    },
+    {
+      el: D.btn('回転盤を印刷'), title: '回転盤も印刷できる',
+      text: '切りぬいて割りピンでとめる回転盤です。1週ごとに内の円を1つ回すと、次の週の分担になります。',
+    },
+    { el: tab('給食'), title: '給食当番', text: '給食当番も、班ごとに1週ずつ回ります。番号順に区切って回すこともできます。', click: true, after: 600 },
+    {
+      el: '.dt-now', title: '役割まで決まる', doLabel: '日直を見る',
+      text: 'おかず・汁物・牛乳などの役割まで、1人ずつ決まります。最後に「日直」のタブを見ます。',
+      do: async (d) => { await d.click(tab('日直')); },
+      after: 600,
+    },
+    {
+      el: () => D.q('.dt-nk-row.is-today')() || D.q('.dt-nk-row')(), title: '日直は毎日回る',
+      text: '番号順に、毎日2人ずつ回ります。土日と祝日は自動でとばします。人数やはじめる日は右（下）で変えられます。',
+    },
+  ]);
+})();
+
+/* ---- js/tours/timetable.js ---- */
+// 使い方のデモ：時間割（手順の書き方は js/demo.js の先頭）
+(function () {
+  const D = Kit.demo;
+  const view = () => document.getElementById('mb-view') || document;
+  // タブを切りかえる（指は出さない。すでに開いていれば何もしない）
+  const openTab = async (label) => {
+    const t = D.btn(label, '.tt-tabs')();
+    if (t && t.getAttribute('aria-selected') !== 'true') { t.click(); await Kit.mounted(); }
+  };
+  const chip = (s) => D.text('.tt-palette .chip', s);
+  // 空いているマス（今日の曜日の列にあれば、そこを先に）
+  const emptyCell = () => () => {
+    const all = [...view().querySelectorAll('.tt-grid button.tt-c:not(.has)')];
+    const d = (new Date().getDay() + 6) % 7;
+    return all.find((b) => String(b.dataset.k || '').startsWith(d + '-')) || all[0] || null;
+  };
+  const homeMark = () => D.text('.tt-top .chip', 'ホームに表示中')() || D.btn('ホームに出す', '.tt-top')();
+  const makeBtn = () => D.btn('組み直す', '.tt-res')() || D.btn('時間割をつくる', '.tt-res')();
+
+  Kit.tour('timetable', [
+    {
+      el: '.tt-tabs', title: '2つの使い方', before: () => openTab('わたしの時間割'),
+      text: '「わたしの時間割」は自分の授業の表です。「学校の時間割をつくる」は、条件から学校全体を自動で組みます。',
+    },
+    {
+      el: '.tt-palette', title: '教科を選んで塗る', text: '教科を選んでマスを押すと、どんどん塗れます。例として「学活」で空きを2つ塗ってみます。', doLabel: '塗ってみる',
+      do: async (d) => {
+        await d.click(chip('学活'));
+        await d.click(emptyCell());
+        await d.wait(200);
+        await d.click(emptyCell());
+        await d.wait(300);
+        await d.click(chip('学活')); // もう一度押すと、塗るのを終わる
+      },
+      after: 600,
+    },
+    { el: homeMark, title: 'ホームに今日の分', text: 'この時間割は、ホームに「今日の時間割」として出ます。朝ひらけば、今日の授業がすぐ分かります。' },
+    {
+      el: D.btn('学校の時間割をつくる（自動）', '.tt-tabs'), title: '学校の時間割を自動で', text: '教務の先生向けです。担当と条件を入れると、先生が重ならないように自動で組みます。',
+      click: true, after: 500,
+    },
+    { el: '.tt-steps', title: '条件を順に入れる', text: '①曜日とクラス ②教科と時間数 ③担当 ④先生の都合 の順に入れて、⑤で組みます。例は架空の中学校です。' },
+    {
+      el: D.btn('先生の都合', '.tt-steps'), title: '先生の都合も入れる', text: '非常勤の先生が来ない曜日や出張の日を×にすると、そこには授業を入れません。', doLabel: '見てみる',
+      do: async (d) => {
+        await d.click(D.btn('先生の都合', '.tt-steps'));
+        await d.wait(300);
+        await d.click(D.text('.tt-tlist button', '島田'));
+      },
+      after: 700,
+    },
+    {
+      el: D.btn('つくる', '.tt-steps'), title: '自動で組む', text: '「組み直す」を押すと、先生の重なり・都合・固定のコマを守って組みます。何度でもやり直せます。', doLabel: '組んでみる',
+      do: async (d) => {
+        await d.click(D.btn('つくる', '.tt-steps'));
+        await d.wait(300);
+        await d.click(makeBtn);
+      },
+      after: 1000,
+    },
+    { el: '.tt-res', title: 'すべて入ったか分かる', text: 'すべての授業が入ったか、入らなかった授業はどれかが、ここに出ます。' },
+    { el: D.btn('わたしの時間割に写す'), title: '見る・直す・写す', text: 'クラス別・先生別に見て、マスを2つ押すと入れかわります。できた表は「わたしの時間割」に写せます。' },
+  ]);
+})();
+
+/* ---- js/tours/homework.js ---- */
+// 使い方のデモ：宿題・提出（手順の書き方は js/demo.js の先頭）
+(function () {
+  const D = Kit.demo;
+  const TITLE = 'ワーク P.30〜31';
+  const card = () => D.text('.hw-card', TITLE)();
+  const inCard = (sel) => () => { const c = card(); return c ? D.q(sel, c)() : null; };
+  // チェックの画面の n 番目の名前
+  const student = (n) => () => { const m = D.modal()(); return m ? [...m.querySelectorAll('.hw-st')][n] || null : null; };
+
+  Kit.tour('homework', [
+    { el: '.hw-list', title: '出した宿題の一覧', text: '宿題ごとに、何人出したかが一目で分かります。締切をすぎると赤い字になります。' },
+    {
+      el: D.btn('宿題を出す', '.app-head'), title: '宿題を出す', text: '題名と締切を入れて「出す」を押します。締切はカレンダーにも出ます。', doLabel: '出してみる',
+      do: async (d) => {
+        await d.click(D.btn('宿題を出す', '.app-head'));
+        await d.type(D.modal('#hw-f-title'), TITLE);
+        await d.pick(D.modal('#hw-f-due'), Kit.rel(1)); // 締切は明日（一覧の上のほうに並ぶ）
+        await d.wait(300);
+        await d.click(D.modalBtn('出す'));
+      },
+      after: 700,
+    },
+    {
+      el: () => { const c = card(); return c ? D.btn('チェック', c)() : null; }, title: '名簿でチェック', text: '一覧に入りました。「チェック」を押すと、クラスの名簿が出ます。',
+      click: true, after: 500,
+    },
+    {
+      // スマホは名簿が画面より長いので、最初の1人を囲む
+      el: () => (window.innerWidth < 640 ? student(0)() : D.modal('.hw-grid')()), title: '名前をタップ', text: '押すたびに「まだ → 済 → 遅れ → 免除」と変わります。出した人から押していきます。', doLabel: 'つけてみる',
+      do: async (d) => {
+        for (const n of [0, 1, 3, 4]) { await d.click(student(n)); await d.wait(120); }
+        await d.click(student(2)); // 2回押すと「遅れ」
+        await d.wait(200);
+        await d.click(student(2));
+      },
+      after: 600,
+    },
+    {
+      el: D.modal('.hw-sum'), title: 'まだの人が分かる', text: '済・遅れ・まだの人数が出ます。「まだ」のまま残った人に、声をかけられます。', doLabel: '閉じる',
+      do: async (d) => { await d.click(D.modal('.modal-f .btn.primary')); },
+      after: 600,
+    },
+    { el: inCard('.hw-prog'), title: '一覧にも数が出る', text: '一覧にも提出の人数が出ます。「まだの人をコピー」で、まだの人の名前を連絡に使えます。' },
+    { el: D.btn('かんたん成績へ（CSV）', '.app-head'), title: '成績にもつなげる', text: '1人ずつの提出の数を書き出して、かんたん成績に取り込めます。' },
+  ]);
+})();
+
+/* ---- js/tours/calendar.js ---- */
+// 使い方のデモ：カレンダー（手順の書き方は js/demo.js の先頭）
+(function () {
+  const D = Kit.demo;
+  const WORD = '学年打ち合わせ'; // サンプルの「職員会議」と同じ日に入るので、別の名前にする
+  // 入れた予定（月はパソコンだと日の中、スマホだと下の一覧。週の表示にも）
+  // 1日に5件以上あると「ほか○件」にまとまるので、見つからなければ明日のマスを囲む
+  const added = () => D.text('.cal-ev, .cal-ag-it, .cal-wev', WORD)() || D.q('.cal-day[data-date="' + Kit.rel(1) + '"]')();
+
+  Kit.tour('calendar', [
+    {
+      el: '.cal-quick', title: 'すばやく追加', text: '「明日 16時 職員会議」のように1行で書くと、日付・時刻・種類を読み取ります。', doLabel: '書いてみる',
+      do: async (d) => { await d.type('#cal-quick', '明日 16時 ' + WORD); },
+      after: 500,
+    },
+    {
+      el: '.cal-quick', title: '読み取って追加', text: '下に日付・時刻・名前・種類が出ます。合っていれば「追加」で入ります。', doLabel: '追加する',
+      do: async (d) => { await d.click(D.btn('追加', '.cal-quick')); },
+      after: 800,
+    },
+    { el: added, title: 'カレンダーに入りました', text: '明日の16時に入りました。会議・テスト・行事など種類ごとに色が分かれ、押すと直せます。' },
+    {
+      el: '.cal-bar .seg', title: '月・週・一覧', text: '「月」「週」「予定リスト」で、見かたを切りかえられます。', doLabel: '切りかえてみる',
+      do: async (d) => {
+        await d.click(D.btn('週', '.cal-bar'));
+        await d.wait(1000);
+        await d.click(D.btn('予定リスト', '.cal-bar'));
+        await d.wait(1000);
+        await d.click(D.btn('月', '.cal-bar'));
+      },
+      after: 500,
+    },
+    { el: D.btn('年間行事をまとめて追加', '.app-head'), title: '年間行事はまとめて', text: '学校の年間行事予定を Excel などからコピーして貼ると、1行ずつ読み取って、まとめて入ります。' },
+    { el: '.cal-others', title: 'ほかの道具ともつながる', text: 'リマインダーと宿題の締切も重ねて出ます。行事・テストなどの色の札で、種類ごとに隠すこともできます。' },
+    { el: '.cal-io-btn', title: 'Google・スマホへ', text: 'Googleカレンダー用やスマホ用のファイルに書き出したり、読み込んだりできます。' },
+  ]);
+})();
+
+/* ---- js/tours/reminders.js ---- */
+// 使い方のデモ：リマインダー（手順の書き方は js/demo.js の先頭）
+(function () {
+  const D = Kit.demo;
+  const WORD = '漢字テストを印刷';
+  const item = D.text('.rm-item', WORD);
+  const itemCheck = () => { const it = item(); return it ? it.querySelector('input[type=checkbox]') : null; };
+
+  Kit.tour('reminders', [
+    {
+      el: '.rm-quick', title: 'すばやく追加', text: '「明日 8時 漢字テストを印刷」のように書くと、日付と時刻を読み取ります。', doLabel: '書いてみる',
+      do: async (d) => { await d.type('#rm-quick', '明日 8時 ' + WORD); },
+      after: 500,
+    },
+    {
+      el: '.rm-quick', title: '読み取って追加', text: '下に日付と時刻が出ます。合っていれば「追加」で入ります。', doLabel: '追加する',
+      do: async (d) => { await d.click(D.btn('追加', '.rm-quick')); },
+      after: 700,
+    },
+    { el: item, title: '日にちごとに並ぶ', text: '今日・明日・この1週間…と分かれて並びます。押すと、くり返し（毎週など）やメモも入れられます。' },
+    {
+      // 「終わったもの」の欄はページのいちばん下にあり、スマホでは吹き出しに隠れるので、ここで言葉で伝える
+      el: item, title: '終わったらチェック', text: '終わったら左の四角にチェック。下の「終わったもの」にまとまり、くり返しのものは次の日付に進みます。', doLabel: 'チェックする',
+      do: async (d) => { await d.check(itemCheck, true); },
+      after: 1200,
+    },
+    { el: '.rm-notice', title: '時刻が来たら知らせる', text: 'このページを開いている間、時刻が来ると画面でお知らせします。' },
+    { el: D.btn('スマホのカレンダーへ', '.app-head'), title: 'スマホにも入れる', text: 'ページを閉じていても知らせてほしいときは、ここで書き出して、スマホのカレンダーの通知を使います。' },
+  ]);
+})();
+
+/* ---- js/tours/newsletter.js ---- */
+// 使い方のデモ：学級通信（手順の書き方は js/demo.js の先頭）
+(function () {
+  const D = Kit.demo;
+  const narrow = () => window.innerWidth < 640;
+  const room = () => {}; // スマホの下の余白は、土台（デモの説明中は .mb-view の下に余白）がつける
+  // せまい画面は「つくる／見る」を切りかえて見せる（広い画面では切りかえが出ないので、何もしない）
+  const pane = (label) => { const b = D.btn(label, '.nl-pane-seg')(); if (b && b.getAttribute('aria-pressed') !== 'true') b.click(); };
+  // 手順の前の準備：開いたままのダイアログ（「戻る」で来たとき）を閉じて、余白を足す
+  const prep = (fn) => async (d) => { Kit.closeModals(); if (fn) await fn(d); room(); };
+  // 号を開いた画面にいるとき（「もう一度」「戻る」で来たとき）は、一覧に戻しておく
+  const toList = prep(async (d) => { const b = D.btn('一覧', '.nl-bar')(); if (b) { b.click(); await d.find(D.q('.nl-card'), 2500); } });
+  const write = prep(async () => pane('つくる'));
+  // 紙面の見た目と「1枚に入るか」の行。広い画面では紙面が右に貼りついて（sticky）下の行が画面の外に出るので、
+  // ページのいちばん下まで送ってから見せる（そこで紙面の下の行が画面に入る）
+  const look = prep(async (d) => {
+    pane('見る');
+    if (window.innerWidth >= 1100) { window.scrollTo(0, document.documentElement.scrollHeight); await d.wait(200); }
+  });
+  // 「戻る」で来たときは、カレンダーから入れるダイアログを開き直しておく
+  const calendar = async (d) => {
+    if (D.modal()()) return;
+    const b = D.btn('カレンダーから入れる', '.nl-ed')();
+    if (b) { b.click(); await d.find(D.modal(), 2500); }
+  };
+  // 題字：スマホは欄が縦に並んで長いので、通信の名前の段だけ囲む
+  const mast = () => (narrow() ? D.q('section[aria-label="題字"] .nl-grid2')() : D.q('section[aria-label="題字"]')());
+  // 予定表の行：スマホは1行が縦に長いので、最初の1行だけ囲む
+  const rows = () => (narrow() ? D.q('.nl-rows .nl-row:not(.nl-row-h)')() : D.q('.nl-rows')());
+  Kit.tour('newsletter', [
+    { before: toList, el: D.btn('開く', '.nl-card'), title: '号を開く', text: '架空のクラスの「かけはし 第12号」を開きます。「次の号」を押すと、前の号を写して続きをつくれます。', click: true, after: 900 },
+    { before: write, el: mast, title: '題字を決める', text: '通信の名前・号・発行日を入れます。「紙・段・見た目」で、A4・B4や2段組みを選べます。' },
+    {
+      before: write, el: D.q('.nl-be'), title: '文章を書く', text: '見出しと本文を書きます。書いたそばから紙面に入ります。見出しを書きかえてみます。', doLabel: '書きかえてみる',
+      do: async (d) => { await d.type(D.q('.nl-be input[aria-label="見出し"]'), '全員で走りきった体育祭'); },
+      after: 800,
+    },
+    { before: write, el: D.btn('カレンダーから入れる', '.nl-ed'), title: '予定はカレンダーから', text: '予定表は、カレンダーに入れた行事・テストから、日ごとに入れられます。', doLabel: '開いてみる', do: async (d) => { await d.click(D.btn('カレンダーから入れる', '.nl-ed')); }, after: 600 },
+    {
+      before: calendar, el: D.modal(), title: '期間と種類を選ぶ', text: '「次の週」「2週間」などの期間と、入れる予定の種類を選びます。宿題の締切も入れられます。', doLabel: '入れてみる',
+      do: async (d) => {
+        await d.click(D.modalBtn('入れる'));
+        // いまの行が埋まっていると「置きかえますか」と聞かれる
+        if (await d.find(D.modalBtn('置きかえる'), 1500)) await d.click(D.modalBtn('置きかえる'));
+      },
+      after: 900,
+    },
+    { before: write, el: rows, title: '予定が入りました', text: '平日は予定がなくても行ができるので、持ち物などを書き足せます。土日・祝日は予定のある日だけです。' },
+    { before: look, el: '.nl-status', title: '1枚に入るか見る', text: '紙面の見た目の下に、1枚に入るかが出ます。入りきらないときは、切れる所に赤い線と、直し方が出ます。' },
+    { before: prep(), el: '.nl-bar .btn-row', title: '印刷・Word・コピー', text: '「印刷」でA4・B4に刷れます。「Word に書き出す」で学校の様式へ、「文章をコピー」で連絡アプリに貼れます。' },
+  ]);
+})();
+
+/* ---- js/tours/templates.js ---- */
+// 使い方のデモ：連絡テンプレート（手順の書き方は js/demo.js の先頭）
+(function () {
+  const D = Kit.demo;
+  const room = () => {}; // スマホの下の余白は、土台（デモの説明中は .mb-view の下に余白）がつける
+  // スマホは「一覧」と「入れる画面」が分かれるので、一覧を見せたい手順の前に戻しておく（広い画面では何もしない）
+  const toList = async () => { Kit.closeModals(); const b = D.btn('ひな形の一覧', '.tp-back')(); if (b) b.click(); room(); };
+  const isOpen = (t) => { const h2 = document.querySelector('#mb-view .tp-head h2'); return !!h2 && h2.textContent.includes(t); };
+  // 「戻る」で来たときも、そのひな形を開いた状態にしておく（指は出さない）
+  const ensure = (t) => async (d) => { if (!isOpen(t)) { await toList(); const it = await d.find(D.text('.tp-it', t), 1500); if (it) it.click(); } room(); };
+  const MOTI = '持ち物のお願い';
+  Kit.tour('templates', [
+    { before: toList, el: D.btn('保護者へ', '.tp-groups'), title: '相手でしぼる', text: 'ひな形は、保護者・生徒・先生あてに分かれています。「保護者へ」でしぼってみます。', click: true, after: 500 },
+    { before: toList, el: D.text('.tp-it', MOTI), title: 'ひな形を選ぶ', text: '使いたいひな形を押します。例として「持ち物のお願い」を開きます。', click: true, after: 700 },
+    { before: ensure(MOTI), el: '.tp-auto', title: '自動で入るもの', text: 'クラスと先生の名前は、名簿と学校の設定から自動で入ります。入れるのは、残りの空欄だけです。' },
+    {
+      before: ensure(MOTI), el: '.tp-fields', title: '空欄を入れる', text: '行事名・日付・持ち物を入れます。行事は「カレンダーの予定から入れる」で選ぶこともできます。', doLabel: '入れてみる',
+      do: async (d) => {
+        await d.type('#tp-v-行事名', '校外学習');
+        await d.type('#tp-v-日付', '11月6日（金）');
+        await d.type('#tp-v-持ち物', '弁当・水筒\n雨具\nしおり');
+      },
+      after: 600,
+    },
+    { before: ensure(MOTI), el: 'textarea[aria-label="できあがりの文"]', title: 'できた文を見る', text: '入れたそばから、文ができあがります。この欄で、直接直すこともできます。' },
+    { before: ensure(MOTI), el: '.tp-out .btn-row', title: 'コピー・メールで送る', text: '「コピー」で連絡アプリや Classroom に貼れます。「メールで開く」で、メールの下書きになります。' },
+    { before: toList, el: D.text('.tp-it', '〈行事名〉のお知らせ'), title: '文書のひな形', text: '紙で配る「お知らせ」も同じように使えます。入れた行事名は、そのまま引きつぎます。', click: true, after: 700 },
+    { before: ensure('〈行事名〉のお知らせ'), el: '.tp-out .btn-row', title: '印刷・Word に', text: '文書は紙の形で見えます。「印刷」でそのまま配れます。「Word に書き出す」で学校の様式にも写せます。' },
+  ]);
 })();
 
 /* ---- js/start.js ---- */
