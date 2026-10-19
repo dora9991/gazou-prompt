@@ -24,6 +24,7 @@ const shotsDir = opt('shots', null);
 const html = opt('html', path.join(ROOT, 'index.html'));
 const url = 'file://' + path.resolve(html);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const dbg = (...a) => { if (process.env.DEBUG) console.log('   …', ...a); };
 
 // 本物のデータのかわり：自分のクラスを1つ入れて、サンプルを片付けた状態
 const SEED = `(async () => {
@@ -46,8 +47,9 @@ async function runOne(engine, sizeName, tourIds) {
     const p = await b.page(url);
     if (engine === 'chrome' && sz.mobile) await p.send('Emulation.setDeviceMetricsOverride', { width: sz.width, height: sz.height, deviceScaleFactor: 2, mobile: true });
     await p.wait('window.Kit && Kit.current && Kit.current() === "home"', 15000);
-    await p.eval(SEED);
-    await p.eval('location.hash = "#home"; 1');
+    dbg('開いた'); await p.eval(SEED); dbg('本物のデータを入れた');
+    // WebKit の道具は「1つの式」しか受け付けない（文を並べると返事が来ない）。どの eval も式1つで書く
+    await p.eval('(location.hash = "#home", 1)');
     await sleep(400);
     const before = await p.eval(SNAP);
     const list = tourIds.length ? tourIds : await p.eval('JSON.stringify(Kit.apps().map((a) => a.id).filter((id) => Kit.demo.has(id)))').then(JSON.parse);
@@ -56,11 +58,11 @@ async function runOne(engine, sizeName, tourIds) {
       const t0 = Date.now();
       const errBefore = p.errors().length;
       try {
-        await p.eval(`Kit.demo.speed = 0.25; location.hash = '#${id}'; 1`);
+        await p.eval(`(Kit.demo.speed = 0.25, location.hash = '#${id}', 1)`);
         await p.wait(`Kit.current() === '${id}'`, 8000);
         await sleep(300);
         // 見出しの「使い方を見る」を、本物のクリックで押す
-        await p.clickEl('.app-head .demo-btn');
+        dbg(id, '使い方を見る'); await p.clickEl('.app-head .demo-btn');
         await p.wait(`Kit.demo.running() && Kit.demo.running().id === '${id}'`, 8000);
         for (let guard = 0; guard < 60; guard++) {
           let st = null;
@@ -72,7 +74,7 @@ async function runOne(engine, sizeName, tourIds) {
             await sleep(120);
           }
           if (st.done) break;
-          r.n = st.n; r.steps = st.i + 1;
+          r.n = st.n; r.steps = st.i + 1; dbg(id, '手順', st.i + 1, st.title);
           if (!st.found || st.note) r.missing.push((st.i + 1) + '「' + st.title + '」');
           if (shotsDir) { const dir = path.join(shotsDir, engine + '-' + sizeName); fs.mkdirSync(dir, { recursive: true }); await p.shot(path.join(dir, id + '-' + String(st.i + 1).padStart(2, '0') + '.png')); }
           await p.clickEl('.tour-card .tour-btn.primary');
@@ -80,7 +82,7 @@ async function runOne(engine, sizeName, tourIds) {
         }
         if (shotsDir) { const dir = path.join(shotsDir, engine + '-' + sizeName); await p.shot(path.join(dir, id + '-99-end.png')); }
         // 最後のカードの「デモを終わる」
-        await p.clickEl('.tour-card .tour-btn.primary');
+        dbg(id, 'デモを終わる'); await p.clickEl('.tour-card .tour-btn.primary');
         await p.wait('!Kit.store.demo && !document.documentElement.classList.contains("is-demo")', 8000);
         await sleep(500);
         const after = await p.eval(SNAP);
