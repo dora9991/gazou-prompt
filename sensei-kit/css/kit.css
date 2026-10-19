@@ -278,7 +278,7 @@ p { margin: 0; }
   background: linear-gradient(90deg, var(--shu) 0 72%, color-mix(in srgb, var(--shu) 55%, var(--surface)) 72%);
   transform: rotate(-24deg);
 }
-.app-head .app-desc { color: var(--ink-2); margin-top: 2px; font-size: 14.5px; max-width: 46em; }
+.app-head .app-desc { color: var(--ink-2); margin-top: 2px; font-size: 14.5px; max-width: 46em; text-wrap: pretty; }
 .app-head .app-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 @media (max-width: 640px) { .app-head h1 { font-size: 21px; gap: 10px; } }
 
