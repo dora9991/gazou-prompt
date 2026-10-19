@@ -13,7 +13,23 @@
   Kit.css('home', `
 .hm-top{display:grid;gap:16px;grid-template-columns:1fr}
 @media (min-width:980px){.hm-top{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}}
-.hm-h2{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.hm-h2{font-size:15px;font-weight:700;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;white-space:nowrap}
+.hm-h2 .chip{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.hm-start{margin-bottom:16px;border-color:color-mix(in srgb,var(--gosu) 35%,var(--line));background:linear-gradient(180deg,color-mix(in srgb,var(--gosu-wash) 55%,var(--surface)) 0,var(--surface) 70%)}
+.hm-start-title{font-family:var(--font-display);font-size:20px;font-weight:600;letter-spacing:.03em}
+.hm-start-lead{margin-top:4px;font-size:14.5px;color:var(--ink-2);max-width:46em}
+.hm-steps{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+.hm-step{position:relative;display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line)}
+.hm-step-go{display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 12px;align-items:center;padding:0;border:0;background:transparent;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.hm-step-go:hover .hm-step-name{color:var(--gosu)}
+.hm-step-no{grid-row:span 2;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--board);color:var(--on-board);font-family:var(--font-display);font-weight:600;font-size:19px}
+.hm-step-name{font-weight:700;font-size:16.5px}
+.hm-step-sub{font-size:13px;color:var(--ink-3)}
+.hm-step .demo-btn{align-self:flex-start}
+.hm-start-foot{margin-top:14px}
+.hm-tool-wrap{position:relative;display:grid}
+.hm-tool-wrap .hm-tool{padding-bottom:50px}
+.hm-tool-wrap .demo-btn{position:absolute;right:12px;bottom:10px}
 .hm-tt{display:grid;gap:4px;margin-top:10px}
 .hm-tt-row{display:grid;grid-template-columns:32px 74px minmax(0,1fr);gap:8px;align-items:center;padding:5px 8px;border-radius:8px;background:var(--surface-2);font-size:14px}
 .hm-tt-row.has{background:color-mix(in srgb,var(--c) 14%,var(--surface))}
@@ -33,6 +49,7 @@
 .hm-group+.hm-group{margin-top:16px}
 .hm-group-label{font-size:12px;letter-spacing:.16em;color:var(--ink-3);font-weight:700}
 .hm-tools{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr))}
+.hm-tools .demo-btn{min-height:32px;font-size:12.5px}
 .hm-tool{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 12px;align-items:start;text-align:left;padding:14px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);color:var(--ink);font:inherit;cursor:pointer;text-decoration:none;transition:border-color .12s,transform .06s}
 .hm-tool:hover{border-color:var(--gosu);color:var(--ink)}
 .hm-tool:active{transform:translateY(1px)}
@@ -106,11 +123,17 @@
         }));
 
         if (Kit.store.samplesShown() && (classes.some((c) => c.sample) || events.some((e) => e.sample))) {
-          root.append(h('div', { class: 'sample-bar', role: 'note' },
-            h('span', null, h('strong', null, 'サンプル表示中'), '　架空のクラス（2年3組）と架空の学校の例で、全部の道具を動かしています。気軽にさわってみてください。'),
-            h('div', { class: 'btn-row' },
-              Kit.btn('自分のクラスで始める', startOwn, { sm: true, kind: 'primary', icon: 'users' }),
-              Kit.btn('サンプルを片付ける', clearSamples, { sm: true, kind: 'ghost', icon: 'trash' }))));
+          // はじめての方へ：3つの手順と、それぞれの使い方のデモ。デモ中は出さない（帯が出ているので）
+          const STEPS = [['1', '名簿を入れる', 'Excel から貼るだけ。番号だけでも', 'roster'], ['2', '席替えをする', '条件つきのくじ。発表・印刷も', 'seats'], ['3', '係・当番を決める', '名簿からそのまま表に', 'roles']].filter((x) => Kit.appDef(x[3]));
+          root.append(h('section', { class: 'card pad-lg hm-start', 'aria-label': 'はじめての方へ' },
+            h('h2', { class: 'hm-start-title' }, 'はじめての方へ'),
+            h('p', { class: 'hm-start-lead' }, '架空のクラス「2年3組」で、全部の道具を試せます。「使い方を見る」を押すと、操作の流れを実際に動かして見せます（あなたのデータは変わりません）。'),
+            h('ol', { class: 'hm-steps' }, STEPS.map(([no, name, sub, id]) => h('li', { class: 'hm-step' },
+              h('button', { type: 'button', class: 'hm-step-go', onclick: () => Kit.go(id) }, h('span', { class: 'hm-step-no' }, no), h('span', { class: 'hm-step-name' }, name), h('span', { class: 'hm-step-sub' }, sub)),
+              Kit.demo && Kit.demo.has(id) ? h('button', { type: 'button', class: 'demo-btn', onclick: () => Kit.demo.start(id) }, Kit.icon('play', 12), h('span', null, '使い方を見る')) : null))),
+            Kit.store.demo ? null : h('div', { class: 'btn-row hm-start-foot' },
+              Kit.btn('自分のクラスで始める', startOwn, { kind: 'primary', icon: 'users' }),
+              Kit.btn('サンプルを片付ける', clearSamples, { kind: 'ghost', icon: 'trash' }))));
         }
 
         /* ── 今日の時間割 ── */
@@ -190,8 +213,13 @@
           const apps = Kit.apps().filter((a) => a.group === g);
           if (!apps.length) continue;
           tools.append(h('div', { class: 'hm-group' }, h('div', { class: 'hm-group-label' }, LABEL[g]),
-            h('div', { class: 'hm-tools' }, apps.map((a) => h('button', { type: 'button', class: 'hm-tool', onclick: () => Kit.go(a.id) },
-              h('span', { class: 'hm-tool-ic' }, Kit.icon(a.icon)), h('span', { class: 'hm-tool-title' }, a.title), h('span', { class: 'hm-tool-desc' }, a.desc || ''), h('span', { class: 'hm-tool-stat' }, stat[a.id] ? stat[a.id]() : ''))))));
+            h('div', { class: 'hm-tools' }, apps.map((a) => {
+              const card = h('button', { type: 'button', class: 'hm-tool', onclick: () => Kit.go(a.id) },
+                h('span', { class: 'hm-tool-ic' }, Kit.icon(a.icon)), h('span', { class: 'hm-tool-title' }, a.title), h('span', { class: 'hm-tool-desc' }, a.desc || ''), h('span', { class: 'hm-tool-stat' }, stat[a.id] ? stat[a.id]() : ''));
+              if (!(Kit.demo && Kit.demo.has(a.id))) return card;
+              return h('div', { class: 'hm-tool-wrap' }, card,
+                h('button', { type: 'button', class: 'demo-btn', onclick: () => Kit.demo.start(a.id), 'aria-label': a.title + 'の使い方を見る' }, Kit.icon('play', 12), h('span', null, '使い方を見る')));
+            }))));
         }
         tools.append(h('div', { class: 'hm-group' }, h('div', { class: 'hm-group-label' }, 'すでにある道具（別のページで開きます）'),
           h('div', { class: 'hm-tools' }, OTHER_TOOLS.map((t) => h('a', { class: 'hm-tool', href: t.url, target: '_blank', rel: 'noopener' },
@@ -232,6 +260,7 @@
       }
 
       async function startOwn() {
+        if (Kit.store.demo) { Kit.toast('デモの中ではできません。上の帯の「デモを終わる」で戻ってから使ってください'); return; }
         const p = await Kit.profile.edit();
         if (!p) return;
         const yes = await Kit.confirm({ title: 'サンプルも片付けますか', body: '架空のクラス・学校の例（名簿・席・係・時間割・予定など）を消して、空の状態から始めます。自分で入力したものは残ります。', ok: '片付ける', cancel: 'あとで' });
@@ -239,6 +268,7 @@
         render();
       }
       async function clearSamples() {
+        if (Kit.store.demo) { Kit.toast('デモの中ではできません。上の帯の「デモを終わる」で戻ってから使ってください'); return; }
         const yes = await Kit.confirm({ title: 'サンプルを片付けますか', body: 'すべての道具から、架空のクラス・学校の例を消します。自分で入力・編集したものは残ります。', ok: '片付ける' });
         if (!yes) return;
         await Kit.store.samplesOff();
@@ -246,12 +276,14 @@
         render();
       }
       async function backup() {
+        if (Kit.store.demo) { Kit.toast('デモの中ではできません。上の帯の「デモを終わる」で戻ってから使ってください'); return; }
         await Kit.store.flush();
         const data = await Kit.store.exportAll();
         const ok = await Kit.download('sensei-kit-backup-' + Kit.ymd() + '.json', JSON.stringify(data, null, 1));
         if (ok) Kit.toast('バックアップを書き出しました');
       }
       async function restore() {
+        if (Kit.store.demo) { Kit.toast('デモの中ではできません。上の帯の「デモを終わる」で戻ってから使ってください'); return; }
         const f = await Kit.img.pick('application/json,.json');
         if (!f) return;
         let data;
@@ -264,6 +296,7 @@
         catch (e) { Kit.toast('戻せませんでした：' + ((e && e.message) || e), { type: 'bad' }); }
       }
       async function wipe() {
+        if (Kit.store.demo) { Kit.toast('デモの中ではできません。上の帯の「デモを終わる」で戻ってから使ってください'); return; }
         const yes = await Kit.confirm({ title: 'すべて消しますか', body: 'すべての道具の内容（名簿・席・係・当番・時間割・予定・リマインダー・宿題・通信・わたしのひな形）を消して、最初の状態（サンプル表示）に戻します。元に戻せないので、先にバックアップを書き出しておくと安心です。', ok: 'すべて消す', danger: true });
         if (!yes) return;
         await Kit.store.wipeAll();

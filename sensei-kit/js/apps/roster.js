@@ -30,6 +30,12 @@
 .ro-paste-prev{max-height:min(40vh,320px);overflow:auto}
 .ro-paste-prev td,.ro-paste-prev th{font-size:13px;padding:5px 10px}
 .ro-help{margin-top:16px}
+.ro-danger{display:flex;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px dashed var(--line)}
+/* 空の欄は静かに（入っている欄が目立つように）。番号の上下の矢印は出さない */
+.ro-row input[type=text]:placeholder-shown{background:transparent;border-color:var(--line)}
+.ro-row input[type=text]:placeholder-shown:focus{background:var(--surface);border-color:var(--focus)}
+.ro-row input[type=number]{-moz-appearance:textfield;appearance:textfield}
+.ro-row input[type=number]::-webkit-inner-spin-button,.ro-row input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 @media (max-width:760px){
   .ro-row{grid-template-columns:50px minmax(0,1fr) minmax(0,1fr) 62px 38px;grid-template-areas:"no name name gender del" "no kana note front front";row-gap:6px;column-gap:6px;padding:8px}
   .ro-row.ro-th{display:none}
@@ -103,8 +109,7 @@
         body.append(h('div', { class: 'ro-head' },
           Kit.field({ label: 'クラスの名前', input: nameIn }),
           h('span', { class: 'small ink-2 num', style: { paddingBottom: '8px' } }, cur.students.length + '人' + (genderN('m') + genderN('f') ? '（男 ' + genderN('m') + '・女 ' + genderN('f') + '）' : '')),
-          h('span', { class: 'grow' }),
-          Kit.btn('このクラスを消す', () => removeClass(), { sm: true, kind: 'danger', icon: 'trash' })));
+          h('span', { class: 'grow' })));
 
         const veil = h('div', { class: 'ro-veil' + (School.hidden() && !showAnyway ? ' is-veiled' : '') });
         const table = h('div', { class: 'ro-table', role: 'group', 'aria-label': (cur.name || 'クラス') + 'の名簿' });
@@ -134,6 +139,8 @@
             h('li', null, '「前の席」に印をつけた人は、席替えで前のほうの席になります。性別は、席替えの「男女を交互に」だけに使います（空欄でもかまいません）。'),
             h('li', null, '名簿はこのブラウザの中だけに保存されます。学校の決まりで名前を入れられないときは、番号だけで使ってください。'),
             h('li', null, '生徒を消すと、その人の席・係・提出の記録は表示されなくなります。'))));
+        // クラスを消すのは、いちばん下に（ふだん押さないので目立たせない）
+        body.append(h('div', { class: 'ro-danger' }, Kit.btn('このクラスを消す', () => removeClass(), { sm: true, kind: 'danger', icon: 'trash' })));
       }
 
       function row(s, i, dup) {

@@ -23,6 +23,7 @@
   // 開いた道具の見出しの「使い方を見る」。出ていなければ、上の「デモ中」の帯（#mb-view の外にあるので、ページ全体からさがす）
   const demoBtn = () => D.q('.app-head .demo-btn')() || document.querySelector('.demo-ribbon');
   Kit.tour('home', [
+    { before: goHome, el: () => sec('はじめての方へ')() || first('今日・明日やること', '.list-item')(), title: 'はじめの3歩', text: '名簿 → 席替え → 係・当番の順に使うと、ほかの道具にもつながります。それぞれ「使い方を見る」でデモが見られます。' },
     { before: goHome, el: first('今日・明日やること', '.list-item'), title: '今日・明日やること', text: '予定・リマインダー・宿題の締切から、今日と明日の分がここに集まります。押すと、その道具が開きます。' },
     { before: goHome, el: sec('今日の時間割'), title: '今日の時間割と当番', text: '「時間割」でつくった今日の授業と、今日の日直・今週の給食当番が出ます。' },
     { before: goHome, el: tools, title: '道具箱', text: 'クラス・授業・予定・通信の道具が並びます。カードの下に、いまの様子（何件あるか など）が出ます。' },
