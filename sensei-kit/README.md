@@ -7,6 +7,8 @@
 
 最初は、架空のクラス「2年3組」と架空の学校の例で全部が動いている。ホームの「自分のクラスで始める」で、自分のクラスに切りかえる。
 
+**使い方のデモ**：どの道具も、見出しの横の「▶ 使い方を見る」で、操作の流れを実際に動かして見せる（光る囲み・吹き出し・動く指。「次へ」「やってみる」で1手ずつ、「自動で」で最後まで）。デモのあいだは架空のクラスの砂場で動き、上に「デモ中」の帯が出る。**本物のデータは読まず・書かない**（「デモを終わる」かページの読み込み直しで元に戻る）。自分のクラスに切りかえたあとでも、いつでも見られる。
+
 土台（`js/kit.js`・`css/kit.css`）は、みせびらき（math-dialogue の `startup-kit/`）を写して、色と看板を学校向けにしたもの。アプリの書き方・保存のしかたが同じなので、道具を行き来させられる。
 
 ## 開き方
@@ -35,6 +37,13 @@
 | リマインダー | `js/apps/reminders.js` | 期限・時刻・くり返し（毎日・平日・毎週・毎月）。期限切れ／今日／明日／この1週間。ページを開いている間は時刻に知らせる。スマホのカレンダーに書き出して（.ics、知らせつき）確実に知らせる。共有 |
 | 学級通信 | `js/apps/newsletter.js` `js/core/docx.js` | 題字（通信の名前・号・発行日〈和暦／西暦〉・学校名・発行）の下に、文章・予定表・箇条書き・囲み・写真を並べる。予定表は「カレンダーから入れる」（行事・テストなどを日ごとに、宿題の締切も）、箇条書きは「宿題・提出物から足す」。A4 たて・B4 たて・A4 よこ、1段・2段、見出しのかたち3つ、字体3つ（白黒の印刷機で見やすいよう色なし）。縮めた紙面で「1枚に入るか」を見ながら書ける。印刷・Word（.docx）・連絡アプリに貼る文。前の号を写して次の号 |
 | 連絡テンプレート | `js/apps/templates.js` `js/core/letters.js` | 保護者へ（行事・面談〈切り取りの希望票つき〉・お礼・学級閉鎖・持ち物・提出物・欠席への返事・けが・下校時刻・テスト前）、生徒へ（明日の連絡・課題・テスト範囲・行事の集合）、先生へ（自習監督・会議の案内・休みの連絡・引き継ぎ・お礼）の 19 のひな形。クラス・先生の名前・発行日（和暦）・時候のあいさつ・次の授業の日は自動で入り、行事はカレンダーから、生徒の名前は名簿から。メッセージはコピー・メール、文書は印刷・Word。自分のひな形として直して保存できる。宿題の「まだの人」や、カレンダーの予定から、そのまま開ける |
+
+## 使い方のデモのしくみ（`js/demo.js`・`js/tours/*.js`）
+
+- `Kit.demo.start(id)` で、`Kit.store` を砂場（メモリ）に、`Kit.pref` をメモリだけに切りかえてから道具を開き直し、`Kit.tour(id, 手順)` の手順を出す。`Kit.demo.end()` で本物の保存先に戻して開き直す。
+- 手順の書き方は `js/demo.js` の先頭。1道具＝`js/tours/<id>.js` 1つ。手順の文は「です・ます」、1つ 70 字くらいまで。
+- ダウンロード・印刷・コピー・ファイル選び・通知の許可は、デモでは押さない（場所を見せるだけ）。
+- 確かめ：`node tools/demo-check.cjs`（全道具のデモを最後まで進め、どの手順も囲む所が見つかるか・エラーがないか・終えたあと本物のデータが1文字も変わっていないか・本物のクラスに戻るかを、Chrome と WebKit × パソコンとスマホで）。
 
 ## 共有のしくみ（サーバーなし）
 
@@ -67,11 +76,14 @@ sensei-kit/
 ├── js/core/letters.js      … 和暦・時候のあいさつ・差し込み・連絡のひな形（同上）
 ├── js/core/docx.js         … Word（.docx）をその場で組み立てる（サーバーも部品の読み込みもなし。同上）
 ├── js/apps/*.js            … 道具（1ファイル1道具）
+├── js/demo.js              … 使い方のデモの土台（砂場への切りかえ・帯・光る囲み・吹き出し・動く指）
+├── js/tours/*.js           … 道具ごとのデモの手順（1道具1ファイル）
 ├── js/start.js             … 起動
 ├── vendor/qrcode.js        … QRコード（MIT, Kazuhiko Arase。みせびらき と同じもの）
 ├── tools/bundle.cjs        … 1つの HTML にまとめる（all-in-one と Artifact 用）
 ├── tools/check.cjs         … 動作確認（Playwright で全部の道具を PC/スマホ × ライト/ダークで開き、エラー・はみ出しを調べ、画面を撮る）
 ├── tools/test.cjs          … 計算の確かめ（席替え・時間割・係決め・当番表の決まり、和暦と差し込み、Word の組み立て、祝日、名簿の読み取り、共有の往復、年間行事、ICS）
+├── tools/demo-check.cjs    … 使い方のデモの確かめ（全道具 × Chrome・WebKit × パソコン・スマホ。本物のデータが変わらないことも）
 ├── tools/flow.cjs          … つながりの確かめ（名簿の貼り付け → 席替え → 係 → 当番表 → 宿題 → 時間割 → 年間行事 → 共有リンクを別の人が開く → 学級通信 → 連絡テンプレート → バックアップ）
 ├── docs/つなぐ機能の設計.md … サーバーが要る機能（共有・連絡・宿題の配布・学習記録）を数学ポータルに足す案
 └── sensei-kit-all-in-one.html … まとめたもの（tools/bundle.cjs で作る。手で直さない）
@@ -84,7 +96,9 @@ sensei-kit/
 - クラスに結びつく記録は `classId` を持たせ、`School.classes.onRemove(School.removeByClass('<coll>'))` でクラスを消したときに一緒に消す。
 - 生徒の名前を出すところは `School.label(生徒)` を使う（「名前を隠す」に従う）。
 - 解く部品（くじ・組み合わせ）は `js/core/` に、画面から切りはなして書き、`tools/test.cjs` で確かめる。
-- 直したら：`node tools/test.cjs` → `node tools/check.cjs --fresh` → `node tools/flow.cjs` → `node tools/bundle.cjs`。
+- 道具を足したら、`js/tours/<id>.js` に使い方のデモも書く（`index.html` に `<script>` を1行）。
+- 直したら：`node tools/test.cjs` → `node tools/check.cjs --fresh` → `node tools/flow.cjs` → `node tools/demo-check.cjs` → `node tools/bundle.cjs`。
+- 手元の Mac で流すとき（Playwright を入れていない場合）：`playwright-core` だけを別の場所に入れ、`PLAYWRIGHT=<その場所>/node_modules/playwright-core CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"` をつけて実行する。`demo-check.cjs` は追加の部品なし（`~/.claude/skills/shiage/scripts/lib` の道具で Chrome と WebKit を動かす）。
 
 ## 確かめたこと
 
