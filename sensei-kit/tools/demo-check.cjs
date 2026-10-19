@@ -76,7 +76,7 @@ async function runOne(engine, sizeName, tourIds) {
           if (st.done) break;
           r.n = st.n; r.steps = st.i + 1; dbg(id, '手順', st.i + 1, st.title);
           if (!st.found || st.note) r.missing.push((st.i + 1) + '「' + st.title + '」');
-          if (shotsDir) { const dir = path.join(shotsDir, engine + '-' + sizeName); fs.mkdirSync(dir, { recursive: true }); await p.shot(path.join(dir, id + '-' + String(st.i + 1).padStart(2, '0') + '.png')); }
+          if (shotsDir) { const dir = path.join(shotsDir, engine + '-' + sizeName); fs.mkdirSync(dir, { recursive: true }); await sleep(450); await p.shot(path.join(dir, id + '-' + String(st.i + 1).padStart(2, '0') + '.png')); }
           await p.clickEl('.tour-card .tour-btn.primary');
           await sleep(150);
         }

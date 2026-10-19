@@ -148,11 +148,23 @@
   // 見せたい所が、上の帯にも下の吹き出し（スマホ）にも隠れない位置まで送る
   function keepVisible(el) {
     if (!T || !el) return;
-    const r = el.getBoundingClientRect();
     const top = coverBottom() + 10;
     const bottom = narrow() ? window.innerHeight - T.ui.card.offsetHeight - 16 : window.innerHeight - 10;
-    if (r.top < top) window.scrollBy(0, r.top - top);
-    else if (r.bottom > bottom) window.scrollBy(0, Math.min(r.bottom - bottom, r.top - top));
+    const need = () => {
+      const r = el.getBoundingClientRect();
+      if (r.top < top) return r.top - top;
+      if (r.bottom > bottom) return Math.min(r.bottom - bottom, r.top - top);
+      return 0;
+    };
+    // ダイアログの中など、送れる箱の中にあれば、先にその箱を送る
+    for (let box = el.parentElement; box && box !== document.body; box = box.parentElement) {
+      const d = need();
+      if (!d) break;
+      const cs = getComputedStyle(box);
+      if (/(auto|scroll)/.test(cs.overflowY) && box.scrollHeight > box.clientHeight + 1) box.scrollTop += d;
+    }
+    const d = need();
+    if (d) window.scrollBy(0, d);
     T.lastKey = '';
   }
   function loop() {
@@ -255,7 +267,7 @@
       h('div', { class: 'tour-title' }, 'これで一通りです'),
       h('p', { class: 'tour-text' }, 'このままデモの中で、自由にさわってみることもできます。終わるときは、上の帯の「デモを終わる」で、あなたのデータに戻ります。'),
       h('div', { class: 'tour-foot' },
-        h('button', { type: 'button', class: 'tour-btn ghost', onclick: () => run(id) }, Kit.icon('refresh', 14), 'もう一度'),
+        h('button', { type: 'button', class: 'tour-btn ghost', onclick: () => Kit.demo.start(id) }, Kit.icon('refresh', 14), 'もう一度'),
         h('span', { class: 'grow' }),
         h('button', { type: 'button', class: 'tour-btn', onclick: () => stopTour({ keep: true }) }, '自由にさわる'),
         h('button', { type: 'button', class: 'tour-btn primary', onclick: () => Kit.demo.end() }, 'デモを終わる'))]);
