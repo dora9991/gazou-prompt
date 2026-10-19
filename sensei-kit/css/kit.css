@@ -522,7 +522,7 @@ kbd { font-family: var(--font-mono); font-size: 12px; padding: 1px 6px; border-r
 @media (pointer: coarse) { .demo-btn { min-height: 40px; } }
 
 .demo-ribbon {
-  position: sticky; top: 0; z-index: 45;
+  position: sticky; top: 0; z-index: 165; /* 使い方の吹き出し（160）より上：説明の途中でも「デモを終わる」を押せる */
   display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px;
   padding: 8px var(--gutter-r) 8px var(--gutter-l);
   background: var(--demo); color: var(--on-demo); font-size: 13.5px; line-height: 1.5;
