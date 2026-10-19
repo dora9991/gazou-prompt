@@ -66,7 +66,7 @@
     const main = document.querySelector('.mb-main') || document.body;
     ribbon = h('div', { class: 'demo-ribbon', role: 'status' },
       h('span', { class: 'demo-ribbon-tag' }, Kit.icon('play', 12), 'デモ中'),
-      h('span', { class: 'demo-ribbon-text' }, '架空のクラスで動かしています。', h('b', null, 'あなたのデータは変わりません。')),
+      h('span', { class: 'demo-ribbon-text' }, h('span', { class: 'demo-ribbon-long' }, '架空のクラスで動かしています。'), h('b', null, 'あなたのデータは変わりません。')),
       h('span', { class: 'demo-ribbon-btns' },
         h('button', { type: 'button', class: 'demo-ribbon-end', onclick: () => Kit.demo.end() }, Kit.icon('close', 14), 'デモを終わる')));
     main.prepend(ribbon);
@@ -134,14 +134,25 @@
     }
     card.style.left = Math.round(x) + 'px'; card.style.top = Math.round(y) + 'px';
   }
-  // スマホ：吹き出しが下にくっつくので、見せたい所が吹き出しの上に来るように送る
-  function keepAboveCard(el) {
-    if (!T) return;
-    const r = el.getBoundingClientRect(), ch = T.ui.card.offsetHeight;
-    const top = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--top-h')) || 52) + 44;
-    const room = window.innerHeight - ch - 16;
-    if (r.bottom > room) window.scrollBy(0, Math.min(r.bottom - room, r.top - top));
-    else if (r.top < top) window.scrollBy(0, r.top - top);
+  // 上にかぶさる物（スマホの上のバー・デモ中の帯）の下の端
+  function coverBottom() {
+    let y = 0;
+    for (const sel of ['.mb-top', '.demo-ribbon']) {
+      const e = document.querySelector(sel);
+      if (!e) continue;
+      const r = e.getBoundingClientRect();
+      if (r.height > 0 && getComputedStyle(e).display !== 'none' && r.top < 4 + y) y = Math.max(y, r.bottom);
+    }
+    return y;
+  }
+  // 見せたい所が、上の帯にも下の吹き出し（スマホ）にも隠れない位置まで送る
+  function keepVisible(el) {
+    if (!T || !el) return;
+    const r = el.getBoundingClientRect();
+    const top = coverBottom() + 10;
+    const bottom = narrow() ? window.innerHeight - T.ui.card.offsetHeight - 16 : window.innerHeight - 10;
+    if (r.top < top) window.scrollBy(0, r.top - top);
+    else if (r.bottom > bottom) window.scrollBy(0, Math.min(r.bottom - bottom, r.top - top));
     T.lastKey = '';
   }
   function loop() {
@@ -162,8 +173,8 @@
     const n = T.steps.length;
     const acts = !!(step.click || step.do);
     const last = T.i === n - 1;
-    const back = h('button', { type: 'button', class: 'tour-btn ghost', disabled: T.i === 0 || T.busy, onclick: () => prev() }, Kit.icon('left', 16), '戻る');
-    const auto = h('button', { type: 'button', class: 'tour-btn ghost tour-auto', 'aria-pressed': String(T.auto), onclick: () => toggleAuto(), title: T.auto ? '自動で進むのを止める' : '自動で最後まで進める' }, Kit.icon(T.auto ? 'pause' : 'play', 14), T.auto ? '止める' : '自動で');
+    const back = h('button', { type: 'button', class: 'tour-btn ghost tour-back', disabled: T.i === 0 || T.busy, onclick: () => prev(), 'aria-label': '戻る' }, Kit.icon('left', 16), h('span', null, '戻る'));
+    const auto = h('button', { type: 'button', class: 'tour-btn ghost tour-auto', 'aria-pressed': String(T.auto), onclick: () => toggleAuto(), title: T.auto ? '自動で進むのを止める' : '自動で最後まで進める', 'aria-label': T.auto ? '自動で進むのを止める' : '自動で最後まで進める' }, Kit.icon(T.auto ? 'pause' : 'play', 14), h('span', null, T.auto ? '止める' : '自動で'));
     const go = h('button', { type: 'button', class: 'tour-btn primary', disabled: T.busy, onclick: () => next() },
       acts ? [Kit.icon('play', 14), step.doLabel || 'やってみる'] : last ? ['おわる', Kit.icon('check', 16)] : ['次へ', Kit.icon('right', 16)]);
     Kit.add(card, [
@@ -198,7 +209,7 @@
     renderCard(step, { note: step.el && !el ? '（この画面では見つかりませんでした。説明だけ出しています）' : '' });
     T.lastKey = '';
     place();
-    if (el && narrow()) keepAboveCard(el);
+    if (el) keepVisible(el);
     T.ready = true; T.found = !!el || !step.el;
     try { T.goBtn.focus({ preventScroll: true }); } catch (e) { /* noop */ }
     if (T.auto) T.timer = setTimeout(() => { if (T && my === T.seq) next(); }, dwell(step));
@@ -272,6 +283,7 @@
     const steps = tours.get(id);
     if (!steps || !steps.length) return;
     T = { id, steps, i: 0, auto: false, el: null, seq: 0, busy: false, timer: 0, raf: 0, lastKey: '', ui: buildLayer() };
+    document.documentElement.classList.add('is-touring');
     document.addEventListener('click', onUserClick, true);
     document.addEventListener('keydown', onKey, true);
     window.addEventListener('resize', onResize);
@@ -284,6 +296,7 @@
     T.seq++;
     T.ui.layer.remove();
     T = null;
+    document.documentElement.classList.remove('is-touring');
     document.removeEventListener('click', onUserClick, true);
     document.removeEventListener('keydown', onKey, true);
     window.removeEventListener('resize', onResize);
@@ -309,7 +322,7 @@
       await sleep(520);
     }
     T.el = el; T.lastKey = '';
-    if (narrow()) { keepAboveCard(el); await sleep(60); const r2 = el.getBoundingClientRect(); f.style.transform = `translate(${r2.left + r2.width / 2}px, ${r2.top + r2.height / 2}px)`; }
+    { const y0 = el.getBoundingClientRect().top; keepVisible(el); if (el.getBoundingClientRect().top !== y0) { await sleep(60); const r2 = el.getBoundingClientRect(); f.style.transform = `translate(${r2.left + r2.width / 2}px, ${r2.top + r2.height / 2}px)`; } }
     f.classList.remove('tap'); void f.offsetWidth; f.classList.add('tap');
     await sleep(140);
   }

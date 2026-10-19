@@ -537,7 +537,15 @@ kbd { font-family: var(--font-mono); font-size: 12px; padding: 1px 6px; border-r
 .demo-ribbon-btns .demo-ribbon-end { background: var(--on-demo); color: var(--demo); }
 .demo-ribbon-btns button:hover { filter: brightness(1.08); }
 @media (pointer: coarse) { .demo-ribbon-btns button { min-height: 40px; } }
-@media (max-width: 640px) { .demo-ribbon { font-size: 12.5px; } .demo-ribbon-text { flex: 1 1 60%; } }
+@media (max-width: 640px) {
+  .demo-ribbon { flex-wrap: nowrap; gap: 8px; padding-top: 6px; padding-bottom: 6px; font-size: 12.5px; }
+  .demo-ribbon-long { display: none; }
+  .demo-ribbon-text { flex: 1 1 auto; line-height: 1.35; }
+  .demo-ribbon-btns button { min-height: 36px; padding: 4px 10px; font-size: 12.5px; }
+  .demo-ribbon-tag { padding: 2px 8px; }
+  .tour-card.docked .tour-auto span, .tour-card.docked .tour-back span { display: none; }
+  .tour-card.docked .tour-foot { flex-wrap: nowrap; }
+}
 .mb-save-state[data-mode="demo"]::before { background: var(--demo); }
 
 .tour { position: fixed; inset: 0; z-index: 160; pointer-events: none; }
@@ -594,6 +602,12 @@ kbd { font-family: var(--font-mono); font-size: 12px; padding: 1px 6px; border-r
 .tour-finger.tap::after { animation: tour-ripple .5s ease-out; }
 @keyframes tour-press { 50% { scale: .82; } }
 @keyframes tour-ripple { from { opacity: 1; transform: scale(.6); } to { opacity: 0; transform: scale(1.9); } }
+/* 説明のあいだ：知らせは上に出す（下の吹き出しのボタンに重ならないように）。スマホは、ページの下の部品も吹き出しの上まで送れるように余白を足す */
+html.is-touring .mb-toasts { bottom: auto; top: calc(env(safe-area-inset-top, 0px) + 64px); }
+@media (max-width: 999px) { html.is-touring .mb-toasts { top: calc(env(safe-area-inset-top, 0px) + var(--top-h) + 52px); } }
+@media (max-width: 639px) { html.is-touring .mb-view { padding-bottom: 52vh; } }
+/* ダイアログが開いているときは、帯をダイアログの下に（題名が隠れないように） */
+body:has(.modal-back) .demo-ribbon { z-index: 45; }
 @media print { .demo-ribbon, .tour, .demo-btn { display: none !important; } }
 
 /* 印刷（手元のブラウザで開いたときだけ使える） */
