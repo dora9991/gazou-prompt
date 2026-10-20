@@ -30,6 +30,9 @@
 .ro-paste-prev{max-height:min(40vh,320px);overflow:auto}
 .ro-paste-prev td,.ro-paste-prev th{font-size:13px;padding:5px 10px}
 .ro-help{margin-top:16px}
+.ro-numonly{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 12px;border-radius:var(--r-sm);background:var(--gosu-wash);font-size:13.5px;color:var(--ink-2)}
+.ro-numonly>span{flex:1 1 260px;min-width:0}
+.ro-numonly b{color:var(--ink)}
 .ro-danger{display:flex;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px dashed var(--line)}
 /* 空の欄は静かに（入っている欄が目立つように）。番号の上下の矢印は出さない */
 .ro-row input[type=text]:placeholder-shown{background:transparent;border-color:var(--line)}
@@ -277,9 +280,13 @@
         };
         ta.addEventListener('input', show);
         show();
-        const body2 = h('div', { class: 'stack' }, Kit.field({ label: '名簿（Excel からコピーして貼り付け）', input: ta }), prev, Kit.field({ label: '入れ方', input: modeSeg }), nameF,
+        // 名前を入れなくても使える（学校の決まりで名前を入れにくいとき）
+        const numOnly = h('div', { class: 'ro-numonly' },
+          h('span', null, h('b', null, '名前を入れなくても使えます。'), '番号だけの名簿でも、席替え・係・当番・宿題はそのまま使えます。'),
+          Kit.btn('番号だけで作る', () => { pm.close(); addClass(); }, { sm: true, icon: 'plus' }));
+        const body2 = h('div', { class: 'stack' }, numOnly, Kit.field({ label: '名簿（Excel からコピーして貼り付け）', input: ta }), prev, Kit.field({ label: '入れ方', input: modeSeg }), nameF,
           h('p', { class: 'small muted' }, '置きかえるときは、同じ名前（名前がなければ同じ番号）の人の席・係・提出の記録を引き継ぎます。'));
-        Kit.modal({
+        const pm = Kit.modal({
           title: '名簿を貼り付ける', wide: true, body: body2, autofocus: 'input',
           actions: [{ label: 'やめる', kind: 'ghost' }, {
             label: '名簿に入れる', kind: 'primary', onClick: async () => {

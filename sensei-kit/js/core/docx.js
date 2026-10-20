@@ -4,11 +4,14 @@
      font: '游ゴシック', size: 10.5,                       … 字体（日本語）と、ふつうの字の大きさ（pt）
      title, head: [ブロック…], body: [ブロック…] })       … head は1段（全部の幅）、body は cols 段。→ Uint8Array（.docx の中身）
    ブロック：
-     { p: '文字' | [{ t, b, size, u }], b, size, align: 'left'|'center'|'right'|'both', before, after（pt）, line（行の高さの倍率）,
-       border: { top, bottom, left, right: 'single'|'double'|'thick'|'dashed' }, indent・first（1行目）・hanging（2行目から）（mm）, keep（次とはなさない） }
-     { table: [[セル…]…], widths: [割合…], border: 'all'|'box'|'none', header（1行目を見出しに）, shade: 'E8E8E8' }
-        セル：'文字' | { p, b, size, align, shade, span, blocks: [ブロック…] }（blocks があればそれを中に入れる）
+     { p: '文字' | [{ t, b, size, u, color, font, sp }], b, size, color（'FFFFFF' など）, font（字体名）, sp（字の間 pt）,
+       align: 'left'|'center'|'right'|'both', before, after（pt）, line（行の高さの倍率）, shade（地の色）,
+       border: { top, bottom, left, right: 'single'|'double'|'thick'|'heavy'|'dashed'|'dotted', color }, indent・first（1行目）・hanging（2行目から）（mm）, keep（次とはなさない） }
+     { table: [[セル…]…], widths: [割合…], border: 'all'|'box'|'none', line: 'single'|'double'|'dashed'|'dotted', thick, sz（線の太さ 1/8pt）, color,
+       header（1行目を見出しに）, shade: 'E8E8E8' }
+        セル：'文字' | { p, b, size, align, color, font, shade, span, valign, borders: { top… , sz }, blocks: [ブロック…] }（blocks があればそれを中に入れる）
      { img: Uint8Array, type: 'png'|'jpeg', w・h（mm）か frac（幅の割合）・ratio（高さ÷幅）, align }
+     どのブロックも full: true で、段組みの本文の中でも全部の幅に置く（前後で段を区切る）
    ZIP は「圧縮なし」で書く（写真はもともと縮んでいるので、大きさはほぼ変わらない） */
 (function (root) {
   'use strict';
@@ -55,15 +58,18 @@
   }
 
   /* ───────── 文書 ───────── */
-  const BORDER = { single: ['single', 6], double: ['double', 6], thick: ['single', 18], dashed: ['dashed', 6] };
-  const bd = (side, kind) => { const b = BORDER[kind]; return b ? `<w:${side} w:val="${b[0]}" w:sz="${b[1]}" w:space="${side === 'left' || side === 'right' ? 4 : 1}" w:color="000000"/>` : ''; };
+  const BORDER = { single: ['single', 6], double: ['double', 6], thick: ['single', 18], heavy: ['single', 24], dashed: ['dashed', 6], dotted: ['dotted', 12] };
+  const col = (c) => (/^[0-9A-Fa-f]{6}$/.test(String(c || '')) ? String(c).toUpperCase() : '000000');
+  const bd = (side, kind, color) => { const b = BORDER[kind]; return b ? `<w:${side} w:val="${b[0]}" w:sz="${b[1]}" w:space="${side === 'left' || side === 'right' ? 4 : 1}" w:color="${col(color)}"/>` : ''; };
 
   function runs(p, base) {
     const list = Array.isArray(p) ? p : [{ t: p }];
     return list.map((r) => {
       const o = typeof r === 'string' ? { t: r } : r;
-      const b = o.b != null ? o.b : base.b, size = o.size || base.size;
-      const rpr = (b ? '<w:b/><w:bCs/>' : '') + (size ? `<w:sz w:val="${Math.round(size * 2)}"/><w:szCs w:val="${Math.round(size * 2)}"/>` : '') + (o.u ? '<w:u w:val="single"/>' : '');
+      const b = o.b != null ? o.b : base.b, size = o.size || base.size, color = o.color || base.color, font = o.font || base.font, sp = o.sp != null ? o.sp : base.sp;
+      const rpr = (font ? `<w:rFonts w:ascii="${esc(font)}" w:hAnsi="${esc(font)}" w:eastAsia="${esc(font)}"/>` : '') + (b ? '<w:b/><w:bCs/>' : '')
+        + (color ? `<w:color w:val="${col(color)}"/>` : '') + (sp ? `<w:spacing w:val="${Math.round(sp * 20)}"/>` : '')
+        + (size ? `<w:sz w:val="${Math.round(size * 2)}"/><w:szCs w:val="${Math.round(size * 2)}"/>` : '') + (o.u ? '<w:u w:val="single"/>' : '');
       const text = String(o.t == null ? '' : o.t).split('\n').map((s) => `<w:t xml:space="preserve">${esc(s)}</w:t>`).join('<w:br/>');
       return `<w:r>${rpr ? '<w:rPr>' + rpr + '</w:rPr>' : ''}${text}</w:r>`;
     }).join('');
@@ -71,7 +77,7 @@
   function para(b) {
     let ppr = '';
     if (b.keep) ppr += '<w:keepNext/>';
-    if (b.border) ppr += '<w:pBdr>' + ['top', 'left', 'bottom', 'right'].map((s) => bd(s, b.border[s])).join('') + '</w:pBdr>';
+    if (b.border) ppr += '<w:pBdr>' + ['top', 'left', 'bottom', 'right'].map((s) => bd(s, b.border[s], b.border.color)).join('') + '</w:pBdr>';
     if (b.shade) ppr += `<w:shd w:val="clear" w:color="auto" w:fill="${b.shade}"/>`;
     const sp = [];
     if (b.before != null) sp.push(`w:before="${Math.round(b.before * 20)}"`);
@@ -111,7 +117,11 @@
       const sum = fr.reduce((s, x) => s + x, 0) || 1;
       const widths = fr.map((x) => tw((avail * x) / sum));
       const kind = b.border || 'all';
-      const line = (side, on) => (on ? `<w:${side} w:val="single" w:sz="${b.thick ? 12 : 4}" w:space="0" w:color="000000"/>` : `<w:${side} w:val="nil"/>`);
+      const style = { double: 'double', dashed: 'dashed', dotted: 'dotted' }[b.line] || 'single';
+      const line = (side, on) => (on ? `<w:${side} w:val="${style}" w:sz="${b.sz || (b.thick ? 12 : 4)}" w:space="0" w:color="${col(b.color)}"/>` : `<w:${side} w:val="nil"/>`);
+      // セルごとの線（table の線より先に効く）
+      const cellLine = (kind, color, sz) => { const k = BORDER[kind]; return k ? `w:val="${k[0]}" w:sz="${sz || (kind === 'thick' || kind === 'heavy' ? 12 : 6)}" w:space="0" w:color="${col(color)}"` : 'w:val="nil"'; };
+      const tcb = (c) => (c.borders ? '<w:tcBorders>' + ['top', 'left', 'bottom', 'right'].filter((s) => c.borders[s]).map((s) => `<w:${s} ${cellLine(c.borders[s], c.borders.color || b.color, c.sz)}/>`).join('') + '</w:tcBorders>' : '');
       const borders = '<w:tblBorders>' + line('top', kind !== 'none') + line('left', kind !== 'none') + line('bottom', kind !== 'none') + line('right', kind !== 'none') + line('insideH', kind === 'all') + line('insideV', kind === 'all') + '</w:tblBorders>';
       let xml = `<w:tbl><w:tblPr><w:tblW w:w="${widths.reduce((s, x) => s + x, 0)}" w:type="dxa"/>${borders}<w:tblLayout w:type="fixed"/>`
         + `<w:tblCellMar><w:top w:w="${b.pad != null ? tw(b.pad) : 40}" w:type="dxa"/><w:left w:w="${b.pad != null ? tw(b.pad) : 85}" w:type="dxa"/><w:bottom w:w="${b.pad != null ? tw(b.pad) : 40}" w:type="dxa"/><w:right w:w="${b.pad != null ? tw(b.pad) : 85}" w:type="dxa"/></w:tblCellMar></w:tblPr>`;
@@ -127,13 +137,13 @@
           const cellW = (w / TW) - 3; // セルの中の幅（mm、左右の余白をひく）
           ci += span;
           const shade = c.shade || (head ? b.shade || 'E8E8E8' : '');
-          xml += `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${span > 1 ? `<w:gridSpan w:val="${span}"/>` : ''}${shade ? `<w:shd w:val="clear" w:color="auto" w:fill="${shade}"/>` : ''}<w:vAlign w:val="${c.valign || 'center'}"/></w:tcPr>`;
+          xml += `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${span > 1 ? `<w:gridSpan w:val="${span}"/>` : ''}${tcb(c)}${shade ? `<w:shd w:val="clear" w:color="auto" w:fill="${shade}"/>` : ''}<w:vAlign w:val="${c.valign || 'center'}"/></w:tcPr>`;
           if (c.blocks && c.blocks.length) {
             const inner = c.blocks.map((x) => block(x, cellW)).join('');
             xml += inner + (/<\/w:tbl>$/.test(inner) || !inner ? '<w:p/>' : '');
           } else {
             const lines = String(c.p == null ? '' : Array.isArray(c.p) ? '' : c.p).split('\n');
-            xml += Array.isArray(c.p) ? para(Object.assign({ after: 0, before: 0 }, c, { b: c.b != null ? c.b : head, shade: null, border: null })) : lines.map((t) => para({ p: t, b: c.b != null ? c.b : head, size: c.size, align: c.align || (head ? 'center' : null), after: 0, before: 0 })).join('');
+            xml += Array.isArray(c.p) ? para(Object.assign({ after: 0, before: 0 }, c, { b: c.b != null ? c.b : head, shade: null, border: null })) : lines.map((t) => para({ p: t, b: c.b != null ? c.b : head, size: c.size, color: c.color, font: c.font, align: c.align || (head ? 'center' : null), after: 0, before: 0 })).join('');
           }
           xml += '</w:tc>';
         }
@@ -153,11 +163,18 @@
     const m = tw(page.margin);
     const pgMar = `<w:pgMar w:top="${m}" w:right="${m}" w:bottom="${m}" w:left="${m}" w:header="0" w:footer="0" w:gutter="0"/>`;
     const sect = (cols, cont) => `<w:sectPr>${cont ? '<w:type w:val="continuous"/>' : ''}${pgSz}${pgMar}<w:cols w:num="${cols}" w:space="${tw(page.gap)}"${cols > 1 && page.sep ? ' w:sep="1"' : ''}/><w:docGrid w:linePitch="360"/></w:sectPr>`;
-    let body = (o.head || []).map((b) => block(b, full)).join('');
-    const two = page.cols > 1 && (o.head || []).length;
-    if (two) body += `<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="120" w:lineRule="exact"/>${sect(1, false)}</w:pPr></w:p>`;
-    body += (o.body || []).map((b) => block(b, colW)).join('');
-    body += sect(page.cols, two);
+    // 段の区切り：題字（head）は1段、本文（body）は cols 段。本文の full: true のブロックは1段（全部の幅）
+    const secs = [];
+    const put = (cols, xml) => { const last = secs[secs.length - 1]; if (last && last.cols === cols) last.xml += xml; else secs.push({ cols, xml }); };
+    for (const b of o.head || []) put(1, block(b, full));
+    for (const b of o.body || []) { if (!b) continue; const one = page.cols > 1 && b.full; put(one ? 1 : page.cols, block(b, one ? full : colW)); }
+    if (!secs.length) secs.push({ cols: page.cols, xml: '' });
+    let body = '';
+    secs.forEach((s, i) => {
+      body += s.xml;
+      if (i < secs.length - 1) body += `<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="120" w:lineRule="exact"/>${sect(s.cols, i > 0)}</w:pPr></w:p>`;
+      else body += sect(s.cols, i > 0);
+    });
 
     const NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
     const XML = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';

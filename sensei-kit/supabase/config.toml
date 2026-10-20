@@ -1,0 +1,58 @@
+# 手元で確かめるための Supabase（本番とは別。ポート 57460〜57469）。本番の設定ではない
+# 起動は tools/cloud-local.sh（tools/_out/cloud-workdir に、この設定と「会員サイトのまね＋sensei.sql」を移行として置いて start する。
+# API が起きる前に sensei スキーマができている必要があるため）
+project_id = "sensei-kit"
+
+[api]
+enabled = true
+port = 57461
+schemas = ["public", "graphql_public", "sensei"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 57462
+shadow_port = 57460
+health_timeout = "2m"
+major_version = 17
+
+[db.pooler]
+enabled = false
+port = 57469
+
+[db.migrations]
+enabled = true
+
+[db.seed]
+enabled = false
+
+[realtime]
+enabled = false
+
+[studio]
+enabled = false
+port = 57463
+
+[local_smtp]
+enabled = false
+port = 57464
+
+[storage]
+enabled = false
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:57468"
+# 本番に合わせる：自分で登録はできない（アカウントは管理の側で作る）・確認メールなし
+enable_signup = false
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+
+[edge_runtime]
+enabled = false
+
+[analytics]
+enabled = false
+port = 57467

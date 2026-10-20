@@ -1,4 +1,5 @@
-// 学級通信：題字（通信の名前・号・発行日）の下に、文章・予定表・箇条書き・囲み・写真を並べる。A4・B4 で印刷、Word（.docx）にも書き出せる
+// 学級通信：題字（通信の名前・号・発行日）の下に、文章・予定表・箇条書き・囲み・写真・切り取りの返事を並べる。A4・B4 で印刷、Word（.docx）にも書き出せる
+// テンプレート（紙面の型 10）と題字の型（11）は js/core/newsletter-templates.js（NLTemplates）。号をつくるときに選べて、あとから題字だけ・全体の型だけを切りかえられる
 (function () {
   'use strict';
   const { h } = Kit;
@@ -6,14 +7,24 @@
   const MM = 96 / 25.4; // 1mm の画面の大きさ（px）
   const PAPERS = { a4: { label: 'A4 たて', w: 210, h: 297 }, b4: { label: 'B4 たて', w: 257, h: 364 }, a4l: { label: 'A4 よこ', w: 297, h: 210 } };
   const MARGIN = 12, GAP = 7;
-  const LOOKS = [{ value: 'line', label: 'すっきり' }, { value: 'bar', label: 'しっかり' }, { value: 'round', label: 'やわらか' }];
   const FONTS = L.FONTS;
+  // テンプレートの部品。index.html で先に読んでいなければ、ここから読みこむ（読み終わるまで、道具を開くのを待つ）
+  const NLT_READY = window.NLTemplates ? Promise.resolve(window.NLTemplates) : new Promise((res) => {
+    const me = document.currentScript, src = me && me.src ? me.src.replace(/js\/apps\/newsletter\.js(\?.*)?$/, 'js/core/newsletter-templates.js') : 'js/core/newsletter-templates.js';
+    const s = document.createElement('script');
+    s.src = src; s.onload = () => res(window.NLTemplates || null); s.onerror = () => res(null);
+    document.head.append(s);
+  });
+  const NLT = () => window.NLTemplates;
+  const OLD_LOOKS = [{ value: 'line', label: 'すっきり' }, { value: 'bar', label: 'しっかり' }, { value: 'round', label: 'やわらか' }];
+  const LOOKS = () => (NLT() ? NLT().LOOKS : OLD_LOOKS);
   const BLOCKS = [
     { type: 'text', label: '文章', icon: 'text' },
     { type: 'schedule', label: '予定表', icon: 'calendar' },
     { type: 'list', label: '箇条書き', icon: 'checks' },
     { type: 'box', label: '囲み', icon: 'layout' },
     { type: 'image', label: '写真・イラスト', icon: 'image' },
+    { type: 'reply', label: '切り取りの返事', icon: 'scissors' },
   ];
   const BL = Object.fromEntries(BLOCKS.map((b) => [b.type, b]));
   const SIZES = { small: 0.4, half: 0.65, full: 1 };
@@ -28,7 +39,8 @@
 
   // ブロック
   const nb = (type, o) => Object.assign({ id: Kit.uid('b'), type },
-    type === 'schedule' ? { head: '予定', col3: '持ち物・連絡', rows: [] } : type === 'image' ? { src: '', caption: '', size: 'half' } : { head: '', body: '' }, o || {});
+    type === 'schedule' ? { head: '予定', col3: '持ち物・連絡', rows: [] } : type === 'image' ? { src: '', caption: '', size: 'half' }
+      : type === 'reply' ? { head: '出欠票', body: '生徒氏名：\n出席　・　欠席　（どちらかに○をつけてください）\n保護者氏名：' } : { head: '', body: '' }, o || {});
   // base の次の週の月〜金（祝日は名前を入れておく）
   function weekRows(base) {
     const mon = addDays(mondayOf(base || Kit.ymd()), 7);
@@ -36,19 +48,27 @@
   }
   const month = (d) => Kit.parseYmd(d || Kit.ymd()).getMonth() + 1;
 
-  // 新しい号の型
-  const KATA = [
-    { id: 'week', label: '週の通信', desc: '巻頭の文章・来週の予定・お知らせ', make: (d) => [nb('text', { body: L.jiko(month(d)).soft + '。\n' }), nb('schedule', { head: '来週の予定', rows: weekRows(d) }), nb('list', { head: 'お知らせ・お願い' })] },
-    { id: 'event', label: '行事のお知らせ', desc: '日時・場所・持ち物を、囲みで目立たせる', make: () => [nb('text'), nb('box', { head: '日時・場所・持ち物', body: '日時：\n場所：\n持ち物：' }), nb('list', { head: 'お願い' })] },
-    { id: 'look', label: '写真でふり返り', desc: '行事のあとに、写真と生徒の声', make: () => [nb('text'), nb('image'), nb('text', { head: '生徒の声から' })] },
-    { id: 'blank', label: '白紙', desc: '文章のブロック1つから', make: () => [nb('text')] },
-  ];
+  // テンプレートの中身に入れる日付など（発行日 d から見て）
+  const nthWeekday = (d, n) => { let x = d, k = 0; for (let g = 0; k < n && g < 400; g++) { x = addDays(x, 1); if (!isWeekend(x) && !School.holiday(x)) k++; } return x; };
+  function tplCtx(d, o = {}) {
+    return {
+      month: month(d), jiko: L.jiko(month(d)), teacher: String(o.teacher || '').replace(/\s*先生$/, ''), cls: o.cls || '',
+      at: (n) => nthWeekday(d, n), day: (n) => Kit.fmtDate(nthWeekday(d, n), 'M月D日(W)'),
+      week: (k = 1) => weekRows(addDays(d, 7 * (k - 1))),
+    };
+  }
+  const tplBlocks = (t, d, o) => NLT().blocksOf(t, tplCtx(d, o)).map((b) => nb(b.type, b));
 
   function norm(x) {
-    const o = Object.assign({ name: '学級通信', catch: '', no: 1, date: Kit.ymd(), school: '', from: '', paper: 'a4', cols: 1, look: 'line', font: 'goth', era: 'wareki', blocks: [] }, x || {});
+    const o = Object.assign({ name: '学級通信', catch: '', no: 1, date: Kit.ymd(), school: '', from: '', paper: 'a4', cols: 1, look: 'line', banner: '', accent: 'k', tpl: '', font: 'goth', era: 'wareki', blocks: [] }, x || {});
     if (!PAPERS[o.paper]) o.paper = 'a4';
     o.cols = +o.cols === 2 ? 2 : 1;
-    if (!LOOKS.some((l) => l.value === o.look)) o.look = 'line';
+    if (!LOOKS().some((l) => l.value === o.look)) o.look = 'line';
+    // 題字の型がない号（前からある号）は、見出しと同じ名前の題字（すっきり／しっかり／やわらか）＝前と同じ見た目
+    const NL = NLT();
+    if (!NL || !NL.BANNER_MAP[o.banner]) o.banner = ['line', 'bar', 'round'].includes(o.look) ? o.look : 'line';
+    if (!NL || !NL.ACCENT_MAP[o.accent]) o.accent = 'k';
+    if (!NL || !NL.TEMPLATE_MAP[o.tpl]) o.tpl = '';
     if (!FONTS[o.font]) o.font = 'goth';
     o.no = Math.max(1, parseInt(o.no, 10) || 1);
     o.blocks = (o.blocks || []).filter((b) => b && BL[b.type]);
@@ -120,10 +140,41 @@
 .nl-img-row{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
 .nl-thumb{width:140px;min-height:90px;border-radius:8px;border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;background:var(--surface-2)}
 .nl-thumb img{display:block;width:100%;height:auto}
-.nl-kata{display:grid;gap:8px}
+.nl-kata{display:grid;gap:12px}
 .nl-kata-it{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);cursor:pointer}
-.nl-kata-it:has(input:checked){border-color:var(--gosu);background:var(--gosu-wash)}
+.nl-kata-it:has(input:checked){border-color:var(--gosu);background:var(--gosu-wash);box-shadow:0 0 0 1px var(--gosu)}
+.nl-kata-it:has(input:focus-visible){outline:2px solid var(--focus);outline-offset:2px}
 .nl-kata-it input{margin-top:4px}
+.nl-kata-sec{font-size:13px;font-weight:700;color:var(--ink-2);margin:2px 0 -4px}
+/* テンプレート・題字を選ぶ（見本の小さな絵つき） */
+.nl-tp-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(148px,1fr))}
+.nl-tp-grid.mast{grid-template-columns:repeat(auto-fill,minmax(min(100%,232px),1fr))}
+.nl-tp{position:relative;flex-direction:column;gap:6px;padding:8px;align-items:stretch}
+.nl-tp input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+.nl-tp-t{display:grid;gap:1px;line-height:1.35}
+.nl-tp-t b{font-size:14px}
+.nl-tp-t span{font-size:12px;color:var(--ink-3)}
+.nl-tp:has(input:checked) .nl-tp-t span{color:var(--ink-2)}
+.nl-tp-now{position:absolute;top:4px;right:4px;z-index:2;font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--gosu);color:var(--on-gosu)}
+.nl-mini{display:block;position:relative;width:100%;overflow:hidden;border-radius:4px;background:#fff;box-shadow:0 0 0 1px var(--line),0 1px 3px rgba(0,0,0,.12);pointer-events:none}
+.nl-mini-s{display:block;position:absolute;top:0;left:0;transform-origin:0 0;background:#fff;box-sizing:border-box}
+.nl-tp-note{margin:0}
+.modal.nl-pick{scroll-padding:76px 0 84px}
+.modal.nl-pick .modal-h{position:sticky;top:0;z-index:3;background:var(--surface);padding-bottom:10px;border-bottom:1px solid var(--line)}
+.modal.nl-pick .modal-f{position:sticky;bottom:0;z-index:3;background:var(--surface);border-top:1px solid var(--line)}
+/* デザインの欄（編集の画面） */
+.nl-design{display:grid;gap:10px}
+.nl-design-t{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
+.nl-design-s{display:flex;flex-wrap:wrap;gap:2px 12px}
+.nl-design-s span{white-space:nowrap}
+.nl-design-s b{color:var(--ink)}
+@media (min-width:1100px){.nl-design-pv{display:none}}
+.nl-chips{display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));flex:1;min-width:min(100%,300px)}
+.nl-chip{display:grid;gap:4px;padding:5px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink-2);font:inherit;font-size:12.5px;cursor:pointer;text-align:center;min-height:40px}
+.nl-chip:hover{border-color:var(--line-strong)}
+.nl-chip[aria-pressed="true"]{border-color:var(--gosu);background:var(--gosu-wash);color:var(--ink);font-weight:700;box-shadow:0 0 0 1px var(--gosu)}
+.nl-chip .nl-mini{height:34px}
+.nl-sw{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:2px;box-shadow:0 0 0 1px var(--line-strong);flex:none}
 .nl-cats{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px}
 .nl-pv{position:relative;overflow:hidden;border-radius:6px;background:var(--surface-2);border:1px solid var(--line)}
 .nl-sheet{position:absolute;top:0;left:0;transform-origin:0 0;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.18);box-sizing:border-box}
@@ -139,18 +190,15 @@
 .nl-catch{font-size:10pt;margin-top:1mm}
 .nl-mast-r{text-align:right;font-size:9.5pt;line-height:1.45}
 .nl-no{font-size:12pt;font-weight:700}
-.nl-page.k-line .nl-mast{padding-bottom:2mm;border-bottom:3pt double #000}
-.nl-page.k-bar .nl-mast{padding:3mm 4mm;border:1.6pt solid #000}
-.nl-page.k-round .nl-mast{padding:3mm 5mm;border:1.2pt solid #000;border-radius:6mm}
 .nl-body.c2{columns:2;column-gap:7mm;column-rule:.5pt solid #888}
 .nl-blk{margin:0 0 4mm}
 .nl-h{font-size:12.5pt;font-weight:700;line-height:1.35;margin:0 0 1.5mm;break-after:avoid}
-.k-line .nl-h{border-bottom:1pt solid #000;padding-bottom:.6mm}
-.k-bar .nl-h{border-left:2.4mm solid #000;padding-left:2mm}
-.k-round .nl-h{display:inline-block;border:1pt solid #000;border-radius:99px;padding:.2mm 3.5mm}
+.k-line .nl-h{border-bottom:1pt solid var(--ac,#000);padding-bottom:.6mm}
+.k-bar .nl-h{border-left:2.4mm solid var(--ac,#000);padding-left:2mm}
+.k-round .nl-h{display:inline-block;border:1pt solid var(--ac,#000);border-radius:99px;padding:.2mm 3.5mm}
 .nl-txt p{margin:0}
 .nl-txt p.gap{height:.7em}
-.nl-boxed{border:1pt solid #000;padding:2.5mm 3.5mm;break-inside:avoid}
+.nl-boxed{border:1pt solid var(--ac,#000);padding:2.5mm 3.5mm;break-inside:avoid}
 .k-bar .nl-boxed{border-width:1.6pt}
 .k-round .nl-boxed{border-style:dashed;border-radius:4mm}
 .nl-boxed .nl-h{border:0;padding:0;display:block}
@@ -166,10 +214,13 @@
 .nl-fig figcaption{font-size:9pt;margin-top:1mm}
 .nl-fig.ph{border:1pt dashed #999;padding:8mm 2mm;color:#888;font-size:9pt}
 `);
+  // 題字・見出しの飾り（テンプレートの部品から）
+  NLT_READY.then((NL) => { if (NL) Kit.css('newsletter-tpl', NL.CSS); });
 
   // 紙面をつくる（画面の見た目と印刷で同じものを使う）
-  function blockEl(b, imgs, o) {
-    const head = b.head ? h('h2', { class: 'nl-h' }, b.head) : null;
+  function blockEl(b, imgs, o, x) {
+    const orn = b.head && NLT() ? NLT().headOrn(x.look, x.accent) : '';
+    const head = b.head ? h('h2', { class: 'nl-h' }, orn ? h('span', { class: 'nl-ho', 'aria-hidden': 'true', html: orn }) : null, b.head) : null;
     if (b.type === 'text' || b.type === 'box') {
       if (o.print && !b.head && !String(b.body || '').trim()) return null;
       return h('section', { class: 'nl-blk' + (b.type === 'box' ? ' nl-boxed' : '') }, head, h('div', { class: 'nl-txt' }, lines(String(b.body || '').replace(/\s+$/, '')).map((t) => (t.trim() ? h('p', null, t) : h('p', { class: 'gap' })))));
@@ -185,16 +236,56 @@
       if (!src && o.print) return null;
       return h('figure', { class: 'nl-blk nl-fig' + (src ? '' : ' ph') }, src ? h('img', { src, alt: b.caption || '', style: { width: (SIZES[b.size] || SIZES.half) * 100 + '%' } }) : '写真・イラスト（選ぶと、ここに入ります）', b.caption ? h('figcaption', null, b.caption) : null);
     }
+    if (b.type === 'reply') {
+      const rows = NLT() ? NLT().replyLines(b.body) : [];
+      if (o.print && !b.head && !rows.length) return null;
+      return h('section', { class: 'nl-blk nl-reply' },
+        h('div', { class: 'nl-cut', 'aria-hidden': 'true' }, h('span', { class: 'nl-ho', html: NLT() ? NLT().scissors('#000') : '' }), h('span', null, 'きりとり')),
+        h('div', { class: 'nl-reply-in' }, b.head ? h('h2', { class: 'nl-h' }, b.head) : null,
+          rows.map((r) => (r.field ? h('div', { class: 'nl-fld' }, h('span', null, r.text), h('i')) : h('p', null, r.text)))));
+    }
     return null;
   }
   function pageEl(x, imgs, o = {}) {
-    const page = h('div', { class: 'nl-page k-' + x.look, style: { fontFamily: FONTS[x.font].css } });
-    page.append(h('header', { class: 'nl-mast' },
+    const NL = NLT();
+    const page = h('div', { class: 'nl-page k-' + x.look + ' ac-' + (x.accent || 'k'), style: { fontFamily: FONTS[x.font].css } });
+    const P = PAPERS[x.paper] || PAPERS.a4;
+    page.append(NL ? NL.mast(x, { h, date: dateText(x), w: P.w - MARGIN * 2 }) : h('header', { class: 'nl-mast b-line' },
       h('div', null, h('div', { class: 'nl-name' }, x.name || '　'), x.catch ? h('div', { class: 'nl-catch' }, x.catch) : null),
       h('div', { class: 'nl-mast-r' }, h('div', { class: 'nl-no' }, '第' + x.no + '号'), h('div', null, dateText(x)), x.school ? h('div', null, x.school) : null, x.from ? h('div', null, x.from) : null)));
-    page.append(h('div', { class: 'nl-body' + (x.cols === 2 ? ' c2' : '') }, x.blocks.map((b) => blockEl(b, imgs, o))));
+    // 新しい飾りは、ブロックの間に区切り線を入れる
+    const sep = NL && NL.hasSep(x.look), kids = [];
+    for (const b of x.blocks) {
+      const el = blockEl(b, imgs, o, x);
+      if (!el) continue;
+      if (sep && kids.length) kids.push(h('div', { class: 'nl-sep', 'aria-hidden': 'true' }));
+      kids.push(el);
+    }
+    page.append(h('div', { class: 'nl-body' + (x.cols === 2 ? ' c2' : '') }, kids));
     return page;
   }
+  // 縮めた見本（テンプレート・題字を選ぶところ）。mast：題字だけ。置いた場所の幅に合わせて縮める（fitMinis。それまでは wpx の幅で）
+  function miniEl(x, imgs, wpx, o = {}) {
+    const P = PAPERS[x.paper] || PAPERS.a4, pw = P.w * MM, k = wpx / pw;
+    const box = h('span', { class: 'nl-mini' + (o.mast ? ' mast' : ''), 'aria-hidden': 'true', dataset: { pw: String(pw), ph: o.mast ? '' : String(P.h * MM) }, style: { height: Math.round((o.mast ? 40 : P.h) * MM * k) + 'px' } });
+    const sheet = h('span', { class: 'nl-mini-s', style: { width: P.w + 'mm', padding: (o.mast ? '5mm ' : '') + MARGIN + 'mm', transform: 'scale(' + k + ')' } });
+    sheet.append(pageEl(o.mast ? Object.assign({}, x, { blocks: [] }) : x, imgs));
+    box.append(sheet);
+    return box;
+  }
+  // 見本を、置いた場所の幅いっぱいに縮め直す（ダイアログ・欄に入れたあとで。題字だけの見本は高さも中身に合わせる）
+  function fitMinis(root) {
+    for (const box of root.querySelectorAll('.nl-mini[data-pw]')) {
+      const s = box.firstChild, w = box.clientWidth, pw = +box.dataset.pw;
+      if (!s || !w || !pw) continue;
+      const k = w / pw;
+      s.style.transform = 'scale(' + k + ')';
+      box.style.height = Math.ceil((box.dataset.ph ? +box.dataset.ph : s.offsetHeight) * k) + 'px';
+    }
+  }
+  // ダイアログを開いたあと：見本を合わせる（字体を読みこんだあとにも、もう一度）
+  // 見本の多いダイアログは、見出しとボタンを上下に止める（スマホで下まで送らなくても「つくる」が押せる）
+  const fitLater = (el) => { el.classList.add('nl-pick'); requestAnimationFrame(() => fitMinis(el)); if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitMinis(el)); };
 
   // 連絡アプリ・メールに貼る文
   function plainText(x) {
@@ -208,6 +299,7 @@
       if (b.type === 'list') part.push(...items(b.body).map((t) => '・' + t));
       if (b.type === 'schedule') part.push(...(b.rows || []).filter((r) => r.text || r.note).map((r) => (r.date ? md(r.date) + '　' : '') + String(r.text || '').replace(/\n/g, '／') + (r.note ? '（' + (b.col3 || '持ち物・連絡') + '：' + String(r.note).replace(/\n/g, '／') + '）' : '')));
       if (b.type === 'image' && b.caption) part.push('（写真：' + b.caption + '）');
+      if (b.type === 'reply') part.push(...String(b.body || '').split('\n').map((t) => t.trim()).filter(Boolean).map((t) => (/[：:]$/.test(t) ? t + '＿＿＿＿＿＿' : t)));
       const t = part.filter(Boolean).join('\n');
       if (t) out.push('', t);
     }
@@ -228,31 +320,31 @@
     }
     return x && Object.assign(x, { ratio: (im.naturalHeight || 3) / (im.naturalWidth || 4) });
   }
-  async function docxOf(x) {
-    const P = PAPERS[x.paper], F = FONTS[x.font], look = x.look;
-    const hb = look === 'line' ? { bottom: 'single' } : look === 'bar' ? { left: 'thick' } : { top: 'single', bottom: 'single', left: 'single', right: 'single' };
-    const heading = (t) => ({ p: t, b: true, size: 12.5, keep: true, before: 4, after: 2, border: hb });
+  // 題字・見出し・囲みの形は NLTemplates（もとからある3つの形は、前と同じ Word になる）。崩れやすい飾り（模様・花・リボンの形）は、線・地の色・記号に置きかえる
+  async function docxOf(x0) {
+    const NL = (await NLT_READY) || NLT();
+    const x = norm(Kit.clone(x0));
+    const P = PAPERS[x.paper], F = FONTS[x.font];
+    const st = NL.docxStyle(x.look, x.accent);
     const txt = (s) => lines(String(s || '').replace(/\s+$/, '')).map((t) => ({ p: t, line: 1.3 }));
     const gap = { p: '', line: 0.6 };
-    const right = (p, o) => Object.assign({ p, size: 9.5, align: 'right', line: 1.15 }, o);
-    const head = [
-      { table: [[{ blocks: [{ p: x.name || '', b: true, size: 26, line: 1.05 }].concat(x.catch ? [{ p: x.catch, size: 10, before: 2 }] : []), valign: 'bottom' },
-        { blocks: [right('第' + x.no + '号', { b: true, size: 12 }), right(dateText(x))].concat(x.school ? [right(x.school)] : [], x.from ? [right(x.from)] : []), valign: 'bottom' }]],
-      widths: [0.6, 0.4], border: look === 'line' ? 'none' : 'box', thick: look === 'bar', pad: look === 'line' ? 0.3 : 2.5, noGap: look === 'line' },
-      look === 'line' ? { p: '', border: { bottom: 'double' }, after: 6, line: 0.3 } : { p: '', line: 0.5 },
-    ];
+    const head = NL.docxHead(x, { date: dateText(x), fonts: { goth: FONTS.goth.word, mincho: FONTS.mincho.word, hand: FONTS.hand.word }, w: P.w - MARGIN * 2 });
     const body = [];
     for (const b of x.blocks) {
-      if (b.type === 'text') { if (!b.head && !String(b.body || '').trim()) continue; if (b.head) body.push(heading(b.head)); body.push(...txt(b.body), gap); }
-      else if (b.type === 'box') body.push({ table: [[{ blocks: (b.head ? [{ p: b.head, b: true, size: 11.5, after: 1 }] : []).concat(txt(b.body)) }]], border: 'box', thick: look === 'bar', pad: 2.2 });
-      else if (b.type === 'list') { if (b.head) body.push(heading(b.head)); body.push(...items(b.body).map((t) => ({ p: '・' + t, hanging: 3.7, line: 1.3 })), gap); }
+      const part = [];
+      if (b.type === 'text') { if (!b.head && !String(b.body || '').trim()) continue; if (b.head) part.push(st.heading(b.head)); part.push(...txt(b.body), gap); }
+      else if (b.type === 'box') part.push(st.box(b.head, txt(b.body)));
+      else if (b.type === 'list') { if (b.head) part.push(st.heading(b.head)); part.push(...items(b.body).map((t) => st.item(t)), gap); }
       else if (b.type === 'schedule') {
-        if (b.head) body.push(heading(b.head));
-        body.push({ table: [['日', '予定', b.col3 || '持ち物・連絡'].map((t) => ({ p: t, size: 9.5 }))].concat((b.rows || []).map((r) => [{ p: r.date ? md(r.date) : '', align: 'center', size: 9.5 }, { p: r.text || '', size: 9.5 }, { p: r.note || '', size: 9.5 }])), widths: [0.21, 0.45, 0.34], header: true, pad: 0.8 });
+        if (b.head) part.push(st.heading(b.head));
+        part.push({ table: [['日', '予定', b.col3 || '持ち物・連絡'].map((t) => ({ p: t, size: 9.5, color: st.th.color }))].concat((b.rows || []).map((r) => [{ p: r.date ? md(r.date) : '', align: 'center', size: 9.5 }, { p: r.text || '', size: 9.5 }, { p: r.note || '', size: 9.5 }])), widths: [0.21, 0.45, 0.34], header: true, pad: 0.8, shade: st.th.shade });
       } else if (b.type === 'image' && b.src) {
         const im = await imgBytes(b.src);
-        if (im) { body.push({ img: im.bytes, type: im.type, frac: SIZES[b.size] || SIZES.half, ratio: im.ratio, align: 'center' }); if (b.caption) body.push({ p: b.caption, align: 'center', size: 9, after: 4 }); }
-      }
+        if (im) { part.push({ img: im.bytes, type: im.type, frac: SIZES[b.size] || SIZES.half, ratio: im.ratio, align: 'center' }); if (b.caption) part.push({ p: b.caption, align: 'center', size: 9, after: 4 }); }
+      } else if (b.type === 'reply') part.push(...NL.docxReply(b));
+      if (!part.length) continue;
+      if (st.sep && body.length) body.push(Object.assign({}, st.sep, part[0].full ? { full: true } : null));
+      body.push(...part);
     }
     return { title: x.name + ' 第' + x.no + '号', author: x.from, page: { w: P.w, h: P.h, margin: MARGIN, cols: x.cols, gap: GAP, sep: true }, font: F.word, latin: F.latin, size: 10.5, head, body };
   }
@@ -262,7 +354,8 @@
     desc: '題字・文章・予定表・お知らせを並べて、A4・B4 で印刷。Word にも書き出せる',
     colls: ['newsletters'],
     async mount(root, params) {
-      const S = { cls: null, list: [], cur: null, pane: Kit.pref.get('newsletter:pane', 'write'), imgs: new Map(), profile: null, pv: null };
+      await NLT_READY;
+      const S = { cls: null, list: [], cur: null, pane: Kit.pref.get('newsletter:pane', 'write'), imgs: new Map(), profile: null, pv: null, lookOpen: false };
       let alive = true;
       const classSlot = h('div'), sampleSlot = h('div'), main = h('div');
       root.append(Kit.appHead({
@@ -293,7 +386,7 @@
 
       async function render() {
         Kit.clear(classSlot); Kit.clear(sampleSlot); Kit.clear(main);
-        S.pv = null;
+        S.pv = null; S.updDesign = null;
         if (ro) ro.disconnect();
         classSlot.append(await School.classBar({ onChange: async () => { await save.flush(); S.cur = null; await load(); render(); } }));
         if (S.cur) renderEdit(); else renderList();
@@ -344,6 +437,73 @@
         grid.append(editor(), side());
         refresh();
       }
+      /* ── デザイン（テンプレート・題字） ── */
+      function designCard() {
+        const NL = NLT();
+        const pv = h('div', { class: 'nl-design-pv' }), sum = h('div', { class: 'nl-design-s small ink-2' });
+        S.updDesign = () => {
+          const x = S.cur, t = NL.TEMPLATE_MAP[x.tpl], b = NL.BANNER_MAP[x.banner], l = NL.LOOK_MAP[x.look];
+          Kit.clear(pv); Kit.clear(sum);
+          pv.append(miniEl(x, S.imgs, 300, { mast: true }));
+          requestAnimationFrame(() => fitMinis(pv));
+          sum.append(t ? h('span', null, 'テンプレート：', h('b', null, t.label)) : null, h('span', null, '題字：', h('b', null, b.label)), h('span', null, '見出し：', h('b', null, l ? l.label : '')));
+        };
+        S.updDesign();
+        return h('section', { class: 'card nl-design', 'aria-label': 'デザイン' },
+          h('div', { class: 'nl-design-t' }, h('h2', { class: 'nl-sec' }, 'デザイン'), sum), pv,
+          h('div', { class: 'btn-row' }, Kit.btn('テンプレートを変える', () => pickTemplate(), { sm: true, icon: 'layout' }), Kit.btn('題字を変える', () => pickBanner(), { sm: true, icon: 'wand' })));
+      }
+      // 見本つきの選択肢（ラジオ）。x は見本に描く号
+      function tpCard(group, id, label, sub, x, o = {}) {
+        const r = h('input', { type: 'radio', name: group, id: group + '-' + id, value: id, checked: !!o.checked });
+        if (o.onPick) r.addEventListener('change', () => o.onPick(id));
+        return h('label', { class: 'nl-kata-it nl-tp', for: group + '-' + id }, r,
+          o.now ? h('span', { class: 'nl-tp-now' }, 'いま') : null,
+          miniEl(x, S.imgs, o.mast ? 216 : 132, { mast: o.mast }),
+          h('span', { class: 'nl-tp-t' }, h('b', null, label), sub ? h('span', null, sub) : null));
+      }
+      // 見た目を変えたあと：「元に戻す」つきで知らせる
+      function restyled(msg, before) {
+        changed(); rerender();
+        Kit.toast(msg, { ms: 5000, action: { label: '元に戻す', onClick: () => { if (!S.cur) return; Object.assign(S.cur, before); changed(); rerender(); } } });
+      }
+      const LOOK_KEYS = ['tpl', 'banner', 'look', 'cols', 'font'];
+      const pickOf = (o) => Object.fromEntries(LOOK_KEYS.map((k) => [k, o[k]]));
+      async function pickTemplate() {
+        const NL = NLT(), x = S.cur;
+        let pick = '';
+        const grid = h('div', { class: 'nl-tp-grid', role: 'radiogroup', 'aria-label': 'テンプレート' },
+          NL.TEMPLATES.map((t) => tpCard('nl-tpc', t.id, t.label, t.scene + '・' + t.mood, NL.applyTemplate(x, t.id), { now: t.id === x.tpl, onPick: (v) => { pick = v; } })));
+        const ok = await new Promise((res) => fitLater(Kit.modal({
+          title: 'テンプレートを変える', wide: true, onClose: (v) => res(v === true),
+          body: h('div', { class: 'stack' }, h('p', { class: 'small ink-2 nl-tp-note' }, '書いた中身はそのままで、題字・見出しの飾り・段・字体が変わります。見本は、この号の中身で描いています。'), grid),
+          actions: [{ label: 'やめる', kind: 'ghost', value: null }, { label: 'この型にする', kind: 'primary', onClick: () => (pick ? true : (Kit.toast('テンプレートを選んでください'), false)) }],
+        }).el));
+        if (!ok || !pick || !S.cur) return;
+        const before = pickOf(S.cur);
+        Object.assign(S.cur, pickOf(NL.applyTemplate(S.cur, pick)));
+        restyled('見た目を「' + NL.TEMPLATE_MAP[pick].label + '」にしました（中身はそのまま）', before);
+      }
+      async function pickBanner() {
+        const NL = NLT(), x = S.cur;
+        let pick = x.banner;
+        const grid = h('div', { class: 'nl-tp-grid mast', role: 'radiogroup', 'aria-label': '題字の型' },
+          NL.BANNERS.map((b) => tpCard('nl-bnc', b.id, b.label, b.desc, NL.applyBanner(x, b.id), { mast: true, checked: b.id === x.banner, now: b.id === x.banner, onPick: (v) => { pick = v; } })));
+        let done = null;
+        const closed = new Promise((res) => { done = res; });
+        const m = Kit.modal({
+          title: '題字を変える', wide: true, onClose: (v) => done(v === true),
+          body: h('div', { class: 'stack' }, h('p', { class: 'small ink-2 nl-tp-note' }, '題字だけが変わります。見出し・中身はそのままです。'), grid),
+          actions: [{ label: 'やめる', kind: 'ghost', value: null }, { label: 'この題字にする', kind: 'primary', value: true }],
+        });
+        fitLater(m.el);
+        const ok = await closed;
+        if (!ok || !S.cur || pick === S.cur.banner) return;
+        const before = pickOf(S.cur);
+        S.cur.banner = pick;
+        restyled('題字を「' + NL.BANNER_MAP[pick].label + '」にしました', before);
+      }
+
       function editor() {
         const x = S.cur;
         const inp = (key, label, attrs) => {
@@ -358,21 +518,40 @@
           });
           return Kit.field({ label, input: el, id: 'nl-' + key });
         };
+        const NL = NLT();
         const opt = (label, seg) => h('div', { class: 'nl-opt' }, h('span', null, label), seg);
-        const seg = (list, key, label) => Kit.seg(list, x[key], (v) => { x[key] = key === 'cols' ? +v : v; changed(); }, { label });
+        const seg = (list, key, label, then) => Kit.seg(list, x[key], (v) => { x[key] = key === 'cols' ? +v : v; changed(); if (then) then(v); }, { label });
+        // 見出し・囲みの飾り：見本つきのボタン
+        const chips = h('div', { class: 'nl-chips', role: 'group', 'aria-label': '見出し・囲みの飾り' });
+        const drawChips = () => {
+          Kit.clear(chips);
+          for (const l of NL.LOOKS) {
+            const orn = NL.headOrn(l.value, x.accent);
+            const pv = h('span', { class: 'nl-mini', 'aria-hidden': 'true' }, h('span', { class: 'nl-mini-s', style: { width: '44mm', padding: '2.6mm 3mm', transform: 'scale(.55)' } },
+              h('div', { class: 'nl-page k-' + l.value + ' ac-' + x.accent, style: { fontFamily: FONTS[x.font].css } }, h('h2', { class: 'nl-h', style: { margin: 0 } }, orn ? h('span', { class: 'nl-ho', html: orn }) : null, '見出し'))));
+            chips.append(h('button', { type: 'button', class: 'nl-chip', 'aria-pressed': String(x.look === l.value), 'data-v': l.value, onclick: () => { x.look = l.value; changed(); for (const c of chips.children) c.setAttribute('aria-pressed', String(c.dataset.v === l.value)); } }, pv, l.label));
+          }
+        };
+        drawChips();
+        const acSeg = seg(NL.ACCENTS.map((a) => ({ value: a.id, label: a.label })), 'accent', '飾りの色', () => drawChips());
+        for (const b of acSeg.children) { const a = NL.ACCENT_MAP[b.dataset.v]; if (a) b.prepend(h('i', { class: 'nl-sw', style: { background: a.ac } })); }
+        const looks = h('details', { class: 'nl-look', open: S.lookOpen }, h('summary', null, '紙・段・見た目'),
+          opt('紙', seg(Object.entries(PAPERS).map(([k, p]) => ({ value: k, label: p.label })), 'paper', '紙')),
+          opt('段', seg([{ value: 1, label: '1段' }, { value: 2, label: '2段' }], 'cols', '段')),
+          opt('見出し・囲み', chips),
+          opt('飾りの色', acSeg),
+          opt('字体', seg(Object.entries(FONTS).map(([k, f]) => ({ value: k, label: f.label })), 'font', '字体', () => drawChips())),
+          h('p', { class: 'small muted', style: { marginTop: '8px' } }, '色は飾りの線と地だけに使います（文字は黒）。白黒の印刷機で刷っても、線の形と模様で見分けられます。'));
+        looks.addEventListener('toggle', () => { S.lookOpen = looks.open; });
         const ed = h('div', { class: 'nl-ed stack' });
+        ed.append(designCard());
         ed.append(h('section', { class: 'card stack', 'aria-label': '題字' },
           h('h2', { class: 'nl-sec' }, '題字（通信の名前・号・日付）'),
           h('div', { class: 'nl-grid2' }, inp('name', '通信の名前', { maxlength: 20, placeholder: '例：かけはし' }), inp('catch', 'そえる言葉', { maxlength: 40, placeholder: '例：学級目標・今月のめあて' })),
           h('div', { class: 'nl-grid3' }, inp('no', '号', { type: 'number', min: 1, max: 999 }), inp('date', '発行日', { type: 'date' }),
             h('div', { class: 'field' }, h('span', { class: 'small ink-2' }, '日付の書き方'), seg([{ value: 'wareki', label: '和暦' }, { value: 'seireki', label: '西暦' }], 'era', '日付の書き方'))),
           h('div', { class: 'nl-grid2' }, inp('school', '学校名', { maxlength: 40 }), inp('from', '発行（クラス・担任）', { maxlength: 40, placeholder: defaultFrom() })),
-          h('details', { class: 'nl-look' }, h('summary', null, '紙・段・見た目'),
-            opt('紙', seg(Object.entries(PAPERS).map(([k, p]) => ({ value: k, label: p.label })), 'paper', '紙')),
-            opt('段', seg([{ value: 1, label: '1段' }, { value: 2, label: '2段' }], 'cols', '段')),
-            opt('見出し', seg(LOOKS, 'look', '見出しのかたち')),
-            opt('字体', seg(Object.entries(FONTS).map(([k, f]) => ({ value: k, label: f.label })), 'font', '字体')),
-            h('p', { class: 'small muted', style: { marginTop: '8px' } }, '学校の印刷機（白黒）で刷っても見やすいよう、色は使いません。'))));
+          looks));
         x.blocks.forEach((b, i) => ed.append(blockEditor(b, i)));
         ed.append(h('div', { class: 'nl-add', role: 'group', 'aria-label': 'ブロックを足す' }, h('span', { class: 'small ink-2' }, '足す：'), BLOCKS.map((t) => Kit.btn(t.label, () => addBlock(t.type), { sm: true, icon: t.icon }))));
         return ed;
@@ -392,6 +571,7 @@
         else if (b.type === 'list') card.append(headIn(), area(5, '1行に1つ（「・」は自動でつきます）', '箇条書き'), h('div', { class: 'btn-row' }, Kit.btn('宿題・提出物から足す', () => fromHomework(b), { sm: true, icon: 'clipboard', kind: 'ghost' })));
         else if (b.type === 'schedule') card.append(headIn(), scheduleEditor(b));
         else if (b.type === 'image') card.append(imageEditor(b));
+        else if (b.type === 'reply') card.append(headIn(), area(4, '1行に1つ。「：」で終わる行は、書きこむ線になります', '返事の票の中身'), h('p', { class: 'small muted' }, '紙面では、上に「きりとり」の線が入ります。2段のときも、全部の幅に入ります。'));
         return card;
       }
       function scheduleEditor(b) {
@@ -499,6 +679,7 @@
         end.style.top = P.h + 'mm';
         sheet.append(pageEl(x, S.imgs), end);
         fit();
+        if (S.updDesign) S.updDesign();
         for (const im of sheet.querySelectorAll('img')) if (!im.complete) im.addEventListener('load', fit, { once: true });
       }
       function fit() {
@@ -622,14 +803,17 @@
       }
 
       /* ── 号をつくる・写す・消す ── */
+      // テンプレート k から新しい号（題字・見出し・段・字体はテンプレートから。白紙は前の号の見た目のまま。紙・色・日付の書き方は前の号から）
       function fresh(k) {
         const prev = S.list[0], p = S.profile, d = Kit.ymd();
-        return norm({
+        const look = k.banner ? { tpl: k.id, banner: k.banner, look: k.look, cols: k.cols, font: k.font }
+          : { tpl: '', banner: prev ? prev.banner : 'line', look: prev ? prev.look : 'line', cols: prev ? prev.cols : 1, font: prev ? prev.font : 'goth' };
+        return norm(Object.assign({
           id: Kit.uid('nl'), classId: S.cls ? S.cls.id : '', name: prev ? prev.name : '学級通信', catch: prev ? prev.catch : '', no: prev ? maxNo(prev.name) + 1 : 1, date: d,
           school: prev ? prev.school : p.school || '', from: prev ? prev.from : defaultFrom(),
-          paper: prev ? prev.paper : 'a4', cols: prev ? prev.cols : 1, look: prev ? prev.look : 'line', font: prev ? prev.font : 'goth', era: prev ? prev.era : 'wareki',
-          blocks: k.make(d),
-        });
+          paper: prev ? prev.paper : 'a4', accent: prev ? prev.accent : 'k', era: prev ? prev.era : 'wareki',
+          blocks: tplBlocks(k, d, { teacher: p.teacher, cls: S.cls ? S.cls.name : '' }),
+        }, look));
       }
       // 前の号を写す：見出し・文章・見た目はそのまま。予定表は次の週の空の行、写真は空に
       function nextOf(prev) {
@@ -647,18 +831,26 @@
         await render();
         window.scrollTo(0, 0);
       }
+      // 新しい号：前の号を写すか、テンプレート（見本の小さな絵つき）から選ぶ
       async function newIssue() {
+        const NL = NLT();
         const prev = S.list[0] || null;
         let pick = prev ? 'prev' : 'week';
-        const opts = (prev ? [{ id: 'prev', label: '前の号から（' + prev.name + ' 第' + prev.no + '号を写す）', desc: '題字・見出し・文章・見た目はそのまま。予定表は次の週の空の行、写真は空にします' }] : []).concat(KATA);
-        const box = h('div', { class: 'nl-kata', role: 'radiogroup', 'aria-label': 'つくり方' }, opts.map((k) => {
-          const r = h('input', { type: 'radio', name: 'nl-kata', id: 'nl-k-' + k.id, value: k.id, checked: k.id === pick });
-          r.addEventListener('change', () => { pick = k.id; });
-          return h('label', { class: 'nl-kata-it', for: 'nl-k-' + k.id }, r, h('span', null, h('b', null, k.label), h('span', { class: 'small muted', style: { display: 'block' } }, k.desc)));
-        }));
-        const ok = await new Promise((res) => Kit.modal({ title: '新しい号をつくる', body: box, onClose: (v) => res(v === true), actions: [{ label: 'やめる', kind: 'ghost', value: false }, { label: 'つくる', kind: 'primary', value: true }] }));
+        const onPick = (v) => { pick = v; };
+        const prevCard = prev ? (() => {
+          const r = h('input', { type: 'radio', name: 'nl-kata', id: 'nl-kata-prev', value: 'prev', checked: true });
+          r.addEventListener('change', () => { pick = 'prev'; });
+          return h('label', { class: 'nl-kata-it', for: 'nl-kata-prev' }, r, h('span', null, h('b', null, '前の号から（' + prev.name + ' 第' + prev.no + '号を写す）'),
+            h('span', { class: 'small muted', style: { display: 'block' } }, '題字・見出し・文章・見た目はそのまま。予定表は次の週の空の行、写真は空にします')));
+        })() : null;
+        const cards = NL.TEMPLATES.map((t) => tpCard('nl-kata', t.id, t.label, t.scene + '・' + t.mood, fresh(t), { checked: pick === t.id, onPick }))
+          .concat(tpCard('nl-kata', 'blank', NL.BLANK.label, NL.BLANK.desc, fresh(NL.BLANK), { onPick }));
+        const box = h('div', { class: 'nl-kata', role: 'radiogroup', 'aria-label': 'つくり方' }, prevCard,
+          h('p', { class: 'nl-kata-sec' }, prev ? 'または、テンプレートから（中身の例文つき）' : 'テンプレートを選ぶ（中身の例文つき）'),
+          h('div', { class: 'nl-tp-grid' }, cards));
+        const ok = await new Promise((res) => fitLater(Kit.modal({ title: '新しい号をつくる', wide: true, body: box, onClose: (v) => res(v === true), actions: [{ label: 'やめる', kind: 'ghost', value: null }, { label: 'つくる', kind: 'primary', value: true }] }).el));
         if (!ok) return;
-        await create(pick === 'prev' ? nextOf(prev) : fresh(KATA.find((k) => k.id === pick)));
+        await create(pick === 'prev' ? nextOf(prev) : fresh(pick === 'blank' ? NL.BLANK : NL.TEMPLATE_MAP[pick]));
         Kit.toast('第' + S.cur.no + '号をつくりました');
       }
       async function nextIssue(x) {

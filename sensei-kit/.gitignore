@@ -1,2 +1,4 @@
 dist/
 tools/_out/
+supabase/.temp/
+supabase/.branches/

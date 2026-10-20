@@ -71,6 +71,13 @@
 .hm-flow-tool{font-size:12px;color:var(--ink-3)}
 .hm-data ul{margin:6px 0 0;padding-left:1.3em;font-size:13.5px;color:var(--ink-2)}
 .hm-data li+li{margin-top:3px}
+.hm-cloud{margin-top:12px}
+.hm-remind{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:14px;padding:10px 10px 10px 14px;border-radius:var(--r);border:1px solid color-mix(in srgb,var(--warn) 45%,var(--line));background:var(--warn-wash);color:var(--ink)}
+.hm-remind>svg{flex:none;color:var(--warn)}
+.hm-remind p{flex:1 1 280px;min-width:0;font-size:14px;line-height:1.55}
+.hm-remind .btn-row{margin-left:auto}
+.hm-move ol{margin:0;padding-left:1.4em;display:grid;gap:4px}
+.hm-move .hm-move-cloud{padding:10px 12px;border-radius:var(--r-sm);background:var(--gosu-wash)}
 .hm-duty{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:10px;padding:8px 10px;border-radius:8px;background:var(--surface-2);font-size:13.5px;border:0;width:100%;text-align:left;color:var(--ink);font-family:inherit;cursor:pointer}
 .hm-duty:hover{background:var(--gosu-wash)}
 .hm-duty b{font-weight:700}
@@ -87,6 +94,24 @@
     if (ev.repeat === 'monthly') return a.getDate() === b.getDate();
     return false;
   }
+  // バックアップの声かけ：この端末だけに保存していて、自分のデータがあり、最後に書き出してから 14 日以上たったら、ホームの上に1行で知らせる。
+  // 日付は端末ごとの好み（Kit.pref）に覚える：backup:last＝最後に書き出した日／backup:since＝自分のデータを見つけた日／backup:snooze＝「あとで」の期限
+  const REMIND_DAYS = 14, SNOOZE_DAYS = 7;
+  function backupDue(own) {
+    if (Kit.store.demo || !['local', 'memory'].includes(Kit.store.mode) || !own) return null;
+    const today = Kit.ymd();
+    let since = Kit.pref.get('backup:since', null);
+    if (!since) { Kit.pref.set('backup:since', today); since = today; }
+    const snooze = Kit.pref.get('backup:snooze', null);
+    if (snooze && today < snooze) return null;
+    const last = Kit.pref.get('backup:last', null);
+    const days = Kit.daysBetween(last || since, today);
+    return days >= REMIND_DAYS ? { days, never: !last } : null;
+  }
+  const markBackup = () => { Kit.pref.set('backup:last', Kit.ymd()); Kit.pref.set('backup:snooze', null); };
+  // 「名簿を入れない」で移すときに入れるもの（生徒の名前・記録が入らないものだけ）
+  const MOVE_SAFE = { colls: ['events', 'reminders', 'ttgrids', 'ttplans', 'msgtemplates'], docs: ['profile', 'calendar'] };
+
   const colorOf = (name) => { let x = 0; for (const ch of String(name || '')) x = (x * 31 + ch.charCodeAt(0)) >>> 0; return 'var(--series-' + ((x % 8) + 1) + ')'; };
   const dayTag = (ymd, today) => {
     const n = Kit.daysBetween(today, ymd);
@@ -124,6 +149,19 @@
           desc: Kit.fmtDate(today, 'YYYY年M月D日(W)') + (hol ? '・' + hol : '') + '　' + profile.year + '年度' + (profile.school ? '　' + profile.school : ''),
           actions: [Kit.btn('学校の設定', () => Kit.profile.edit().then(render), { icon: 'school' }), Kit.btn('バックアップ', () => root.querySelector('#hm-backup').scrollIntoView({ behavior: 'smooth' }), { icon: 'save', kind: 'ghost' })],
         }));
+
+        // バックアップの声かけ（この端末だけに保存しているとき）
+        const own = classes.some((c) => !c.sample) || events.some((e) => !e.sample) || reminders.some((r) => !r.sample) || homework.some((x) => !x.sample);
+        const due = backupDue(own);
+        if (due) {
+          root.append(h('div', { class: 'hm-remind', role: 'status' }, Kit.icon('save', 20),
+            h('p', null, (due.never ? '入れはじめてから ' + due.days + ' 日、まだバックアップを書き出していません。' : '最後にバックアップを書き出してから ' + due.days + ' 日たちました。'),
+              'この端末だけに保存しているので、ときどき書き出しておくと安心です。',
+              Kit.cloud && Kit.cloud.enabled ? h('span', null, '　', h('a', { href: '#home', onclick: (e) => { e.preventDefault(); Kit.cloud.open(); } }, 'ログインすると、アカウントにも保存できます')) : null),
+            h('div', { class: 'btn-row' },
+              Kit.btn('書き出す', backup, { kind: 'primary', sm: true, icon: 'download' }),
+              Kit.btn('あとで', () => { Kit.pref.set('backup:snooze', Kit.rel(SNOOZE_DAYS)); render(); }, { kind: 'ghost', sm: true }))));
+        }
 
         if (Kit.store.samplesShown() && (classes.some((c) => c.sample) || events.some((e) => e.sample))) {
           // はじめての方へ：3つの手順と、それぞれの使い方のデモ。デモ中は出さない（帯が出ているので）
@@ -210,10 +248,10 @@
           calendar: () => { let n = 0; for (let i = 0; i < 7; i++) { const d = Kit.rel(i); n += events.filter((e) => occursOn(e, d)).length; } return 'この7日の予定 ' + n + '件'; },
           reminders: () => { const open = reminders.filter((r) => !r.done); return open.length ? 'のこり ' + open.length + '件' : 'やることはありません'; },
         };
-        const LABEL = { class: 'クラス', lesson: '授業', plan: '予定', write: '通信・連絡' };
+        const LABEL = { class: 'クラス', lesson: '授業', plan: '予定', write: '通信・連絡', beta: 'β版（会員限定・試しの段階）' };
         const tools = h('section', { style: { marginTop: '24px' }, 'aria-label': '道具箱' }, h('h2', { class: 'section-title' }, '道具箱'));
-        for (const g of ['class', 'lesson', 'plan', 'write']) {
-          const apps = Kit.apps().filter((a) => a.group === g);
+        for (const g of ['class', 'lesson', 'plan', 'write', 'beta']) {
+          const apps = Kit.visibleApps().filter((a) => a.group === g);
           if (!apps.length) continue;
           tools.append(h('div', { class: 'hm-group' }, h('div', { class: 'hm-group-label' }, LABEL[g]),
             h('div', { class: 'hm-tools' }, apps.map((a) => {
@@ -238,7 +276,8 @@
             h('span', { class: 'hm-flow-no' }, String(i + 1)), h('span', { class: 'hm-flow-name' }, name), h('span', { class: 'hm-flow-tool' }, tool))))));
 
         /* ── データの扱い・共有・バックアップ ── */
-        const where = Kit.store.mode === 'db' ? 'あなたのアカウントに保存しています。ほかの端末で開いても同じ内容です。'
+        const where = Kit.store.mode === 'cloud' ? 'ジーニー会員のアカウントに、鍵をかけて保存しています（運営も中身を読めません）。どの端末でも、ログインして合言葉を入れると同じ内容になります。'
+          : Kit.store.mode === 'db' ? 'あなたのアカウントに保存しています。ほかの端末で開いても同じ内容です。'
           : Kit.env.artifact ? '共有されたページとして開いているため、このブラウザだけに保存しています。'
             : Kit.store.mode === 'memory' ? 'この環境では保存できません。閉じる前にバックアップを書き出してください。'
               : 'このブラウザの中だけに保存しています（サーバーには送りません）。ブラウザのデータを消すと消えるので、ときどきバックアップを書き出してください。';
@@ -246,19 +285,25 @@
           h('h2', { class: 'hm-h2' }, Kit.icon('lock', 18), 'データの扱い'),
           h('ul', null,
             h('li', null, where),
-            h('li', null, '名簿は出席番号だけでも使えます。教室で画面を映すときは、クラスの帯の「名前を隠す」を使ってください。'),
+            h('li', null, h('b', null, '名簿は出席番号だけでも使えます'), '（学校の決まりで名前を入れにくいときに、おすすめ。席替え・係・当番・宿題はそのまま使えます）。教室で画面を映すときは、クラスの帯の「名前を隠す」を使ってください。'),
             h('li', null, '共有（予定・リマインダー・時間割）には、生徒の名前は入りません。'),
-            h('li', null, '学校の共用パソコンで使ったときは、バックアップを書き出してから「すべて消して最初から」を押してください。'))));
+            h('li', null, Kit.store.mode === 'cloud' ? '学校の共用パソコンで使ったときは、ログアウトして「この端末の写しも消す」を選んでください。' : '学校の共用パソコンで使ったときは、バックアップを書き出してから「すべて消して最初から」を押してください。')),
+          Kit.cloud && Kit.cloud.enabled ? h('div', { class: 'btn-row hm-cloud' },
+            Kit.cloud.user()
+              ? [h('span', { class: 'small ink-2' }, Kit.cloud.user().email || ''), Kit.btn('アカウント', () => Kit.cloud.open(), { icon: 'lock' })]
+              : [Kit.btn('ログインして、どの端末でも使う', () => Kit.cloud.open(), { kind: 'primary', icon: 'lock' }), h('span', { class: 'small muted' }, 'ジーニー会員のアカウントで。鍵をかけて保存します。ログインすると、β版の道具（成績・面談の日程・動画編集）も使えます')]) : null));
         root.append(h('section', { class: 'card', style: { marginTop: '16px' }, 'aria-label': '共有を受け取る' },
           h('h2', { class: 'hm-h2' }, Kit.icon('share', 18), '共有を受け取る'),
           h('p', { class: 'small ink-2', style: { marginTop: '6px' } }, 'ほかの先生から「共有用のファイル（.json）」をもらったら、ここから開きます。共有リンクをもらったときは、リンクを開くだけで取り込みの画面が出ます。'),
           h('div', { class: 'btn-row', style: { marginTop: '10px' } }, Kit.btn('共有ファイルを開く', () => School.share.fromFile(), { icon: 'upload' }))));
         root.append(h('section', { class: 'card', id: 'hm-backup', style: { marginTop: '16px' }, 'aria-label': '保存とバックアップ' },
           h('h2', { class: 'hm-h2' }, Kit.icon('save', 18), '保存とバックアップ'),
-          h('p', { class: 'small muted', style: { marginTop: '6px' } }, 'バックアップ（JSON）には、すべての道具の内容が入ります。名簿もふくまれるので、置き場所に気をつけてください。'),
+          h('p', { class: 'small muted', style: { marginTop: '6px' } }, 'バックアップ（JSON）には、すべての道具の内容が入ります。名簿もふくまれるので、置き場所に気をつけてください。'
+            + (Kit.pref.get('backup:last', null) ? '最後に書き出した日：' + Kit.fmtDate(Kit.pref.get('backup:last', null), 'M月D日') + '。' : '')),
           h('div', { class: 'btn-row', style: { marginTop: '10px' } },
             Kit.btn('バックアップを書き出す', backup, { icon: 'download' }),
             Kit.btn('バックアップから戻す', restore, { icon: 'upload' }),
+            Kit.btn('ほかの端末へ移す', moveDlg, { icon: 'share' }),
             Kit.btn('すべて消して最初から', wipe, { icon: 'trash', kind: 'danger' }))));
       }
 
@@ -283,7 +328,45 @@
         await Kit.store.flush();
         const data = await Kit.store.exportAll();
         const ok = await Kit.download('sensei-kit-backup-' + Kit.ymd() + '.json', JSON.stringify(data, null, 1));
-        if (ok) Kit.toast('バックアップを書き出しました');
+        if (ok) { markBackup(); Kit.toast('バックアップを書き出しました'); render(); }
+      }
+      // ほかの端末へ移す：アカウントならログインするだけ。この端末だけなら、移すファイル（全部／名簿を入れない）を書き出して、新しい端末で「バックアップから戻す」
+      function moveDlg() {
+        if (Kit.store.demo) { Kit.toast('デモの中ではできません。上の帯の「デモを終わる」で戻ってから使ってください'); return; }
+        if (Kit.store.mode === 'cloud') {
+          Kit.modal({ title: 'ほかの端末へ移す', body: h('div', { class: 'stack hm-move' },
+            h('p', null, 'アカウントに保存しているので、移す作業はいりません。'),
+            h('ol', null, h('li', null, 'ほかの端末でこのページを開く'), h('li', null, '左下の「この端末だけ」→ 同じアカウントでログイン'), h('li', null, '合言葉を入れる（その端末で最初の1回だけ）'))),
+            actions: [{ label: '閉じる', kind: 'primary' }] });
+          return;
+        }
+        let scope = 'all';
+        const body = h('div', { class: 'stack hm-move' },
+          Kit.cloud && Kit.cloud.enabled ? h('div', { class: 'hm-move-cloud small' }, h('b', null, 'ジーニー会員なら、ログインするだけ。'), 'どの端末でも同じ内容になり、ファイルを移す必要はありません。',
+            h('div', { class: 'btn-row', style: { marginTop: '6px' } }, Kit.btn('ログインする', () => { m.close(); Kit.cloud.open(); }, { sm: true, icon: 'lock' }))) : null,
+          h('p', null, 'ファイル1つで、家のパソコンなどに移せます。'),
+          h('ol', null,
+            h('li', null, 'この端末で「移すファイルを書き出す」'),
+            h('li', null, 'そのファイルを新しい端末へ（メール・USB・Google ドライブなど）'),
+            h('li', null, '新しい端末でこのページを開き、ホームの「バックアップから戻す」でファイルを選ぶ')),
+          Kit.field({ label: '移すもの', input: Kit.seg([{ value: 'all', label: '全部（名簿もふくむ）' }, { value: 'safe', label: '名簿を入れない' }], scope, (v) => { scope = v; note.textContent = NOTE[v]; }, { label: '移すもの' }) }));
+        const NOTE = {
+          all: '名簿・席・係・宿題の記録など、全部が入ります。生徒の名前が入るので、学校の決まりに合わせて扱ってください。',
+          safe: '予定・リマインダー・時間割・わたしのひな形・学校の設定だけ。生徒の名前や記録は入りません（新しい端末の名簿はそのまま）。',
+        };
+        const note = h('p', { class: 'small muted' }, NOTE.all);
+        body.append(note);
+        const m = Kit.modal({ title: 'ほかの端末へ移す', body, actions: [{ label: 'やめる', kind: 'ghost' }, { label: '移すファイルを書き出す', kind: 'primary', onClick: async () => {
+          await Kit.store.flush();
+          const data = await Kit.store.exportAll();
+          if (scope === 'safe') {
+            data.scope = 'no-roster';
+            for (const k of Object.keys(data.colls)) if (!MOVE_SAFE.colls.includes(k)) delete data.colls[k];
+            for (const k of Object.keys(data.docs)) if (!MOVE_SAFE.docs.includes(k)) delete data.docs[k];
+          }
+          const ok = await Kit.download('sensei-kit-move-' + (scope === 'safe' ? 'nonames-' : '') + Kit.ymd() + '.json', JSON.stringify(data, null, 1));
+          if (ok) { if (scope === 'all') markBackup(); Kit.toast('移すファイルを書き出しました。新しい端末で「バックアップから戻す」から開いてください'); render(); }
+        } }] });
       }
       async function restore() {
         if (Kit.store.demo) { Kit.toast('デモの中ではできません。上の帯の「デモを終わる」で戻ってから使ってください'); return; }
@@ -293,14 +376,15 @@
         try { data = JSON.parse(await f.text()); } catch (e) { Kit.toast('ファイルを読めませんでした。先生の道具箱のバックアップ（.json）を選んでください', { type: 'bad' }); return; }
         if (!data || data.app !== 'sensei-kit') { Kit.toast(data && data.kind ? 'これは共有ファイルです。「共有ファイルを開く」から開いてください' : '先生の道具箱のバックアップではありません', { type: 'bad' }); return; }
         const n = Object.values(data.colls || {}).reduce((s, a) => s + (a ? a.length : 0), 0);
-        const yes = await Kit.confirm({ title: 'バックアップから戻しますか', body: Kit.fmtDate(String(data.exportedAt || '').slice(0, 10), 'YYYY年M月D日') + 'のバックアップ（' + n + '件のデータ）で、いまの内容を置きかえます。', ok: '戻す', danger: true });
+        const safe = data.scope === 'no-roster';
+        const yes = await Kit.confirm({ title: safe ? '移すファイルを取り込みますか' : 'バックアップから戻しますか', body: Kit.fmtDate(String(data.exportedAt || '').slice(0, 10), 'YYYY年M月D日') + (safe ? 'の「名簿を入れない」ファイル（' + n + '件）です。予定・リマインダー・時間割・わたしのひな形・学校の設定を置きかえます。この端末の名簿・席・係などは、そのまま残ります。' : 'のバックアップ（' + n + '件のデータ）で、いまの内容を置きかえます。'), ok: safe ? '取り込む' : '戻す', danger: !safe });
         if (!yes) return;
         try { await Kit.store.importAll(data); Kit.toast('バックアップから戻しました'); render(); }
         catch (e) { Kit.toast('戻せませんでした：' + ((e && e.message) || e), { type: 'bad' }); }
       }
       async function wipe() {
         if (Kit.store.demo) { Kit.toast('デモの中ではできません。上の帯の「デモを終わる」で戻ってから使ってください'); return; }
-        const yes = await Kit.confirm({ title: 'すべて消しますか', body: 'すべての道具の内容（名簿・席・係・当番・時間割・予定・リマインダー・宿題・通信・わたしのひな形）を消して、最初の状態（サンプル表示）に戻します。元に戻せないので、先にバックアップを書き出しておくと安心です。', ok: 'すべて消す', danger: true });
+        const yes = await Kit.confirm({ title: 'すべて消しますか', body: 'すべての道具の内容（名簿・席・係・当番・時間割・予定・リマインダー・宿題・通信・わたしのひな形）を消して、最初の状態（サンプル表示）に戻します。' + (Kit.store.mode === 'cloud' ? 'アカウントからも消えます（ほかの端末からも）。' : '') + '元に戻せないので、先にバックアップを書き出しておくと安心です。', ok: 'すべて消す', danger: true });
         if (!yes) return;
         await Kit.store.wipeAll();
         Kit.pref.set('class', null);

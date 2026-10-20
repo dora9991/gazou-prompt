@@ -1,11 +1,12 @@
-// 席替え：条件（前の席・はなす2人・男女・前回のとなり）をつけて、くじで席を決める。発表・印刷も
+// 席替え：条件（前の席・列を決める人・はなす2人・男女・前回のとなり）をつけて、くじで席を決める。発表・印刷も
 (function () {
   'use strict';
   const { h } = Kit;
   const K = (r, c) => r + '-' + c;
   const range = (n) => Array.from({ length: n }, (_, i) => i);
 
-  const CFG_DEFAULT = { rows: 6, cols: 6, pairs: true, blocked: [], frontRows: 2, mix: 'none', avoidPrev: true, emptyBack: true, apart: [], fixed: {}, view: 'student' };
+  // zones … 列を決める人 { 生徒id: { cols: [縦の列。黒板に向かって左から 0,1,…], rows: [横の列。前から 0,1,…] } } / window … 窓の側（黒板に向かって）
+  const CFG_DEFAULT = { rows: 6, cols: 6, pairs: true, blocked: [], frontRows: 2, mix: 'none', avoidPrev: true, emptyBack: true, apart: [], fixed: {}, zones: {}, window: 'left', view: 'student' };
   const MIX = [
     { value: 'none', label: '気にしない' },
     { value: 'side', label: 'となり同士は男女' },
@@ -20,6 +21,13 @@
     if (!MIX.some((x) => x.value === o.mix)) o.mix = 'none';
     o.apart = Array.isArray(o.apart) ? o.apart.filter((p) => Array.isArray(p) && p[0] && p[1]) : [];
     o.fixed = o.fixed && typeof o.fixed === 'object' ? o.fixed : {};
+    const zones = {};
+    for (const [id, z] of Object.entries(o.zones && typeof o.zones === 'object' ? o.zones : {})) {
+      const cols = SeatSolver.normIdx(z && z.cols).filter((x) => x < 12), rows = SeatSolver.normIdx(z && z.rows).filter((x) => x < 12);
+      if (cols.length || rows.length) zones[id] = { cols, rows };
+    }
+    o.zones = zones;
+    o.window = o.window === 'right' ? 'right' : 'left';
     o.view = o.view === 'teacher' ? 'teacher' : 'student';
     if (classId) { o.classId = classId; o.id = 'cfg-' + classId; }
     return o;
@@ -68,6 +76,13 @@
 .st-mk svg{width:12px;height:12px;color:var(--gosu)}
 .st-mk b{font-size:12px;line-height:1.2;padding:0 3px;border-radius:3px;background:var(--surface-2);color:var(--ink-2);font-weight:700}
 .st-mk b.fr{background:var(--warn-wash);color:var(--warn)}
+.st-mk.bl{top:auto;bottom:2px;left:4px}
+.st-mk b.zn{background:var(--gosu-wash);color:var(--gosu);line-height:1.15}
+.st-ruler{display:flex;align-items:flex-end;justify-content:center;gap:1px;padding:0 0 2px;border-bottom:2px solid var(--line-strong);font-size:12px;color:var(--ink-2);line-height:1.3;white-space:nowrap}
+.st-ruler b{font-size:13px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.st-ruler.is-under{align-items:flex-start;padding:2px 0 0;border-bottom:0;border-top:2px solid var(--line-strong)}
+.st-rulernote{font-size:12.5px;color:var(--ink-2);text-align:center;margin-top:4px}
+.st-rulernote b{display:inline-block;font-size:12px;line-height:1.2;padding:0 3px;border-radius:3px;background:var(--gosu-wash);color:var(--gosu)}
 @keyframes st-pop{from{transform:scale(.85);opacity:.3}to{transform:none;opacity:1}}
 .st-issues{display:grid;gap:6px;margin-top:10px}
 .st-issue{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;padding:8px 10px;border-radius:8px;background:var(--warn-wash);color:var(--ink)}
@@ -88,6 +103,33 @@
 .st-pair span{flex:1;min-width:0}
 .st-addpair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:6px}
 .st-sum{font-size:13px;color:var(--ink-2)}
+/* 列を決める人 */
+.st-zone-ed{display:grid;gap:8px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2)}
+.st-zone-ed .st-who-now{font-size:14px;font-weight:700}
+.st-lanes-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;font-size:13.5px}
+.st-lanes-h span{font-size:12.5px;color:var(--ink-2)}
+.st-lanes{display:flex;flex-wrap:wrap;gap:5px}
+.st-lane{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;min-width:40px;min-height:42px;padding:3px 5px;border-radius:8px;border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);font:inherit;line-height:1.15;cursor:pointer;transition:background .12s,border-color .12s}
+.st-lane b{font-size:15px;font-variant-numeric:tabular-nums}
+.st-lane small{font-size:12px;color:var(--ink-2)}
+.st-lane:hover{border-color:var(--gosu)}
+.st-lane[aria-pressed="true"]{background:var(--gosu);border-color:var(--gosu);color:var(--on-gosu)}
+.st-lane[aria-pressed="true"] small{color:inherit}
+.st-win{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.st-zmap{display:grid;grid-template-columns:auto auto auto;gap:4px 6px;align-items:center;justify-content:start}
+.st-zmap-grid{display:grid;grid-template-columns:repeat(var(--zc),16px);gap:3px}
+.st-zmap-grid i{display:block;width:16px;height:12px;border-radius:3px;border:1.5px solid var(--line-strong);background:var(--surface)}
+.st-zmap-grid i.on{background:var(--gosu);border-color:var(--gosu)}
+.st-zmap-grid i.none{background:transparent;border-color:transparent}
+.st-zmap-board{font-size:12px;line-height:1.5;text-align:center;letter-spacing:.3em;border-radius:3px;background:var(--board);color:var(--on-board)}
+.st-zmap-side{font-size:12px;color:var(--ink-2);writing-mode:vertical-rl;letter-spacing:.15em}
+.st-zsum{font-size:13px}
+.st-zsum.is-bad{color:var(--bad)}
+.st-znote{font-size:12.5px;color:var(--ink-2)}
+.st-pair.st-zitem{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:0 2px;padding:4px 4px 8px 10px}
+.st-zitem .st-ztext{grid-column:1/-1;display:grid;gap:1px;font-size:12.5px;color:var(--ink-2)}
+.st-zitem .st-zwarn{color:var(--bad)}
+.st-who{display:block;font-size:12.5px;color:var(--ink-2);margin-top:2px}
 /* 発表 */
 .st-show{position:fixed;inset:0;z-index:150;background:var(--bg);display:flex;flex-direction:column;padding:max(14px,env(safe-area-inset-top)) var(--gutter-r) max(14px,env(safe-area-inset-bottom)) var(--gutter-l);overflow:auto}
 .st-show-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:10px}
@@ -105,6 +147,7 @@
   .st-seat{--seat-w:calc((100vw - 2 * var(--gutter-l) - 60px - var(--extra-aisles, 0px)) / var(--ncols))}
   .st-seat .nm{font-size:12.5px}
   .st-seat .nm .mei{display:none}
+  .st-board.has-zones{--seat-h:64px}
   .st-boardcard{padding:10px}
 }
 /* 印刷 */
@@ -130,7 +173,8 @@
     desc: '条件をつけて、くじで席を決める。発表・印刷も',
     colls: ['seatcfg', 'seatplans'],
     async mount(root) {
-      const S = { cls: null, cfg: null, plans: [], draft: null, sel: null, selStudent: null, mode: 'swap', viewPlanId: null, busy: false };
+      const blankZone = () => ({ id: '', cols: [], rows: [] });
+      const S = { cls: null, cfg: null, plans: [], draft: null, sel: null, selStudent: null, mode: 'swap', viewPlanId: null, busy: false, zoneEdit: blankZone() };
       const mq = window.matchMedia('(max-width: 640px)');
       let alive = true;
 
@@ -152,6 +196,7 @@
         S.plans = all.filter((p) => p.classId === S.cls.id).sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.createdAt).localeCompare(String(a.createdAt)));
         const show = (S.viewPlanId && S.plans.find((p) => p.id === S.viewPlanId)) || S.plans[0] || null;
         if (!S.draft || S.draft.classId !== S.cls.id || S.draft.saved) S.draft = show ? fromPlan(show) : blankDraft();
+        if (S.zoneEdit.id && !S.cls.students.some((s) => s.id === S.zoneEdit.id)) S.zoneEdit = blankZone();
       }
       const fromPlan = (p) => ({ classId: p.classId, planId: p.id, title: p.title || '', date: p.date, rows: p.rows, cols: p.cols, blocked: (p.blocked || []).slice(), pairs: !!p.pairs, seats: Object.assign({}, p.seats || {}), seed: p.seed, saved: true, issues: null });
       const blankDraft = () => ({ classId: S.cls.id, planId: null, title: '', date: Kit.ymd(), rows: S.cfg.rows, cols: S.cfg.cols, blocked: S.cfg.blocked.slice(), pairs: S.cfg.pairs, seats: {}, saved: false, issues: null });
@@ -191,6 +236,10 @@
           Kit.seg([{ value: 'swap', label: '入れかえ', icon: 'swap' }, { value: 'pin', label: '固定する', icon: 'pin' }, { value: 'layout', label: '机の配置', icon: 'seats' }], S.mode, (v) => { S.mode = v; S.sel = null; S.selStudent = null; render(); }, { label: '押したときの動き' }),
           h('span', { class: 'st-modehint' }, hint)));
         card.append(board({ interactive: true }));
+        if (hasZones()) {
+          card.append(h('p', { class: 'st-rulernote' }, '列の番号は、黒板に向かって左から数えます（1列目が' + (S.cfg.window === 'left' ? '窓側' : '廊下側') + '）。' + (S.cfg.view === 'teacher' ? '教卓から見た図では、右はしが1列目です。' : ''),
+            ' ', h('b', null, '列'), ' は列を決めた人。'));
+        }
         card.append(unseatedEl());
         card.append(issuesEl());
         card.append(h('div', { class: 'st-actions' },
@@ -207,8 +256,9 @@
         const d = o.draft || S.draft, view = o.view || S.cfg.view;
         const st = stById();
         const blocked = new Set(d.blocked || []);
-        const issueIds = new Set((d.issues || []).filter((x) => x.kind === 'front' || x.kind === 'apart').flatMap((x) => x.ids || []));
+        const issueIds = new Set((d.issues || []).filter((x) => ['front', 'apart', 'zone', 'zoneFront', 'zoneFixed'].includes(x.kind)).flatMap((x) => x.ids || []));
         const fixedAt = o.interactive ? S.cfg.fixed : {};
+        const zones = o.interactive ? S.cfg.zones : {};
         const rowsOrder = view === 'teacher' ? range(d.rows).reverse() : range(d.rows);
         const colsOrder = view === 'teacher' ? range(d.cols).reverse() : range(d.cols);
         const aisleAfter = (c, i) => d.pairs && i < colsOrder.length - 1 && (view === 'teacher' ? c % 2 === 0 : c % 2 === 1);
@@ -217,6 +267,13 @@
         const nAisles = tpl.length - colsOrder.length;
         const grid = h('div', { class: 'st-grid', role: 'group', 'aria-label': view === 'teacher' ? '教卓から見た座席' : '生徒から見た座席', style: '--tpl:' + tpl.join(' ') + ';--ncols:' + d.cols + ';--extra-aisles:' + nAisles * 8 + 'px' });
         const showMix = S.cfg.mix !== 'none';
+        // 列の番号（列を決めた人がいるとき）。黒板に近い側に、黒板に向かって左から 1, 2, …
+        const ruler = (under) => colsOrder.forEach((c, i) => {
+          grid.append(h('span', { class: 'st-ruler' + (under ? ' is-under' : ''), 'aria-hidden': 'true' }, h('b', null, c + 1), d.cols > 8 && mq.matches ? null : '列目'));
+          if (aisleAfter(c, i)) grid.append(h('span', { class: 'st-aisle', 'aria-hidden': 'true' }));
+        });
+        const showRuler = o.interactive && hasZones();
+        if (showRuler && view !== 'teacher') ruler(false);
         for (const r of rowsOrder) {
           colsOrder.forEach((c, i) => {
             const k = K(r, c);
@@ -235,19 +292,21 @@
               el = h(o.interactive || o.big ? 'button' : 'div', {
                 type: o.interactive || o.big ? 'button' : null,
                 class: 'st-seat' + (S.sel === k && o.interactive ? ' is-sel' : '') + (fixedAt[k] === id ? ' is-fixed' : '') + (o.interactive && issueIds.has(id) ? ' is-issue' : '') + (hiddenNow ? ' is-hidden' : '') + (o.flipKey === k ? ' is-flip' : '') + (o.popAll ? ' is-new' : ''),
-                'data-k': k, 'aria-label': hiddenNow ? 'まだ伏せている席' : (s.no + '番' + (School.hidden() ? '' : ' ' + (s.name || ''))) + (fixedAt[k] === id ? '（固定）' : ''),
+                'data-k': k, 'aria-label': hiddenNow ? 'まだ伏せている席' : (s.no + '番' + (School.hidden() ? '' : ' ' + (s.name || ''))) + (fixedAt[k] === id ? '（固定）' : '') + (zones[id] ? '（列を決めた人）' : ''),
               },
               hiddenNow || !s.name || School.hidden() ? null : h('span', { class: 'no' }, s.no),
               nm,
               o.interactive ? h('span', { class: 'st-mk l' }, fixedAt[k] === id ? Kit.icon('pin') : null, s.front ? h('b', { class: 'fr', title: '前の席' }, '前') : null) : null,
-              o.interactive && showMix && s.gender ? h('span', { class: 'st-mk r' }, h('b', null, s.gender === 'm' ? '男' : '女')) : null);
+              o.interactive && showMix && s.gender ? h('span', { class: 'st-mk r' }, h('b', null, s.gender === 'm' ? '男' : '女')) : null,
+              o.interactive && zones[id] ? h('span', { class: 'st-mk bl' }, h('b', { class: 'zn', title: '列を決めた人：' + SeatSolver.zoneText(zones[id], { cols: S.cfg.cols, window: S.cfg.window }) }, '列')) : null);
             }
             grid.append(el);
             if (aisleAfter(c, i)) grid.append(h('span', { class: 'st-aisle', 'aria-hidden': 'true' }));
           });
         }
+        if (showRuler && view === 'teacher') ruler(true);
         const front = h('div', { class: 'st-front', 'aria-hidden': 'true' }, h('span', { class: 'st-kokuban' }, '黒板'), h('span', { class: 'st-kyotaku' }, '教卓'));
-        const wrap = h('div', { class: 'st-board' + (o.big ? ' is-big' : '') });
+        const wrap = h('div', { class: 'st-board' + (o.big ? ' is-big' : '') + (showRuler ? ' has-zones' : '') });
         if (view === 'teacher') wrap.append(grid, front); else wrap.append(front, grid);
         if (o.interactive) grid.addEventListener('click', onSeat);
         return wrap;
@@ -268,7 +327,12 @@
         if (d.error) { box.append(h('div', { class: 'st-issue' }, Kit.icon('warn'), h('span', null, d.error))); return box; }
         if (!d.issues) return box;
         if (!d.issues.length) box.append(h('div', { class: 'st-ok' }, Kit.icon('check'), h('span', null, '条件をすべて満たしました。')));
-        for (const it of d.issues) box.append(h('div', { class: 'st-issue' }, Kit.icon('warn'), h('span', null, it.text)));
+        const byId = stById();
+        for (const it of d.issues) {
+          // 列の知らせには、だれのことかを添える（「名前を隠す」なら番号だけ）
+          const who = /^zone/.test(it.kind) ? (it.ids || []).map((id) => byId.get(id)).filter(Boolean).sort((a, b) => (a.no || 0) - (b.no || 0)).map((s) => School.label(s)).join('、') : '';
+          box.append(h('div', { class: 'st-issue' }, Kit.icon('warn'), h('span', null, it.text, who ? h('span', { class: 'st-who' }, '対象：' + who) : null)));
+        }
         return box;
       }
 
@@ -355,7 +419,8 @@
           h('div', { class: 'stack tight' },
             h('h3', null, '「前の席」の人'),
             h('p', { class: 'small ink-2' }, fronts.length ? fronts.map((s) => School.label(s)).join('、') + ' を、' : '名簿で「前の席」に印をつけた人を、'),
-            Kit.seg([1, 2, 3].map((n) => ({ value: n, label: '前から' + n + '列目まで' })), c.frontRows, (v) => { c.frontRows = +v; saveCfg(); }, { label: '前の席の範囲' })),
+            Kit.seg([1, 2, 3].map((n) => ({ value: n, label: '前から' + n + '列目まで' })), c.frontRows, (v) => { c.frontRows = +v; saveCfg(); if (S.zoneEdit.id) render(); }, { label: '前の席の範囲' })),
+          zoneSection(byId),
           h('div', { class: 'stack tight' },
             h('h3', null, '男女の並び'),
             Kit.seg(MIX, c.mix, (v) => { c.mix = v; saveCfg(); render(); }, { label: '男女の並び' }),
@@ -382,6 +447,120 @@
               : h('p', { class: 'small muted' }, '「固定する」にして席を押すと、その人は席替えで動きません（配慮が必要なときなど）。')));
       }
 
+      /* ── 列を決める人 ──
+         縦の列は「黒板に向かって左から」、横の列は「前から」数える。図の向き（生徒から／教卓から）を変えても同じ数え方 */
+      const hasZones = () => !!S.cls && S.cls.students.some((s) => S.cfg.zones[s.id]);
+      const zoneHasDesk = (z) => {
+        const bl = new Set(S.cfg.blocked);
+        for (let r = 0; r < S.cfg.rows; r++) for (let c = 0; c < S.cfg.cols; c++) {
+          if (!bl.has(K(r, c)) && (!z.cols.length || z.cols.includes(c)) && (!z.rows.length || z.rows.includes(r))) return true;
+        }
+        return false;
+      };
+      function zoneSection(byId) {
+        const c = S.cfg, E = S.zoneEdit;
+        const list = Object.entries(c.zones).filter(([id]) => byId.has(id));
+        const who = h('select', { id: 'st-zone-who', 'aria-label': '列を決める生徒を選ぶ' }, h('option', { value: '' }, '生徒を選ぶ'),
+          S.cls.students.map((s) => h('option', { value: s.id }, School.label(s) + (c.zones[s.id] ? '（決めてあります）' : ''))));
+        who.value = E.id || '';
+        who.addEventListener('change', () => openZone(who.value, true));
+        return h('div', { class: 'stack tight st-zone' },
+          h('h3', null, '列を決める人'),
+          h('p', { class: 'small muted' }, '窓側・廊下側、前のほうなど、座ってよい列を生徒ごとに決めます。'),
+          who,
+          E.id && byId.has(E.id) ? zoneEditor(byId.get(E.id)) : null,
+          list.length ? h('div', { class: 'st-pairs' }, list.map(([id, z]) => h('div', { class: 'st-pair st-zitem' },
+            h('b', null, School.label(byId.get(id))),
+            Kit.btn('', () => openZone(id), { icon: 'edit', sm: true, kind: 'ghost', title: 'この人の列を直す' }),
+            Kit.btn('', () => { delete c.zones[id]; if (S.zoneEdit.id === id) S.zoneEdit = blankZone(); saveCfg(); render(); }, { icon: 'close', sm: true, kind: 'ghost', title: 'この人の列の決めごとを外す' }),
+            // 縦の列・横の列を1行ずつ
+            h('span', { class: 'st-ztext' }, SeatSolver.zoneText(z, { cols: c.cols, window: c.window }).split('、').map((t) => h('span', null, t)),
+              zoneHasDesk(z) ? null : h('span', { class: 'st-zwarn' }, 'いまは、この列に机がありません'))))) : null);
+      }
+      async function openZone(id, keepFocus) {
+        const z = S.cfg.zones[id];
+        S.zoneEdit = id ? { id, cols: z ? z.cols.slice() : [], rows: z ? z.rows.slice() : [] } : blankZone();
+        await render();
+        const ed = main.querySelector('.st-zone-ed');
+        if (keepFocus) { const sel = document.getElementById('st-zone-who'); if (sel) sel.focus({ preventScroll: true }); }
+        else if (ed) { ed.scrollIntoView({ block: 'nearest' }); const b = ed.querySelector('.st-lane'); if (b) b.focus({ preventScroll: true }); }
+      }
+      function zoneEditor(s) {
+        const c = S.cfg, E = S.zoneEdit;
+        const winAt = c.window === 'right' ? c.cols - 1 : 0, hallAt = c.window === 'right' ? 0 : c.cols - 1;
+        const colSub = (i) => (c.cols < 2 ? '' : i === winAt ? '窓側' : i === hallAt ? '廊下側' : '');
+        const rowSub = (i) => (c.rows < 2 ? '' : i === 0 ? '前' : i === c.rows - 1 ? '後ろ' : '');
+        const live = h('div', { class: 'stack tight', 'aria-live': 'polite' });
+        const draw = () => { Kit.clear(live); Kit.add(live, zonePreview(s, E)); };
+        const chips = (axis, n, sub, label) => h('div', { class: 'st-lanes', role: 'group', 'aria-label': label }, range(n).map((i) => {
+          const arr = axis === 'c' ? E.cols : E.rows;
+          const b = h('button', { type: 'button', class: 'st-lane', 'data-lane': axis + i, 'aria-pressed': String(arr.includes(i)), 'aria-label': (axis === 'c' ? '縦の列、左から' : '横の列、前から') + (i + 1) + '列目' + (sub(i) ? '（' + sub(i) + '）' : '') },
+            h('b', null, i + 1), sub(i) ? h('small', null, sub(i)) : null);
+          b.addEventListener('click', () => {
+            const list = axis === 'c' ? E.cols : E.rows;
+            const at = list.indexOf(i);
+            if (at >= 0) list.splice(at, 1); else { list.push(i); list.sort((x, y) => x - y); }
+            b.setAttribute('aria-pressed', String(at < 0));
+            draw();
+          });
+          return b;
+        }));
+        draw();
+        return h('div', { class: 'st-zone-ed', role: 'group', 'aria-label': School.label(s) + ' の座ってよい列' },
+          h('div', { class: 'st-who-now' }, School.label(s), c.zones[s.id] ? h('span', { class: 'small muted', style: { fontWeight: 400 } }, '（決めてあります）') : null),
+          h('div', { class: 'st-lanes-h' }, h('b', null, '縦の列'), h('span', null, '黒板に向かって左から')),
+          chips('c', c.cols, colSub, '縦の列（黒板に向かって左から）'),
+          h('div', { class: 'st-win' }, h('span', { class: 'small ink-2' }, '窓は、黒板に向かって'),
+            Kit.seg([{ value: 'left', label: '左' }, { value: 'right', label: '右' }], c.window, (v) => { c.window = v; saveCfg(); render(); }, { label: '窓の側' })),
+          h('div', { class: 'st-lanes-h' }, h('b', null, '横の列'), h('span', null, '前から')),
+          chips('r', c.rows, rowSub, '横の列（前から）'),
+          live,
+          h('div', { class: 'btn-row' },
+            Kit.btn('この列にする', () => saveZone(), { sm: true, icon: 'check' }),
+            Kit.btn('やめる', () => { S.zoneEdit = blankZone(); render(); }, { sm: true, kind: 'ghost' })));
+      }
+      // 座ってよい席の小さな図（いまの図の向き）と、席の数・ほかの条件との重なり
+      function zonePreview(s, E) {
+        const c = S.cfg, teacher = c.view === 'teacher';
+        const fr = c.frontRows;
+        const fixed = Object.values(c.fixed).includes(s.id);
+        const any = E.cols.length || E.rows.length;
+        const clash = s.front && E.rows.length && E.rows.every((r) => r >= fr);
+        const rowsOrder = teacher ? range(c.rows).reverse() : range(c.rows);
+        const colsOrder = teacher ? range(c.cols).reverse() : range(c.cols);
+        const bl = new Set(c.blocked);
+        let n = 0;
+        const grid = h('div', { class: 'st-zmap-grid', style: '--zc:' + c.cols });
+        for (const r of rowsOrder) for (const cc of colsOrder) {
+          const none = bl.has(K(r, cc));
+          const on = !!any && !none && (!E.cols.length || E.cols.includes(cc)) && (!E.rows.length || E.rows.includes(r)) && (!s.front || clash || r < fr);
+          if (on) n++;
+          grid.append(h('i', { class: none ? 'none' : on ? 'on' : '' }));
+        }
+        const winLeft = (c.window === 'left') !== teacher;
+        const side = (t) => h('span', { class: 'st-zmap-side' }, t);
+        const kokuban = () => [h('span'), h('span', { class: 'st-zmap-board' }, '黒板'), h('span')];
+        const map = h('div', { class: 'st-zmap', 'aria-hidden': 'true' },
+          teacher ? null : kokuban(), side(winLeft ? '窓' : '廊下'), grid, side(winLeft ? '廊下' : '窓'), teacher ? kokuban() : null);
+        const sum = !any ? h('p', { class: 'st-zsum muted' }, '縦の列か横の列を選ぶと、座ってよい席に色がつきます。')
+          : n ? h('p', { class: 'st-zsum' }, '座ってよい席：' + n + 'こ' + (teacher ? '（教卓から見た図）' : ''))
+            : h('p', { class: 'st-zsum is-bad' }, '座ってよい席がありません（机のない場所です）。');
+        const note = fixed ? '固定の席の人です。席替えでは、固定の席が優先されます。'
+          : s.front && any ? (clash ? '「前の席」の人です。前から' + fr + '列目までと重ならないので、決めた列を優先します。' : '「前の席」の人なので、前から' + fr + '列目までの中で座ります。')
+            : '';
+        return [map, sum, note ? h('p', { class: 'st-znote' }, note) : null];
+      }
+      function saveZone() {
+        const E = S.zoneEdit, c = S.cfg;
+        if (!E.id) return;
+        if (!E.cols.length && !E.rows.length) { Kit.toast('縦の列か横の列を、1つ以上選んでください', { type: 'bad' }); return; }
+        c.zones[E.id] = { cols: E.cols.slice(), rows: E.rows.slice() };
+        const s = stById().get(E.id);
+        S.zoneEdit = blankZone();
+        saveCfg(); render();
+        Kit.toast((s ? School.label(s) + ' の' : '') + '列を決めました。次の「席替えする」から守ります');
+      }
+
       /* ── 席替え（くじ） ── */
       async function run() {
         if (!S.cls || S.busy) return;
@@ -392,7 +571,7 @@
         const prev = c.avoidPrev ? latest() : null;
         const seed = School.newSeed();
         const input = {
-          rows: c.rows, cols: c.cols, blocked: c.blocked, pairs: c.pairs, students: S.cls.students, fixed: c.fixed, apart: c.apart,
+          rows: c.rows, cols: c.cols, blocked: c.blocked, pairs: c.pairs, students: S.cls.students, fixed: c.fixed, apart: c.apart, zones: c.zones,
           frontRows: c.frontRows, mix: c.mix, emptyBack: c.emptyBack, seed,
           prev: prev ? prev.seats : null, prevRows: prev && prev.rows, prevCols: prev && prev.cols, prevBlocked: prev && prev.blocked, prevPairs: prev && prev.pairs,
         };
@@ -486,7 +665,7 @@
           title: '座席表を印刷', body: h('div', { class: 'stack' },
             Kit.field({ label: '見出し', input: title }), Kit.field({ label: '日付など', input: date }),
             Kit.field({ label: '図の向き', input: Kit.seg([{ value: 'student', label: '生徒から見た図' }, { value: 'teacher', label: '教卓から見た図' }, { value: 'both', label: '両方（2枚）' }], which, (v) => { which = v; }, { label: '図の向き' }) }),
-            h('p', { class: 'small muted' }, 'A4横で印刷します。「前の席」や固定の印は、印刷には出ません。' + (School.hidden() ? '「名前を隠す」がオンなので、番号だけで印刷します。' : ''))),
+            h('p', { class: 'small muted' }, 'A4横で印刷します。「前の席」・固定・列の印は、印刷には出ません。' + (School.hidden() ? '「名前を隠す」がオンなので、番号だけで印刷します。' : ''))),
           actions: [{ label: 'やめる', kind: 'ghost' }, { label: '印刷する', kind: 'primary', onClick: () => { doPrint(which, title.value, date.value); } }],
         });
       }

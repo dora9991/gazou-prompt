@@ -229,7 +229,9 @@ p { margin: 0; }
 .kokuban .kokuban-tray i.c2 { width: 10px; background: #f3cf4a; }
 .kokuban .kokuban-tray i.c3 { width: 12px; background: #ef8fa6; }
 
-.mb-nav { padding: 18px 10px 10px; display: grid; gap: 10px; }
+.mb-nav { padding: 18px 10px 10px; display: grid; gap: 10px; align-content: start; }
+/* 道具が増えて入りきらないときは、メニューの中だけを送る（上の看板と下の保存の状態はいつも見える） */
+.mb-nav { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
 .mb-nav-group > .mb-nav-label { font-size: 12px; letter-spacing: .14em; color: var(--ink-3); padding: 0 10px 2px; font-weight: 700; }
 .mb-nav-item {
   display: flex; align-items: center; gap: 10px; width: 100%;
@@ -251,11 +253,17 @@ p { margin: 0; }
   .kokuban .kokuban-name { font-size: 19px; }
   .kokuban .kokuban-sub { display: none; }
   .mb-nav { padding: 12px 10px 8px; gap: 0; }
+  .mb-nav-item { min-height: 38px; }
   .mb-nav-group + .mb-nav-group { border-top: 1px solid var(--line); margin-top: 5px; padding-top: 5px; }
   .mb-nav-group > .mb-nav-label { display: none; }
   .mb-side-foot .mb-save-where { display: none; }
 }
-.mb-save-state { display: flex; align-items: center; gap: 6px; }
+.mb-save-state { display: flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 6px; margin-left: -6px; border: 0; border-radius: 8px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.mb-save-state:hover { background: var(--surface-2); color: var(--ink); }
+.mb-save-state[data-mode="cloud-ok"]::before { background: var(--ok); }
+.mb-save-state[data-mode="cloud-busy"]::before { background: var(--gosu); }
+.mb-save-state[data-mode="cloud-warn"]::before { background: var(--warn); }
+.mb-save-state[data-mode="cloud-bad"]::before { background: var(--bad); }
 .mb-save-state::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); flex: none; }
 .mb-save-state[data-mode="db"]::before { background: var(--ok); }
 .mb-save-state[data-mode="local"]::before { background: var(--warn); }
@@ -333,6 +341,13 @@ input[type="password"], input:not([type]), select, textarea {
 }
 textarea { min-height: 84px; resize: vertical; }
 select { padding-right: 28px; }
+/* 選ぶ欄：Safari（WebKit）でも高さ 40px にそろえる（既定の見た目だと 26px になる）。矢印は文字の色で描く（暗い表示でも見える） */
+select:not([multiple]):not([size]) {
+  -webkit-appearance: none; appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-2) 50%), linear-gradient(135deg, var(--ink-2) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 52%, calc(100% - 11px) 52%;
+  background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+}
 input:focus, select:focus, textarea:focus { outline: 2px solid var(--focus); outline-offset: 0; border-color: var(--focus); }
 input[type="checkbox"], input[type="radio"] { accent-color: var(--gosu); width: 19px; height: 19px; flex: none; }
 input[type="color"] { width: 44px; height: 36px; padding: 2px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); cursor: pointer; }
@@ -474,9 +489,9 @@ table.tbl tbody tr:hover td { background: color-mix(in srgb, var(--surface-2) 60
 
 /* 知らせ */
 .mb-toasts { position: fixed; z-index: 170; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 8px; width: min(440px, calc(100% - 32px)); pointer-events: none; }
-.toast { pointer-events: auto; background: var(--ink); color: var(--surface); padding: 10px 14px; border-radius: 10px; box-shadow: var(--shadow-2); font-size: 14px; display: flex; gap: 10px; align-items: center; animation: mb-rise .18s ease-out; }
+.toast { pointer-events: none; background: var(--ink); color: var(--surface); padding: 10px 14px; border-radius: 10px; box-shadow: var(--shadow-2); font-size: 14px; display: flex; gap: 10px; align-items: center; animation: mb-rise .18s ease-out; }
 .toast.bad { background: var(--bad); color: #fff; }
-.toast .btn { --btn-bg: transparent; --btn-fg: inherit; --btn-line: currentColor; min-height: 28px; padding: 3px 10px; font-size: 13px; margin-left: auto; }
+.toast .btn { pointer-events: auto; --btn-bg: transparent; --btn-fg: inherit; --btn-line: currentColor; min-height: 28px; padding: 3px 10px; font-size: 13px; margin-left: auto; }
 @keyframes mb-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 /* 使い方などの折りたたみ */

@@ -237,6 +237,8 @@
     filter: 'M4 5h16l-6 8v6l-4-2v-4z',
     star: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z',
     chart: 'M4 20V4M4 20h16M8 16v-5M12 16V8M16 16v-3',
+    film: 'M4 5h16v14H4zM8 5v14M16 5v14M4 9h4M4 15h4M16 9h4M16 15h4',
+    flask: 'M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3M7.5 15h9',
     book: 'M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19V5',
     save: 'M5 4h11l3 3v13H5zM8 4v5h7V4M8 20v-6h8v6',
     refresh: 'M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5',
@@ -372,7 +374,8 @@
     if (actions && actions.length) {
       box.append(h('div', { class: 'modal-f' }, actions.map((a) => h('button', {
         type: 'button', class: 'btn' + (a.kind ? ' ' + a.kind : ''),
-        onclick: async () => { const r = a.onClick ? await a.onClick() : a.value; if (r !== false) close(r === undefined ? a.value : r); },
+        // onClick が false を返したときだけ閉じない（入力の不足など）。value: false の「やめる」は閉じる
+        onclick: async () => { const r = a.onClick ? await a.onClick() : a.value; if (!(a.onClick && r === false)) close(r === undefined ? a.value : r); },
       }, a.label))));
     }
     back.addEventListener('mousedown', (e) => { if (e.target === back && dismissable) close(undefined); });
@@ -438,17 +441,17 @@
     }
   }
 
-  // 手元（localStorage）。使えないときはメモリだけ（閉じると消える）
-  function localBackend() {
-    const P = 'sensei:';
+  // 手元（localStorage）。使えないときはメモリだけ（閉じると消える）。P … 置き場所の頭（アカウントの写しは 'sensei:u:<id>:'）
+  function localBackend(P = 'sensei:') {
     const mem = new Map();
     let ok = true;
     try { localStorage.setItem(P + '__t', '1'); localStorage.removeItem(P + '__t'); } catch (e) { ok = false; }
     let warned = false;
-    const read = (k) => { if (!ok) return clone(mem.get(k)); try { const s = localStorage.getItem(P + k); return s == null ? undefined : JSON.parse(s); } catch (e) { return clone(mem.get(k)); } };
+    // 容量がいっぱいで書けなかった分はメモリに置く。読むときはメモリを先に（書けなかった新しい値を、古い値や「なし」と取りちがえない）
+    const read = (k) => { if (!ok || mem.has(k)) return clone(mem.get(k)); try { const s = localStorage.getItem(P + k); return s == null ? undefined : JSON.parse(s); } catch (e) { return clone(mem.get(k)); } };
     const write = (k, v) => {
       if (!ok) { mem.set(k, clone(v)); return; }
-      try { if (v === undefined) localStorage.removeItem(P + k); else localStorage.setItem(P + k, JSON.stringify(v)); }
+      try { if (v === undefined) localStorage.removeItem(P + k); else localStorage.setItem(P + k, JSON.stringify(v)); mem.delete(k); }
       catch (e) {
         mem.set(k, clone(v));
         if (!warned) { warned = true; Kit.toast('このブラウザの保存容量がいっぱいです。古い記録を消すか、ホームからバックアップを書き出してください', { type: 'bad', ms: 8000 }); }
@@ -456,6 +459,7 @@
     };
     return {
       mode: ok ? 'local' : 'memory',
+      read, write, prefix: P,
       async getDoc(key) { return read('d:' + key); },
       async setDoc(key, v) { write('d:' + key, v); },
       async delDoc(key) { write('d:' + key, undefined); },
@@ -488,6 +492,22 @@
       async clearColl(name) { const s = await db.collection('kit_' + name).limit(1000).get(); for (const d of s.docs) await db.collection('kit_' + name).doc(d.id).delete(); },
       watch() { /* 開くたびに読み直す。同時に2台で編集するときは、あとから保存したほうが残る */ },
     };
+  }
+
+  // アカウント（js/cloud.js）：この端末の写し（localStorage の 'sensei:u:<id>:'）に書き、変わった所を Kit.cloud に知らせる。
+  // Kit.cloud が鍵をかけてサーバーへ送り、ほかの端末で変わった所を受け取って写しに書き、Kit.store.remoteChanged で画面に知らせる
+  function cloudBackend(uid) {
+    const base = localBackend('sensei:u:' + uid + ':');
+    const mark = (kind, name, id, del) => { try { Kit.cloud.mark(kind, name, id || '', !!del); } catch (e) { console.error(e); } };
+    return Object.assign({}, base, {
+      mode: 'cloud',
+      uid,
+      async setDoc(key, v) { await base.setDoc(key, v); mark('d', key, '', v === undefined); },
+      async delDoc(key) { await base.delDoc(key); mark('d', key, '', true); },
+      async putItem(name, item) { await base.putItem(name, item); mark('c', name, item.id, false); },
+      async delItem(name, id) { await base.delItem(name, id); mark('c', name, id, true); },
+      async clearColl(name) { const items = await base.listColl(name); await base.clearColl(name); for (const it of items) mark('c', name, it.id, true); },
+    });
   }
 
   // 書き込みの順番待ち：同じものへの書き込みは1つずつ、最後の値だけ
@@ -697,6 +717,32 @@
     },
     async flush() { await Promise.all([...jobs.keys()].map((k) => run(k))); await Promise.all([...jobs.values()].map((j) => j.running).filter(Boolean)); },
 
+    // ほかの端末で変わった所を受け取ったとき（Kit.cloud から）：覚えている分を捨てて読み直し、画面に知らせる
+    remoteChanged({ docs = [], colls = [] } = {}) {
+      if (store.demo) return;                              // デモ中は、終えるときにまとめて読み直す
+      for (const key of docs) {
+        cache.docs.delete(key);
+        if (key === META) backend.getDoc(META).then((m) => { meta = Object.assign({ samplesOff: false, touched: {} }, m); }).catch(() => {});
+        emit('doc:' + key);
+      }
+      for (const name of colls) { cache.colls.delete(name); virtual.delete(name); emit('coll:' + name); }
+    },
+    backend: () => (store.demo && real ? real.backend : backend),
+    // 保存先を選び直す（ログイン・合言葉を入れたあと）。覚えている分を捨てて読み直し、画面に知らせる
+    async reopen() {
+      await store.init();
+      if (store.demo) return;
+      await store.flush();
+      backend = await chooseBackend();
+      store.mode = backend.mode;
+      cache.docs = new Map(); cache.colls = new Map(); virtual.clear();
+      try { meta = Object.assign({ samplesOff: false, touched: {} }, await backend.getDoc(META)); } catch (e) { meta = { samplesOff: false, touched: {} }; }
+      backend.watch();
+      saveState('saved'); if (shell) saveWhere();
+      for (const key of known.docs) emit('doc:' + key);
+      for (const name of known.colls) emit('coll:' + name);
+    },
+
     // デモ用の砂場：on のあいだは、架空のクラスの例だけが見えるメモリの中で動く。本物のデータは読まず・書かず、off で元どおり
     demo: false,
     async sandbox(on) {
@@ -711,9 +757,10 @@
         virtual.clear();
         meta = { samplesOff: false, touched: {} };
       } else {
-        backend = real.backend; cache.docs = real.docs; cache.colls = real.colls;
-        virtual.clear(); for (const [k, v] of real.virtual) virtual.set(k, v);
-        meta = real.meta;
+        // 本物に戻すときは、覚えていた分を捨てて読み直す（デモのあいだに、ほかの端末から変わった所が届いているかもしれない）
+        backend = real.backend; cache.docs = new Map(); cache.colls = new Map();
+        virtual.clear();
+        try { meta = Object.assign({ samplesOff: false, touched: {} }, await backend.getDoc(META)); } catch (e) { meta = real.meta; }
         real = null;
       }
       store.demo = on;
@@ -747,7 +794,10 @@
   }
 
   async function chooseBackend() {
-    if (!env.artifact) return localBackend();
+    if (!env.artifact) {
+      const u = Kit.cloud && Kit.cloud.enabled && Kit.cloud.user();
+      return u ? cloudBackend(u.id) : localBackend();
+    }
     const [db, user] = await Promise.all([use('db'), use('user')]);
     if (!db) return localBackend();
     let canEdit = false;
@@ -1207,6 +1257,7 @@
     { id: 'lesson', label: '授業' },
     { id: 'plan', label: '予定' },
     { id: 'write', label: '通信・連絡' },
+    { id: 'beta', label: 'β版（会員限定）' },
   ];
   const apps = [];
   const appMap = new Map();
@@ -1220,6 +1271,8 @@
     store.declare('colls', def.colls);
   };
   Kit.apps = () => apps.slice().sort((a, b) => (a.order || 99) - (b.order || 99));
+  // メニューとホームに出す道具（hidden() が true の道具は出さない。β版の会員限定など）
+  Kit.visibleApps = () => Kit.apps().filter((a) => { try { return !(a.hidden && a.hidden()); } catch (e) { return true; } });
   Kit.appDef = (id) => appMap.get(id);
 
   let shell = null;
@@ -1252,7 +1305,7 @@
         h('span', { class: 'kokuban-name' }, '先生の道具箱'), h('span', { class: 'kokuban-sub' }, '学級・授業・予定'),
         h('span', { class: 'kokuban-tray', 'aria-hidden': 'true' }, h('i', { class: 'c1' }), h('i', { class: 'c2' }), h('i', { class: 'c3' }))),
       nav,
-      h('div', { class: 'mb-side-foot' }, h('span', { class: 'mb-save-state', 'data-mode': 'local' }, '読み込み中…'), themeBtn(), h('span', { class: 'mb-save-where' })));
+      h('div', { class: 'mb-side-foot' }, h('button', { type: 'button', class: 'mb-save-state', 'data-mode': 'local', title: '保存のしかた（この端末だけ／アカウント）', onclick: () => { if (Kit.cloud && Kit.cloud.enabled) Kit.cloud.open(); else Kit.go('home'); } }, '読み込み中…'), themeBtn(), h('span', { class: 'mb-save-where' })));
     const scrim = h('div', { class: 'mb-scrim', hidden: true, onclick: () => drawer(false) });
     const view = h('div', { class: 'mb-view', id: 'mb-view' });
     const main = h('main', { class: 'mb-main' }, view);
@@ -1277,7 +1330,7 @@
   }
   function renderNav() {
     Kit.clear(shell.nav);
-    const list = Kit.apps();
+    const list = Kit.visibleApps();
     for (const g of Kit.GROUPS) {
       const items = list.filter((a) => (a.group || 'home') === g.id);
       if (!items.length) continue;
@@ -1294,12 +1347,15 @@
   function saveState(s) {
     if (!shell) return;
     const el = shell.side.querySelector('.mb-save-state');
-    el.dataset.mode = store.demo ? 'demo' : store.mode === 'db' ? 'db' : 'local';
-    el.textContent = store.demo ? 'デモ中（保存しません）' : s === 'saving' ? '保存中…' : s === 'error' ? '保存できませんでした' : store.mode === 'db' ? 'アカウントに保存済み' : store.mode === 'memory' ? '保存できない環境です' : 'このブラウザに保存';
+    const cloud = store.mode === 'cloud' && Kit.cloud ? Kit.cloud.label() : null;
+    el.dataset.mode = store.demo ? 'demo' : cloud ? 'cloud-' + cloud.tone : store.mode === 'db' ? 'db' : 'local';
+    el.textContent = store.demo ? 'デモ中（保存しません）' : s === 'saving' && !cloud ? '保存中…' : s === 'error' ? '保存できませんでした' : cloud ? cloud.text : store.mode === 'db' ? 'アカウントに保存済み' : store.mode === 'memory' ? '保存できない環境です' : 'このブラウザに保存';
   }
+  Kit.saveState = (s) => saveState(s || 'saved');
   function saveWhere() {
     const el = shell.side.querySelector('.mb-save-where');
-    el.textContent = store.mode === 'db' ? 'ほかの端末で開いても同じ内容です。'
+    el.textContent = store.mode === 'cloud' ? 'どの端末でも同じ内容です（鍵つき）。'
+      : store.mode === 'db' ? 'ほかの端末で開いても同じ内容です。'
       : env.artifact ? '共有で開いているため、このブラウザだけに保存されます。'
         : store.mode === 'memory' ? 'ページを閉じると消えます。バックアップを書き出してください。'
           : 'ときどきホームからバックアップを。';
@@ -1332,6 +1388,7 @@
     if (seq === mountSeq) window.scrollTo(0, 0);
   }
   Kit.current = () => (current ? current.id : null);
+  Kit.renderNav = () => { if (shell) { renderNav(); for (const a of shell.nav.querySelectorAll('.mb-nav-item')) { if (current && a.dataset.app === current.id) a.setAttribute('aria-current', 'page'); } } };
   // ハッシュを先に受け取る係：fn(ハッシュ) → 開く画面の id（自分の担当でなければ null）
   Kit.hashHandlers = [];
   Kit.remount = () => (current ? mount(current.id) : Promise.resolve());
@@ -1355,6 +1412,7 @@
     };
     window.addEventListener('hashchange', route);
     route();
+    if (Kit.cloud && Kit.cloud.start) Kit.cloud.start();   // アカウントに保存しているとき：鍵を開けて、ほかの端末と合わせる
     const flush = () => { store.flush(); };
     window.addEventListener('pagehide', flush);
     document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
