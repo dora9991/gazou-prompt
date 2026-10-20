@@ -1,11 +1,14 @@
 /*
  * 画像生成プロンプト処方箋 ― 参加者の画面
+ *
+ * 画面の考え方：まず「ざっくり書く」大きな欄。書いた文章から、当てはまるタグを自動で見つけて指示文に反映する。
+ * ボタンで選びたい人のために、よく使う12個だけを先に出し、そのほか（タグ 275 個）は閉じた項目の中に置く。
  * 画面は最初に1回だけ組み立て、あとは「押されている／いない」などの状態だけを書きかえる
  * （押している最中のボタンを作り直すと、Safari でクリックが届かなくなるため）。
  */
 (function () {
   'use strict';
-  var T = window.GP_TAGS, E = window.GP_ENGINE, API = window.GP_API;
+  var T = window.GP_TAGS, E = window.GP_ENGINE, I = window.GP_INFER, API = window.GP_API;
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 
@@ -29,44 +32,71 @@
   }
 
   // ------------------------------------------------------------ 画面の組み立て方
-  var WISH_PH = {
-    new: '例：運動会でリレーをしている子どもたち／本と電球を組み合わせたロゴ',
-    edit: '例：右の男の子の手を自然にしたい／背景を夕方の校庭にしたい'
+  // よく使う12個だけを、最初から出す（ほかは閉じた項目の中）
+  var MODES = {
+    new: {
+      q: '作りたい絵や、困っていることを書いてください',
+      sub: 'ひとこと・箇条書きでかまいません。書いた内容から、当てはまるタグも自動で見つけます。',
+      ph: '例：学級通信にのせる運動会のイラスト。子どもの手が毎回おかしくなって困っている',
+      examples: ['pr-newsletter', 'pr-slide', 'pr-thumbnail', 'pr-character'],
+      quick: [
+        { title: '作りたいもの', cat: 'use', open: 'use', ids: ['u-newsletter', 'u-slides', 'u-poster', 'u-worksheet', 'u-youtube', 'u-class-character'] },
+        { title: '困っていること', cat: 'trouble', open: 'trouble', ids: ['t-text-broken', 't-hands', 't-chara-consistency', 't-not-as-imagined', 't-partial-edit', 't-what-to-write'] }
+      ],
+      acc: [
+        { id: 'use', title: '作りたいもの（使い道）', parts: [{ cat: 'use' }] },
+        { id: 'trouble', title: '困っていること', parts: [{ cat: 'trouble' }, { text: 'trouble', label: 'ほかに困っていること（自由に）', ph: '例：子どもを描くと、毎回大人っぽくなってしまう' }] },
+        { id: 'look', title: '絵のタッチ・雰囲気・色', parts: [{ cat: 'style', head: true }, { cat: 'mood', head: true }, { cat: 'color', head: true }] },
+        { id: 'scene', title: '場面・テーマ（行事・季節・教科）', parts: [{ cat: 'scene' }] },
+        { id: 'layout', title: '形・構図・背景', parts: [{ cat: 'ratio', head: true }, { cat: 'frame', head: true }, { cat: 'bg', head: true }] },
+        { id: 'people', title: '登場人物・人数', parts: [{ cat: 'people' }, { cat: 'count', head: true }] },
+        { id: 'extra', title: '画像に入れる文字・添えるもの', parts: [{ text: 'title', label: '画像に入れる文字（なければ空欄）', ph: '例：うんどうかい', max: 80, line: true }, { cat: 'option', head: true }] }
+      ]
+    },
+    edit: {
+      q: 'どう直したいですか？',
+      sub: '例：手を自然に／背景を夕方に。変えたくないところも書けます。書いた内容から、タグも自動で見つけます。',
+      ph: '例：右の男の子の手を自然にしたい。ほかは変えないでほしい',
+      examples: ['pr-fix-hands'],
+      quick: [
+        { title: 'どこを直す？', cat: 'change', open: 'change', ids: ['e-hands', 'e-face', 'e-text-fix', 'e-text-remove', 'e-background', 'e-color'] },
+        { title: 'そのままにしたい所', cat: 'keep', open: 'keep', ids: ['k-face', 'k-composition', 'k-style', 'k-colors'] }
+      ],
+      acc: [
+        { id: 'change', title: '直したいところ', parts: [{ cat: 'change' }] },
+        { id: 'keep', title: 'そのままにしたいところ', parts: [{ cat: 'keep' }] },
+        { id: 'trouble', title: '困っていること', parts: [{ cat: 'trouble' }, { text: 'trouble', label: 'ほかに困っていること（自由に）', ph: '例：直してと頼むと、顔まで変わってしまう' }] },
+        { id: 'extra', title: '形・入れる文字', parts: [{ text: 'title', label: '正しい文字・入れたい文字（なければ空欄）', ph: '例：うんどうかい', max: 80, line: true }, { cat: 'ratio', head: true }] }
+      ]
+    }
   };
-  var STEPS = {
-    new: [
-      { id: 'what', title: '何を描きますか？', sub: '自由に書くか、場面・テーマから選びます', parts: [{ text: 'wish', label: '描いてほしいもの（自由に）' }, { cat: 'scene', fold: '場面・テーマから選ぶ' }] },
-      { id: 'use', title: '何に使いますか？', sub: '使い道に合わせて、見やすさや形を整えます', parts: [{ cat: 'use' }] },
-      { id: 'trouble', title: '困っていることは？', sub: 'あれば選んでください。対策を指示文に入れます', parts: [{ cat: 'trouble' }, { text: 'trouble', label: 'ほかに困っていること（自由に）', ph: '例：子どもを描くと、毎回大人っぽくなってしまう' }] },
-      { id: 'look', title: 'どんな感じにしますか？', sub: 'タッチ・雰囲気・色', parts: [{ cat: 'style' }, { cat: 'mood' }, { cat: 'color' }] },
-      { id: 'detail', title: '細かく決める', sub: '形・構図・人物・入れる文字など（なくても大丈夫）', fold: true, parts: [{ cat: 'ratio' }, { cat: 'frame' }, { cat: 'bg' }, { cat: 'people' }, { cat: 'count' }, { text: 'title', label: '画像に入れる文字（なければ空欄）', ph: '例：うんどうかい', max: 80, line: true }, { cat: 'option' }] },
-      { id: 'tool', title: 'どのAIに貼りますか？', sub: 'AIに合わせて、書き方を変えます', parts: [{ cat: 'tool' }] }
-    ],
-    edit: [
-      { id: 'change', title: 'どこを直しますか？', sub: '直したいところを選び、どう直したいかを書きます', parts: [{ cat: 'change' }, { text: 'wish', label: 'どう直したいか（自由に）' }] },
-      { id: 'keep', title: 'そのままにしたいところは？', sub: '変えてほしくないところを、はっきり伝えます', parts: [{ cat: 'keep' }] },
-      { id: 'trouble', title: '困っていることは？', sub: 'あれば選んでください', parts: [{ cat: 'trouble' }, { text: 'trouble', label: 'ほかに困っていること（自由に）', ph: '例：直してと頼むと、顔まで変わってしまう' }] },
-      { id: 'detail', title: '細かく決める', sub: '形・入れる文字（なくても大丈夫）', fold: true, parts: [{ cat: 'ratio' }, { text: 'title', label: '正しい文字・入れたい文字（なければ空欄）', ph: '例：うんどうかい', max: 80, line: true }] },
-      { id: 'tool', title: 'どのAIに貼りますか？', sub: 'AIに合わせて、書き方を変えます', parts: [{ cat: 'tool' }] }
-    ]
-  };
+  var TOOL_CHOICES = [['', 'どのAIでも（おまかせ）'], ['ai-chatgpt', 'ChatGPT'], ['ai-gemini', 'Gemini'], ['ai-copilot', 'Microsoft Copilot'], ['ai-canva', 'Canva'], ['ai-firefly', 'Adobe Firefly'], ['ai-midjourney', 'Midjourney（英語）']];
   var OPEN_URL = {
     'ai-chatgpt': 'https://chatgpt.com/', 'ai-gemini': 'https://gemini.google.com/app', 'ai-copilot': 'https://copilot.microsoft.com/',
     'ai-canva': 'https://www.canva.com/', 'ai-firefly': 'https://firefly.adobe.com/', 'ai-midjourney': 'https://www.midjourney.com/imagine'
   };
 
   // ------------------------------------------------------------ 状態
+  // 選んだタグは「新しく作る」と「できた画像を直す」で別々に持つ（片方で選んだものが、もう片方に隠れて残らないように）。
+  // 使うAIだけは共通（S.tool）。
   var S = {
     mode: 'new',
-    sel: new Set(),
-    text: { wishnew: '', wishedit: '', trouble: '', title: '' },
-    preset: '',
+    sels: { new: new Set(), edit: new Set() },   // 自分で押したタグ
+    offs: { new: new Set(), edit: new Set() },   // 文章から見つかったが、いらないと消したタグ
+    tool: '',                                    // 自分で選んだ使うAI（空＝おまかせ）
+    found: [],             // 文章から見つかったタグ（消したものも含む）
+    eff: new Set(),        // 実際に使うタグ（押したもの＋文章から見つけて消していないもの）
+    autoUsed: [],          // 文章から見つけて使っているタグ（画面に出す）
+    text: { mainnew: '', mainedit: '', trouble: '', title: '' },
     last: null
   };
-  var STATE_KEY = 'gp.state';
+  var STATE_KEY = 'gp.state3';
+  function sel() { return S.sels[S.mode]; }
+  function off() { return S.offs[S.mode]; }
 
   function saveState() {
-    API.store(STATE_KEY, JSON.stringify({ mode: S.mode, tags: Array.from(S.sel), text: S.text }));
+    var arr = function (set) { return Array.from(set); };
+    API.store(STATE_KEY, JSON.stringify({ mode: S.mode, tool: S.tool, sels: { new: arr(S.sels.new), edit: arr(S.sels.edit) }, offs: { new: arr(S.offs.new), edit: arr(S.offs.edit) }, text: S.text }));
   }
   function loadState() {
     var raw = API.store(STATE_KEY);
@@ -74,16 +104,48 @@
     try {
       var o = JSON.parse(raw);
       if (o.mode === 'edit' || o.mode === 'new') S.mode = o.mode;
-      (o.tags || []).forEach(function (id) { if (T.byId(id)) S.sel.add(id); });
+      if (o.tool && T.byId(o.tool) && T.byId(o.tool).cat === 'tool') S.tool = o.tool;
+      ['new', 'edit'].forEach(function (m) {
+        ((o.sels || {})[m] || []).forEach(function (id) { if (T.byId(id)) S.sels[m].add(id); });
+        ((o.offs || {})[m] || []).forEach(function (id) { if (T.byId(id)) S.offs[m].add(id); });
+      });
       if (o.text) Object.keys(S.text).forEach(function (k) { if (typeof o.text[k] === 'string') S.text[k] = o.text[k].slice(0, 400); });
     } catch (e) { /* 壊れていたら使わない */ }
   }
 
-  function wishKey() { return 'wish' + S.mode; }
+  function mainText() { return S.text['main' + S.mode]; }
+  function inMode(id) { var t = T.byId(id); return !!(t && T.CAT[t.cat].modes.indexOf(S.mode) >= 0); }
+
+  // 文章を読みなおして、「実際に使うタグ」を決める。文字・タグ・モードが変わるたびに呼ぶ
+  function recompute() {
+    S.found = I.infer(mainText(), S.mode);
+    var eff = new Set(), explicit = {};
+    sel().forEach(function (id) {
+      if (!inMode(id)) return;
+      eff.add(id);
+      var t = T.byId(id);
+      if (!T.CAT[t.cat].multi) explicit[t.cat] = 1;
+    });
+    if (S.tool) { eff.add(S.tool); explicit.tool = 1; }
+    var used = [];
+    S.found.forEach(function (id) {
+      if (off().has(id) || !inMode(id)) return;
+      var t = T.byId(id);
+      if (!T.CAT[t.cat].multi && explicit[t.cat]) return;          // 1つだけ選べる種類は、自分で選んだものを優先
+      if (!eff.has(id)) used.push(id);
+      eff.add(id);
+    });
+    S.eff = eff;
+    S.autoUsed = used;
+  }
+
+  function toolOf(set) { var r = ''; set.forEach(function (id) { var t = T.byId(id); if (t && t.cat === 'tool') r = id; }); return r; }
+
   function currentInput() {
-    var tool = '';
-    S.sel.forEach(function (id) { var t = T.byId(id); if (t && t.cat === 'tool') tool = id; });
-    return { mode: S.mode, tags: Array.from(S.sel), wish: S.text[wishKey()], trouble: S.text.trouble, title: S.text.title, tool: tool };
+    var sp = I.split(mainText(), S.mode);
+    var extra = S.text.trouble.trim();
+    var trouble = [sp.trouble, extra].filter(Boolean).join(sp.trouble && extra ? ' ／ ' : '').slice(0, 400);
+    return { mode: S.mode, tags: Array.from(S.eff), wish: sp.wish, trouble: trouble, title: S.text.title, tool: toolOf(S.eff) };
   }
   function sig(input) {
     var picked = E.build(input).picked.map(function (p) { return p.id; }).sort();
@@ -96,102 +158,149 @@
       h('span', { class: 'chip-ck', 'aria-hidden': 'true' }), h('span', { class: 'chip-tx', text: t.label }));
   }
 
-  function catBlock(cat, part) {
+  function catBlock(cat, opts) {
+    opts = opts || {};
     var c = T.CAT[cat];
-    var groups = c.groups.filter(function (g) { return !g.more; });
+    var main = c.groups.filter(function (g) { return !g.more; });
     var more = c.groups.filter(function (g) { return g.more; });
     function grp(g) {
       return h('div', { class: 'grp', 'data-grp': g.id },
         g.label && c.groups.length > 1 ? h('p', { class: 'grp-label', text: g.label }) : null,
         h('div', { class: 'chips' }, g.tags.map(chip)));
     }
-    var head = h('div', { class: 'cat-h' }, h('h3', { class: 'cat-title', text: c.label }), h('span', { class: 'cat-hint', text: c.hint }));
-    var inner = [groups.map(grp)];
+    var kids = [];
+    if (opts.head) kids.push(h('div', { class: 'cat-h' }, h('h3', { class: 'cat-title', text: c.label }), h('span', { class: 'cat-hint', text: c.hint })));
+    kids.push(main.map(grp));
     if (more.length) {
       var n = more.reduce(function (a, g) { return a + g.tags.length; }, 0);
-      inner.push(h('details', { class: 'fold fold-more' }, h('summary', null, h('span', { text: 'ほかの' + c.label + '（' + n + '）' })), h('div', { class: 'fold-body' }, more.map(grp))));
+      kids.push(h('details', { class: 'fold fold-more' }, h('summary', null, h('span', { text: 'ほかの' + c.label + '（' + n + '）' })), h('div', { class: 'fold-body' }, more.map(grp))));
     }
-    var block = h('div', { class: 'cat', 'data-cat': cat }, part && part.fold ? null : head, inner);
-    if (part && part.fold) {
-      var total = c.groups.reduce(function (a, g) { return a + g.tags.length; }, 0);
-      return h('details', { class: 'fold fold-cat', 'data-cat-fold': cat }, h('summary', null, h('span', { text: part.fold + '（' + total + '）' }), h('span', { class: 'fold-sel', 'data-fold-count': cat })), h('div', { class: 'fold-body' }, block));
-    }
-    return block;
+    return h('div', { class: 'cat', 'data-cat': cat }, kids);
   }
 
   function textField(mode, part) {
-    var key = part.text === 'wish' ? 'wish' + mode : part.text;
+    var key = part.text;
     var id = 'f-' + mode + '-' + part.text;
     var max = part.max || 400;
     var input = part.line
       ? h('input', { id: id, type: 'text', maxlength: String(max), autocomplete: 'off', 'data-text': key, placeholder: part.ph || '' })
-      : h('textarea', { id: id, rows: '2', maxlength: String(max), 'data-text': key, placeholder: part.ph || WISH_PH[mode] });
-    var count = h('span', { class: 'field-count', 'data-count': id, text: '0/' + max });
-    return h('div', { class: 'field' }, h('label', { for: id, class: 'field-label', text: part.label }), input, h('div', { class: 'field-foot' }, count));
+      : h('textarea', { id: id, rows: '2', maxlength: String(max), 'data-text': key, placeholder: part.ph || '' });
+    return h('div', { class: 'field' }, h('label', { for: id, class: 'field-label', text: part.label }), input,
+      h('div', { class: 'field-foot' }, h('span', { class: 'field-count', 'data-count': id, text: '0/' + max })));
   }
 
-  function buildSteps() {
-    var root = $('#steps');
-    ['new', 'edit'].forEach(function (mode) {
-      STEPS[mode].forEach(function (st, i) {
-        var body = h('div', { class: 'step-body' }, st.parts.map(function (p) { return p.cat ? catBlock(p.cat, p) : textField(mode, p); }));
-        if (st.id === 'trouble') body.appendChild(h('div', { class: 'hint-box', 'data-hints': mode }));
-        var head = h('div', { class: 'step-h' },
-          h('span', { class: 'step-num', text: String(i + 1) }),
-          h('div', { class: 'step-tt' }, h('h2', { class: 'step-title', text: st.title }), h('p', { class: 'step-sub', text: st.sub })),
-          h('span', { class: 'step-badge', 'data-badge': mode + '-' + st.id }));
-        var sec;
-        if (st.fold) {
-          sec = h('section', { class: 'step step-fold', 'data-mode': mode, 'data-step': st.id },
-            h('details', { class: 'fold fold-step', 'data-step-fold': mode }, h('summary', null, head), body));
-        } else {
-          sec = h('section', { class: 'step', 'data-mode': mode, 'data-step': st.id }, head, body);
-        }
-        root.appendChild(sec);
-      });
-    });
+  function accOf(mode, a) {
+    var total = 0, cats = [];
+    a.parts.forEach(function (p) { if (p.cat) { cats.push(p.cat); total += T.CAT[p.cat].groups.reduce(function (n, g) { return n + g.tags.length; }, 0); } });
+    var body = h('div', { class: 'acc-body' }, a.parts.map(function (p) { return p.cat ? catBlock(p.cat, { head: !!p.head }) : textField(mode, p); }));
+    return h('details', { class: 'acc', 'data-acc': a.id, 'data-cats': cats.join(' '), 'data-texts': a.parts.filter(function (p) { return p.text; }).map(function (p) { return p.text; }).join(' ') },
+      h('summary', null, h('div', { class: 'acc-h' }, h('span', { class: 'acc-t', text: a.title }), h('span', { class: 'acc-n', text: total + '個' }), h('span', { class: 'acc-sel', 'data-acc-sel': a.id }))),
+      body);
   }
 
-  function buildPresets() {
-    var box = $('#preset-list');
-    T.PRESETS.forEach(function (p) {
-      box.appendChild(h('button', { type: 'button', class: 'preset', 'data-preset': p.id, 'data-pmode': p.mode },
-        h('span', { class: 'preset-mode', text: p.mode === 'edit' ? '直す' : '作る' }), h('span', { text: p.label })));
+  function buildPane(mode) {
+    var M = MODES[mode];
+    var tid = 'f-' + mode + '-main';
+    var pane = h('div', { class: 'pane', 'data-mode': mode, hidden: mode !== S.mode });
+
+    // ---- 大きな入力欄
+    var examples = M.examples.map(function (pid) {
+      var p = T.PRESETS.filter(function (x) { return x.id === pid; })[0];
+      return p ? h('button', { type: 'button', class: 'example', 'data-preset': p.id }, h('span', { text: p.label })) : null;
     });
+    var select = h('select', { class: 'tool-select', 'aria-label': '使うAI', 'data-tool-select': mode }, TOOL_CHOICES.map(function (c) { return h('option', { value: c[0], text: c[1] }); }));
+    var quick = h('div', { class: 'quick' }, M.quick.map(function (q) {
+      return h('div', { class: 'quick-block' },
+        h('div', { class: 'quick-h' }, h('h2', { class: 'quick-title', text: q.title }), h('button', { type: 'button', class: 'more-link', 'data-open-acc': q.open, text: 'ほかも見る' })),
+        h('div', { class: 'chips' }, q.ids.map(function (id) { return chip(T.byId(id)); })));
+    }));
+    // 大きな入力欄 → 例 → よく使うボタン（12個）→ 見つけたタグ → 使うAIと「処方箋を出す」。ここまでが1枚のカード
+    var hero = h('div', { class: 'hero', id: 'hero-' + mode },
+      h('label', { class: 'hero-q', for: tid, text: M.q }),
+      h('p', { class: 'hero-sub', id: tid + '-sub', text: M.sub }),
+      h('textarea', { id: tid, class: 'hero-input', rows: '3', maxlength: '400', 'data-text': 'main' + mode, placeholder: M.ph, 'aria-describedby': tid + '-sub' }),
+      h('div', { class: 'hero-foot' },
+        h('span', { class: 'nudge', role: 'alert', 'data-nudge': mode, hidden: true, text: 'まず、ひとこと書くか、下の例やボタンを押してください。' }),
+        h('span', { class: 'field-count', 'data-count': tid, text: '0/400' })),
+      h('div', { class: 'examples' }, h('span', { class: 'examples-lab', text: '例（押すと、すぐ処方箋が出ます）' }), examples),
+      quick,
+      h('div', { class: 'auto', 'data-auto': mode, hidden: true }, h('span', { class: 'auto-lab', text: '文章から見つけた項目（押すと外せます）' }), h('div', { class: 'auto-chips' })),
+      h('div', { class: 'hint-box', 'data-hints': mode }),
+      h('div', { class: 'hero-go' },
+        h('label', { class: 'tool-pick' }, h('span', { class: 'tool-lab', text: '使うAI' }), select),
+        h('button', { type: 'button', class: 'btn-go btn-hero', 'data-go': mode, text: '処方箋を出す' })));
+    pane.appendChild(hero);
+
+    // ---- 細かく決める（閉じた項目）
+    pane.appendChild(h('div', { class: 'more' },
+      h('h2', { class: 'more-h', text: 'もっと細かく決めたいとき' }),
+      h('p', { class: 'more-sub', text: '閉じている項目を開くと、ボタンがもっと出てきます。' }),
+      h('div', { class: 'finder' },
+        h('label', { class: 'finder-label', for: 'finder-' + mode, text: 'ボタンをさがす' }),
+        h('div', { class: 'finder-row' },
+          h('input', { id: 'finder-' + mode, class: 'finder-input', type: 'search', autocomplete: 'off', enterkeyhint: 'search', placeholder: '例：文字、手、運動会、ロゴ', 'data-finder': mode }),
+          h('span', { class: 'finder-count', 'data-finder-count': mode, 'aria-live': 'polite' }))),
+      h('div', { class: 'accs' }, M.acc.map(function (a) { return accOf(mode, a); }))));
+    return pane;
+  }
+
+  function buildPanes() {
+    var root = $('#panes');
+    ['new', 'edit'].forEach(function (m) { root.appendChild(buildPane(m)); });
   }
 
   // ------------------------------------------------------------ 表示を状態に合わせる
+  function pane() { return $('.pane[data-mode="' + S.mode + '"]'); }
+
   function syncMode() {
     $$('.mode').forEach(function (b) { b.setAttribute('aria-selected', b.getAttribute('data-mode') === S.mode ? 'true' : 'false'); });
-    $$('.step').forEach(function (s) { s.hidden = s.getAttribute('data-mode') !== S.mode; });
+    $$('.pane').forEach(function (p) { p.hidden = p.getAttribute('data-mode') !== S.mode; });
     document.body.setAttribute('data-mode', S.mode);
   }
 
   function syncChips() {
     $$('.chip').forEach(function (b) {
-      var on = S.sel.has(b.getAttribute('data-id'));
+      var id = b.getAttribute('data-id');
+      var on = S.eff.has(id);
       if ((b.getAttribute('aria-pressed') === 'true') !== on) b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      var auto = on && !sel().has(id);
+      if (b.classList.contains('is-auto') !== auto) b.classList.toggle('is-auto', auto);
     });
-    // 見出しの数
-    ['new', 'edit'].forEach(function (mode) {
-      STEPS[mode].forEach(function (st) {
-        var n = 0;
-        st.parts.forEach(function (p) {
-          if (p.cat) S.sel.forEach(function (id) { var t = T.byId(id); if (t && t.cat === p.cat) n++; });
-          if (p.text) { var key = p.text === 'wish' ? 'wish' + mode : p.text; if (S.text[key].trim()) n++; }
-        });
-        var b = $('[data-badge="' + mode + '-' + st.id + '"]');
-        if (b) { b.textContent = n ? n + '個' : ''; b.classList.toggle('on', n > 0); }
+    // 閉じた項目の見出しに、選んでいる数を出す
+    $$('.acc').forEach(function (a) {
+      var cats = (a.getAttribute('data-cats') || '').split(' ').filter(Boolean);
+      var texts = (a.getAttribute('data-texts') || '').split(' ').filter(Boolean);
+      var n = 0;
+      S.eff.forEach(function (id) { var t = T.byId(id); if (t && cats.indexOf(t.cat) >= 0) n++; });
+      texts.forEach(function (k) { if (S.text[k].trim()) n++; });
+      var el = $('[data-acc-sel]', a);
+      var txt = n ? n + '個 選択中' : '';
+      if (el.textContent !== txt) el.textContent = txt;
+    });
+  }
+
+  // 文章から見つけたタグ（消せる）
+  function syncAuto() {
+    $$('.auto').forEach(function (box) {
+      var mode = box.getAttribute('data-auto');
+      var ids = mode === S.mode ? S.autoUsed : [];
+      var key = ids.join(',');
+      if (box.getAttribute('data-key') === key) return;       // 変わったときだけ作り直す
+      box.setAttribute('data-key', key);
+      box.hidden = !ids.length;
+      var wrap = $('.auto-chips', box);
+      wrap.textContent = '';
+      ids.forEach(function (id) {
+        var t = T.byId(id);
+        wrap.appendChild(h('button', { type: 'button', class: 'auto-chip c-' + (T.CAT[t.cat].color || 'gray'), 'data-dismiss': id, 'aria-label': '「' + t.label + '」をはずす' },
+          h('span', { class: 'auto-tx', text: t.label }), h('span', { class: 'auto-x', 'aria-hidden': 'true', text: '×' })));
       });
     });
-    $$('[data-fold-count]').forEach(function (el) {
-      var cat = el.getAttribute('data-fold-count'), n = 0;
-      S.sel.forEach(function (id) { var t = T.byId(id); if (t && t.cat === cat) n++; });
-      el.textContent = n ? n + '個 選択中' : '';
-    });
-    syncHints();
-    syncDock();
-    syncStale();
+  }
+
+  function syncTool() {
+    var v = toolOf(S.eff);
+    $$('.tool-select').forEach(function (s) { if (s.value !== v) s.value = v; });
   }
 
   function syncHints() {
@@ -199,10 +308,14 @@
       var box = $('[data-hints="' + mode + '"]');
       if (!box) return;
       var hints = [];
-      if (mode === 'new' && S.sel.has('t-partial-edit')) hints.push({ text: 'できた画像の一部を直したいときは、「できた画像を直す」に切りかえると、変えないところまで書いた指示文になります。', btn: '切りかえる', act: 'to-edit' });
-      if ((S.sel.has('t-want-text') || S.sel.has('t-text-broken')) && !S.text.title.trim()) hints.push({ text: '画像に入れたい文字があるときは、「細かく決める」の「画像に入れる文字」に書いてください。ないときは、文字なしの指示になります。', btn: '文字を書く', act: 'to-title' });
+      if (mode === 'new' && mode === S.mode) {
+        if (S.eff.has('t-partial-edit') || I.looksLikeEdit(mainText())) hints.push({ text: 'できた画像の一部を直したいときは、「できた画像を直す」に切りかえると、変えないところまで書いた指示文になります。', btn: '切りかえる', act: 'to-edit' });
+      }
+      if (mode === S.mode && (S.eff.has('t-want-text') || S.eff.has('t-text-broken')) && !S.text.title.trim()) {
+        hints.push({ text: '画像に入れたい文字があるときは、「画像に入れる文字」に書いてください。ないときは、文字なしの指示になります。', btn: '文字を書く', act: 'to-title' });
+      }
       var key = JSON.stringify(hints.map(function (x) { return x.act; }));
-      if (box.getAttribute('data-key') === key) return;   // 変わったときだけ作り直す
+      if (box.getAttribute('data-key') === key) return;
       box.setAttribute('data-key', key);
       box.textContent = '';
       hints.forEach(function (x) {
@@ -212,32 +325,30 @@
   }
 
   function countSelected() {
-    var n = 0;
-    S.sel.forEach(function (id) {
-      var t = T.byId(id);
-      if (t && T.CAT[t.cat].modes.indexOf(S.mode) >= 0) n++;
-    });
-    if (S.text[wishKey()].trim()) n++;
+    var n = S.eff.size;
+    if (mainText().trim()) n++;
     if (S.text.trouble.trim()) n++;
     if (S.text.title.trim()) n++;
     return n;
   }
   function syncDock() {
     var n = countSelected();
-    var t = n ? n + '個 えらんでいます' : 'まだ選んでいません';
+    var t = n ? '入力 ' + n + ' 項目' : 'まだ何も入れていません';
     var el = $('#dock-count');
     if (el.textContent !== t) el.textContent = t;
+    document.body.classList.toggle('has-input', n > 0);   // 何も入れていないあいだは、下の帯を出さない（ボタンは大きな1つだけ）
   }
 
   function syncStale() {
     var body = $('#rx-body');
-    if (!S.last || body.hidden) return;
-    var stale = sig(currentInput()) !== S.last.sig;
-    body.classList.toggle('stale', stale);
-    var bar = $('#stale-bar');
-    if (bar) bar.hidden = !stale;
+    var stale = !!(S.last && !body.hidden && sig(currentInput()) !== S.last.sig);
+    if (S.last && !body.hidden) {
+      body.classList.toggle('stale', stale);
+      var bar = $('#stale-bar');
+      if (bar) bar.hidden = !stale;
+    }
     var label = stale ? '処方箋を出し直す' : '処方箋を出す';
-    ['#go', '#go-dock'].forEach(function (s) { var b = $(s); if (b && b.textContent !== label && !b.matches(':active')) b.textContent = label; });
+    $$('[data-go], #go-dock').forEach(function (b) { if (b.textContent !== label && !b.matches(':active')) b.textContent = label; });
   }
 
   function syncTextFields() {
@@ -249,56 +360,107 @@
     });
   }
 
+  function syncAll() {
+    recompute();
+    syncChips(); syncAuto(); syncTool(); syncHints(); syncDock(); syncStale();
+    var n = $('[data-nudge="' + S.mode + '"]');
+    if (n && !n.hidden && (mainText().trim() || S.eff.size)) n.hidden = true;
+  }
+
   // ------------------------------------------------------------ 操作
+  // タグを押す／はずす。文章から見つけたタグをはずすと「いらない」と覚える
   function toggle(id) {
     var t = T.byId(id);
     if (!t) return;
     var cat = T.CAT[t.cat];
-    if (S.sel.has(id)) S.sel.delete(id);
-    else {
-      if (!cat.multi) S.sel.forEach(function (x) { var o = T.byId(x); if (o && o.cat === t.cat) S.sel.delete(x); });
-      S.sel.add(id);
+    if (S.eff.has(id)) {
+      sel().delete(id);
+      if (S.found.indexOf(id) >= 0) off().add(id);
+    } else {
+      off().delete(id);
+      if (!cat.multi) {
+        sel().forEach(function (x) { var o = T.byId(x); if (o && o.cat === t.cat) sel().delete(x); });
+        S.found.forEach(function (x) { var o = T.byId(x); if (o && o.cat === t.cat && x !== id) off().add(x); });
+      }
+      sel().add(id);
     }
-    S.preset = '';
     saveState();
-    syncChips();
+    syncAll();
+  }
+  function dismiss(id) {
+    sel().delete(id);
+    off().add(id);
+    saveState();
+    syncAll();
+  }
+  function setTool(id) {
+    S.tool = id || '';
+    // どちらの側でも、文章から見つけた別のAIは使わない。選んだものを優先する
+    ['new', 'edit'].forEach(function (m) {
+      I.infer(S.text['main' + m], m).forEach(function (x) { var o = T.byId(x); if (o && o.cat === 'tool' && x !== id) S.offs[m].add(x); });
+      if (id) S.offs[m].delete(id);
+    });
+    saveState();
+    syncAll();
   }
 
-  function setMode(mode) {
+  function setMode(mode, carry) {
     if (mode !== 'new' && mode !== 'edit') return;
+    if (carry && mode === 'edit' && !S.text.mainedit.trim()) S.text.mainedit = S.text.mainnew;   // 書いた文を、直す側にも持っていく
     S.mode = mode;
     saveState();
-    syncMode();
-    syncChips();
+    syncMode(); syncTextFields(); syncAll();
   }
 
   function applyPreset(id) {
     var p = T.PRESETS.filter(function (x) { return x.id === id; })[0];
     if (!p) return;
-    var keepTool = '';
-    S.sel.forEach(function (x) { var t = T.byId(x); if (t && t.cat === 'tool') keepTool = x; });
-    S.sel = new Set(p.tags.filter(function (x) { return T.byId(x); }));
-    if (keepTool) S.sel.add(keepTool);
+    var keepTool = toolOf(S.eff);
+    if (keepTool) S.tool = keepTool;                       // 文章から見つけたAIも、そのまま使う
+    S.sels[p.mode] = new Set(p.tags.filter(function (x) { return T.byId(x) && T.byId(x).cat !== 'tool'; }));
+    S.offs[p.mode] = new Set();
     S.mode = p.mode;
-    S.text['wish' + p.mode] = p.wish || '';
+    S.text['main' + p.mode] = p.wish || '';
     S.text.title = p.title || '';
     S.text.trouble = '';
-    syncMode(); syncTextFields(); syncChips();
+    saveState();
+    syncMode(); syncTextFields(); syncAll();
     generate(id);
   }
 
   function resetAll() {
-    S.sel = new Set();
-    S.text = { wishnew: '', wishedit: '', trouble: '', title: '' };
-    S.preset = '';
+    S.sels = { new: new Set(), edit: new Set() }; S.offs = { new: new Set(), edit: new Set() }; S.tool = '';
+    S.text = { mainnew: '', mainedit: '', trouble: '', title: '' };
     saveState();
-    syncTextFields(); syncChips();
-    toast('選んだものを全部はずしました');
+    syncTextFields(); syncAll();
+    var t = $('#f-' + S.mode + '-main');
+    if (t) t.focus();
+    toast('最初からやり直せます');
+  }
+
+  function openAcc(id) {
+    var a = $('.pane[data-mode="' + S.mode + '"] .acc[data-acc="' + id + '"]');
+    if (!a) return null;
+    a.open = true;
+    a.scrollIntoView({ block: 'start' });          // すぐ動く（ゆっくり動かさない。動きは控えめに）
+    return a;
   }
 
   // ------------------------------------------------------------ 処方箋
+  function nothingYet(input) {
+    return !mainText().trim() && !input.trouble && !input.title.trim() && !input.tags.some(function (id) { return T.byId(id).cat !== 'tool'; });
+  }
+
   function generate(presetId) {
+    recompute();
     var input = currentInput();
+    if (!presetId && nothingYet(input)) {
+      var n = $('[data-nudge="' + S.mode + '"]');
+      if (n) n.hidden = false;
+      var t = $('#f-' + S.mode + '-main');
+      if (t) { t.scrollIntoView({ block: 'center' }); t.focus(); }
+      return;
+    }
     var out = E.build(input, { now: new Date() });
     var gen = API.uuid();
     S.last = { id: gen, input: input, out: out, sig: sig(input), copied: {}, rated: 0 };
@@ -315,10 +477,7 @@
   function showResult() {
     var r = $('#result');
     var narrow = window.matchMedia('(max-width: 959px)').matches;
-    if (narrow) {
-      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      r.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
-    }
+    if (narrow) r.scrollIntoView({ block: 'start' });
     try { r.focus({ preventScroll: true }); } catch (e) { r.focus(); }
   }
 
@@ -346,11 +505,11 @@
       h('p', { class: 'rx-meta' }, h('span', { text: out.toolLabel === 'そのほか' ? 'どのAIでも' : out.toolLabel + ' 向け' }), h('span', { class: 'rx-date', text: dateText }))));
 
     body.appendChild(h('div', { class: 'stale-bar', id: 'stale-bar', hidden: true },
-      h('p', { text: '選び直しました。下の指示文は、前の選び方のものです。' }),
+      h('p', { text: '書き直しました。下の指示文は、前の内容のものです。' }),
       h('button', { type: 'button', class: 'btn-small', 'data-act': 'regen', text: '出し直す' })));
 
     if (out.picked.length) {
-      body.appendChild(h('ul', { class: 'rx-picked', 'aria-label': '選んだもの' }, out.picked.map(function (p) {
+      body.appendChild(h('ul', { class: 'rx-picked', 'aria-label': '指示文に使った項目' }, out.picked.map(function (p) {
         return h('li', { class: 'pk c-' + (T.CAT[p.cat].color || 'gray'), text: p.label });
       })));
     }
@@ -358,6 +517,7 @@
     if (out.notes.length) body.appendChild(h('ul', { class: 'rx-notes' }, out.notes.map(function (n) { return h('li', { text: n }); })));
 
     // 指示文（いくつかの版）
+    var VNOTE = { full: 'ていねいに全部伝える版です。まずはこれを貼ってください。', short: '短くまとめた版です。入力欄が小さいAIや、手早く試したいとき向け。' };
     var tabs = h('div', { class: 'vtabs', role: 'tablist', 'aria-label': '指示文の種類' });
     var panels = h('div', { class: 'vpanels' });
     out.versions.forEach(function (v) {
@@ -366,7 +526,7 @@
       tabs.appendChild(h('button', { type: 'button', role: 'tab', class: 'vtab', id: tabId, 'aria-controls': panelId, 'aria-selected': sel ? 'true' : 'false', 'data-v': v.id },
         h('span', { text: v.label }), sel ? h('span', { class: 'rec', text: 'おすすめ' }) : null));
       panels.appendChild(h('div', { class: 'vpanel', role: 'tabpanel', id: panelId, 'aria-labelledby': tabId, hidden: !sel },
-        v.note ? h('p', { class: 'vnote', text: v.note }) : null,
+        (v.note || VNOTE[v.id]) ? h('p', { class: 'vnote', text: v.note || VNOTE[v.id] }) : null,
         h('div', { class: 'copy-row' },
           h('button', { type: 'button', class: 'btn-copy', 'data-copy': 'v-' + v.id }, h('span', { class: 'ic-copy', 'aria-hidden': 'true' }), h('span', { text: 'この指示文をコピー' })),
           OPEN_URL[out.tool] ? h('a', { class: 'btn-open', href: OPEN_URL[out.tool], target: '_blank', rel: 'noopener noreferrer', text: out.toolLabel + ' を開く ↗' }) : null),
@@ -481,7 +641,7 @@
     $('#fb-done').hidden = false;
   }
 
-  // ------------------------------------------------------------ タグをさがす
+  // ------------------------------------------------------------ ボタンをさがす（閉じた項目の中）
   function norm(s) {
     return String(s || '').toLowerCase()
       .replace(/[！-～]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); })
@@ -491,20 +651,21 @@
   var SEARCH = {};
   Object.keys(T.INDEX).forEach(function (id) { var t = T.INDEX[id]; SEARCH[id] = norm(t.label + ' ' + (t.kw || '')); });
 
-  function runFinder(q) {
+  function runFinder(q, mode) {
+    var root = $('.pane[data-mode="' + mode + '"] .accs');
+    if (!root) return;
     var words = String(q || '').trim().split(/[\s　、,]+/).map(norm).filter(Boolean);
     var hits = 0;
-    var root = $('#steps');
     root.classList.toggle('finding', words.length > 0);
     $$('.chip', root).forEach(function (b) {
       var id = b.getAttribute('data-id');
       var ok = !words.length || words.every(function (w) { return SEARCH[id].indexOf(w) >= 0; });
       b.classList.toggle('miss', !ok);
-      if (ok && words.length && !b.closest('.step').hidden) hits++;
+      if (ok && words.length) hits++;
     });
     $$('.grp', root).forEach(function (g) { g.classList.toggle('miss', words.length > 0 && !$('.chip:not(.miss)', g)); });
     $$('.cat', root).forEach(function (c) { c.classList.toggle('miss', words.length > 0 && !$('.chip:not(.miss)', c)); });
-    $$('details.fold', root).forEach(function (d) {
+    $$('details', root).forEach(function (d) {
       if (words.length) {
         if (!d.hasAttribute('data-was')) d.setAttribute('data-was', d.open ? '1' : '0');
         d.open = !!$('.chip:not(.miss)', d);
@@ -513,8 +674,9 @@
         d.removeAttribute('data-was');
       }
     });
-    $$('.step', root).forEach(function (s) { s.classList.toggle('miss', words.length > 0 && !$('.chip:not(.miss)', s)); });
-    $('#finder-count').textContent = words.length ? (hits ? hits + '件' : '見つかりません') : '';
+    $$('.acc', root).forEach(function (a) { a.classList.toggle('miss', words.length > 0 && !$('.chip:not(.miss)', a)); });
+    var c = $('[data-finder-count="' + mode + '"]');
+    if (c) c.textContent = words.length ? (hits ? hits + '件' : '見つかりません') : '';
   }
 
   // ------------------------------------------------------------ 記録の案内
@@ -568,8 +730,11 @@
       var el = e.target.closest('button, a');
       if (!el) return;
       if (el.classList.contains('chip')) { toggle(el.getAttribute('data-id')); return; }
+      if (el.hasAttribute('data-dismiss')) { dismiss(el.getAttribute('data-dismiss')); return; }
       if (el.classList.contains('mode')) { setMode(el.getAttribute('data-mode')); return; }
       if (el.hasAttribute('data-preset')) { applyPreset(el.getAttribute('data-preset')); return; }
+      if (el.hasAttribute('data-open-acc')) { openAcc(el.getAttribute('data-open-acc')); return; }
+      if (el.hasAttribute('data-go') || el.id === 'go-dock') { generate(); return; }
       if (el.hasAttribute('data-copy')) { onCopy(el.getAttribute('data-copy')); return; }
       if (el.hasAttribute('data-rate')) { onRate(Number(el.getAttribute('data-rate'))); return; }
       if (el.classList.contains('vtab')) {
@@ -579,17 +744,15 @@
         return;
       }
       var act = el.getAttribute('data-act');
-      if (act === 'to-edit') { setMode('edit'); $('#steps').scrollIntoView({ block: 'start' }); return; }
+      if (act === 'to-edit') { setMode('edit', true); var m = $('#f-edit-main'); if (m) { m.scrollIntoView({ block: 'center' }); m.focus(); } return; }
       if (act === 'to-title') {
-        var d = $('[data-step-fold="' + S.mode + '"]');
-        if (d) d.open = true;
+        openAcc('extra');
         var f = $('#f-' + S.mode + '-title');
-        if (f) { f.scrollIntoView({ block: 'center' }); f.focus(); }
+        if (f) setTimeout(function () { f.focus(); }, 50);
         return;
       }
       if (act === 'regen') { generate(); return; }
       if (act === 'fb-send') { onFeedbackSend(); return; }
-      if (el.id === 'go' || el.id === 'go-dock') { generate(); return; }
       if (el.id === 'reset') { resetAll(); return; }
       if (el.id === 'open-privacy') { syncPrivacy(); $('#dlg-privacy').showModal(); return; }
       if (el.id === 'line-connect') { if (window.GP_LINE) window.GP_LINE.start({ force: true }); return; }
@@ -604,17 +767,23 @@
         var c = $('[data-count="' + el.id + '"]');
         if (c) c.textContent = el.value.length + '/' + el.getAttribute('maxlength');
         saveState();
-        syncChips();
-      } else if (el.id === 'finder') {
-        runFinder(el.value);
+        syncAll();
+      } else if (el.hasAttribute && el.hasAttribute('data-finder')) {
+        runFinder(el.value, el.getAttribute('data-finder'));
       }
+    });
+
+    document.addEventListener('change', function (e) {
+      var el = e.target;
+      if (el.classList && el.classList.contains('tool-select')) setTool(el.value);
     });
 
     $('#optout').addEventListener('change', function (e) { API.setOptOut(e.target.checked); syncPrivacy(); syncLine(); });
 
-    // タブを矢印キーで
+    // 入力欄で ⌘（Ctrl）+ Enter：処方箋を出す
     document.addEventListener('keydown', function (e) {
       var t = e.target;
+      if (t && t.classList && t.classList.contains('hero-input') && e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !e.isComposing) { e.preventDefault(); generate(); return; }
       if (!t.classList || !(t.classList.contains('vtab') || t.classList.contains('mode'))) return;
       if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
       var list = $$(t.classList.contains('vtab') ? '.vtab' : '.mode');
@@ -624,26 +793,28 @@
       e.preventDefault();
     });
 
-    // スマホ：処方箋が見えている間は、下の「処方箋を出す」を隠す
+    // スマホ：処方箋か「処方箋を出す」ボタンが見えている間は、下の帯を隠す
     if ('IntersectionObserver' in window) {
+      // 処方箋の上のふちが、画面の上から55%より上に入ってきたら「処方箋を見ている」とみなす（下のふちが少し見えただけでは、帯を隠さない）
       var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (en) { document.body.classList.toggle('result-visible', en.isIntersecting); });
-      }, { threshold: 0.05 });
+      }, { rootMargin: '0px 0px -45% 0px', threshold: 0 });
       io.observe($('#result'));
+      var seen = {};
       var io2 = new IntersectionObserver(function (entries) {
-        entries.forEach(function (en) { document.body.classList.toggle('go-visible', en.isIntersecting); });
+        entries.forEach(function (en) { seen[en.target.getAttribute('data-go')] = en.isIntersecting; });
+        document.body.classList.toggle('go-visible', Object.keys(seen).some(function (k) { return seen[k]; }));
       });
-      io2.observe($('#go'));
+      $$('[data-go]').forEach(function (b) { io2.observe(b); });
     }
   }
 
   function init() {
     loadState();
-    buildSteps();
-    buildPresets();
+    buildPanes();
     syncMode();
     syncTextFields();
-    syncChips();
+    syncAll();
     syncPrivacy();
     wire();
     // 公式LINE（LIFF）から開いたときは LINE とつなぐ。記録しない設定・記録の送り先がないときは、つながない

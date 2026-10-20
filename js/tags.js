@@ -620,21 +620,21 @@
 
   // ---------------------------------------------------------------- おためし（よくある組み合わせ）
   var PRESETS = [
-    { id: 'pr-newsletter', label: '学級通信の運動会イラスト', mode: 'new', wish: '運動会でリレーをしている子どもたち',
+    { id: 'pr-newsletter', label: '学級通信の運動会イラスト', mode: 'new', wish: '学級通信にのせる運動会のイラスト。リレーをしている低学年の子どもたち',
       tags: ['u-newsletter', 's-sports-day', 'st-clipart', 'm-cheerful', 'r-4-3', 'p-elem-low', 'p-gym', 'n-3-5', 'b-white'] },
-    { id: 'pr-slide', label: '授業スライドの挿絵', mode: 'new', wish: '理科の実験を楽しそうにしている中学生',
+    { id: 'pr-slide', label: '授業スライドの挿絵', mode: 'new', wish: '授業スライドの挿絵。理科の実験を楽しそうにしている中学生',
       tags: ['u-slides', 's-experiment', 'st-flat', 'm-fun', 'r-16-9', 'f-margin-right', 'p-junior-high', 'n-2'] },
-    { id: 'pr-thumbnail', label: 'ブログ・YouTubeのサムネイル', mode: 'new', wish: 'ノートパソコンを前に、ひらめいた表情の先生',
+    { id: 'pr-thumbnail', label: 'ブログ・YouTubeのサムネイル', mode: 'new', wish: 'YouTubeのサムネイル。ノートパソコンを前に、ひらめいた表情の先生',
       tags: ['u-youtube', 'st-3d', 'm-cheerful', 'c-vivid', 'r-16-9', 'f-margin-right', 'f-bust', 'p-teacher', 'n-1', 't-want-text'], title: '画像生成のコツ' },
-    { id: 'pr-character', label: 'オリジナルキャラクター', mode: 'new', wish: '学級のマスコット。まるいフォルムの、ひよこの男の子',
+    { id: 'pr-character', label: 'オリジナルキャラクター', mode: 'new', wish: '学級のマスコットキャラクター。まるいフォルムの、ひよこの男の子',
       tags: ['u-class-character', 'st-handdrawn', 'm-cute', 'c-pastel', 'r-1-1', 'f-full', 'b-white', 't-chara-consistency', 'p-animal-chara'] },
-    { id: 'pr-worksheet', label: 'ぬりえ・プリントの線画', mode: 'new', wish: '秋の落ち葉とどんぐり',
+    { id: 'pr-worksheet', label: 'ぬりえ・プリントの線画', mode: 'new', wish: 'プリントに使うぬりえ。秋の落ち葉とどんぐり',
       tags: ['u-worksheet', 's-autumn', 'st-line-art', 'c-mono', 'r-1-1', 'b-white', 'p-none'] },
-    { id: 'pr-poster', label: '教室の季節の掲示物', mode: 'new', wish: '',
+    { id: 'pr-poster', label: '教室の季節の掲示物', mode: 'new', wish: '教室に貼る七夕の掲示物。短冊と天の川を入れたい',
       tags: ['u-poster', 's-tanabata', 'st-paper-cut', 'm-warm', 'r-a4-v', 'f-margin-top', 'p-elem-low', 'n-2'] },
-    { id: 'pr-newyear', label: '年賀状', mode: 'new', wish: '',
+    { id: 'pr-newyear', label: '年賀状', mode: 'new', wish: '年賀状に使う、お正月らしいかわいい動物のイラスト',
       tags: ['u-newyear', 's-new-year', 'st-watercolor', 'm-warm', 'c-japanese', 'r-postcard-v', 'f-margin-top', 'p-animal-chara', 'n-1'] },
-    { id: 'pr-fix-hands', label: 'できた画像の手を直したい', mode: 'edit', wish: '',
+    { id: 'pr-fix-hands', label: 'できた画像の手を直したい', mode: 'edit', wish: '右の男の子の手を自然にしたい。ほかは変えないでほしい',
       tags: ['e-hands', 'k-face', 'k-composition', 'k-style', 't-hands', 't-partial-edit'] }
   ];
 

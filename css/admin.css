@@ -1,6 +1,6 @@
 /* 需要ダッシュボード（管理画面）。色・文字の決まりは app.css を引きつぐ */
 .admin {
-  /* グラフの色（dataviz の基準パレット。棒は1系列なので1色、表の濃淡は青の1色で薄い→濃い） */
+  /* グラフの色（dataviz の基準パレット。棒は1系列なので1色、表の濃淡は青の1色で薄い→濃い）。暗い配色は data-theme="dark" のときだけ */
   --series-1: #2a78d6;
   --series-1-soft: rgba(42, 120, 214, .12);
   --seq-1: #cde2fb; --seq-2: #9ec5f4; --seq-3: #6da7ec; --seq-4: #3987e5; --seq-5: #256abf; --seq-6: #184f95; --seq-7: #0d366b;
@@ -9,18 +9,6 @@
   --axis: #cfc6b8;
   --danger: #b3352f;
   --danger-bg: #fbe6e4;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .admin {
-    --series-1: #3987e5;
-    --series-1-soft: rgba(57, 135, 229, .18);
-    /* 暗い画面では、少ない＝画面の地に近い暗い青、多い＝明るい青 */
-    --seq-1: #0d366b; --seq-2: #184f95; --seq-3: #256abf; --seq-4: #3987e5; --seq-5: #6da7ec; --seq-6: #9ec5f4; --seq-7: #cde2fb;
-    --grid: #34302a;
-    --axis: #4a453d;
-    --danger: #f08a83;
-    --danger-bg: #3d2220;
-  }
 }
 :root[data-theme="dark"] .admin {
   --series-1: #3987e5; --series-1-soft: rgba(57, 135, 229, .18);
@@ -123,10 +111,6 @@
 /* 濃淡の上の数字：明るいマスは黒、暗いマスは白（画面の明暗で、明るいマスの位置が入れかわる） */
 .heat .ink-1, .heat .ink-2, .heat .ink-3 { color: #0b0b0b; }
 .heat .ink-4, .heat .ink-5, .heat .ink-6, .heat .ink-7 { color: #ffffff; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .heat .ink-1, :root:not([data-theme="light"]) .heat .ink-2, :root:not([data-theme="light"]) .heat .ink-3, :root:not([data-theme="light"]) .heat .ink-4 { color: #ffffff; }
-  :root:not([data-theme="light"]) .heat .ink-5, :root:not([data-theme="light"]) .heat .ink-6, :root:not([data-theme="light"]) .heat .ink-7 { color: #0b0b0b; }
-}
 :root[data-theme="dark"] .heat .ink-1, :root[data-theme="dark"] .heat .ink-2, :root[data-theme="dark"] .heat .ink-3, :root[data-theme="dark"] .heat .ink-4 { color: #ffffff; }
 :root[data-theme="dark"] .heat .ink-5, :root[data-theme="dark"] .heat .ink-6, :root[data-theme="dark"] .heat .ink-7 { color: #0b0b0b; }
 .heat-legend { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-3); margin-top: 8px; }
@@ -160,7 +144,6 @@ mark.hit { background: var(--mark-bg); color: var(--mark-ink); border-radius: 3p
 .ad-users { margin-bottom: 14px; }
 .ad-user-actions { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
 .txt-who { font-weight: 700; color: #11623a; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .txt-who { color: #8fe0b0; } }
 :root[data-theme="dark"] .txt-who { color: #8fe0b0; }
 .nw-list { display: flex; flex-wrap: wrap; gap: 8px; }
 
