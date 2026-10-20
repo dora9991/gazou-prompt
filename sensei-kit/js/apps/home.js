@@ -288,6 +288,7 @@
             h('li', null, h('b', null, '名簿は出席番号だけでも使えます'), '（学校の決まりで名前を入れにくいときに、おすすめ。席替え・係・当番・宿題はそのまま使えます）。教室で画面を映すときは、クラスの帯の「名前を隠す」を使ってください。'),
             h('li', null, '共有（予定・リマインダー・時間割）には、生徒の名前は入りません。'),
             h('li', null, Kit.store.mode === 'cloud' ? '学校の共用パソコンで使ったときは、ログアウトして「この端末の写しも消す」を選んでください。' : '学校の共用パソコンで使ったときは、バックアップを書き出してから「すべて消して最初から」を押してください。')),
+          Kit.usage && Kit.usage.note ? Kit.usage.note() : null,
           Kit.cloud && Kit.cloud.enabled ? h('div', { class: 'btn-row hm-cloud' },
             Kit.cloud.user()
               ? [h('span', { class: 'small ink-2' }, Kit.cloud.user().email || ''), Kit.btn('アカウント', () => Kit.cloud.open(), { icon: 'lock' })]
@@ -324,6 +325,7 @@
         render();
       }
       async function backup() {
+        if (Kit.usage) Kit.usage('home', 'backup');
         if (Kit.store.demo) { Kit.toast('デモの中ではできません。上の帯の「デモを終わる」で戻ってから使ってください'); return; }
         await Kit.store.flush();
         const data = await Kit.store.exportAll();
@@ -364,7 +366,8 @@
             for (const k of Object.keys(data.colls)) if (!MOVE_SAFE.colls.includes(k)) delete data.colls[k];
             for (const k of Object.keys(data.docs)) if (!MOVE_SAFE.docs.includes(k)) delete data.docs[k];
           }
-          const ok = await Kit.download('sensei-kit-move-' + (scope === 'safe' ? 'nonames-' : '') + Kit.ymd() + '.json', JSON.stringify(data, null, 1));
+if (Kit.usage) Kit.usage('home', 'move');
+                    const ok = await Kit.download('sensei-kit-move-' + (scope === 'safe' ? 'nonames-' : '') + Kit.ymd() + '.json', JSON.stringify(data, null, 1));
           if (ok) { if (scope === 'all') markBackup(); Kit.toast('移すファイルを書き出しました。新しい端末で「バックアップから戻す」から開いてください'); render(); }
         } }] });
       }

@@ -138,6 +138,7 @@
           pre.append('→ ', h('b', null, p.title || '（名前を入れてください）'), '　', p.date ? md(p.date) + (p.time ? ' ' + p.time : '') : '日付なし');
         };
         const go = async () => {
+          if (Kit.usage) Kit.usage('reminders', 'add');
           const p = parse();
           if (!p || p.bad || !p.title) { inp.focus(); Kit.toast('「明日 8時 学年通信を印刷」のように入れてください', { type: 'bad' }); return; }
           await Kit.store.put('reminders', { title: p.title, date: p.date, time: p.time, repeat: 'none', done: false, star: false, memo: '' });

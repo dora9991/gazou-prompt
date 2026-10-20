@@ -62,6 +62,15 @@
 - 「会員限定」は画面の上でのしぼり込み。アプリ本体の URL は公開の置き場所にあるので、URL を知っていれば開ける。有料にするときは、本体を会員だけが取り出せる置き場所（会員サイトのストレージの署名つき URL など）に移す。
 - β版の道具のデータは、それぞれのアプリの中（その端末のブラウザ）に保存され、アカウントには入らない。
 
+## 公式LINE「アラフォー」の特典として（利用の記録・LIFF）
+
+- 公式LINE から開いた人だけ、**どの道具で何をしたか**（例：席替え／席替えをした、チラシ／印刷）を記録する（`js/usage.js`）。生徒の名前・名簿・入力した中身は送らない。ホームの「データの扱い」に説明と「記録を止める」が出る。
+- だれの記録か：LIFF（`https://liff.line.me/<LIFF ID>`）から開くと、Edge Function `sensei-line` が LINE に本人確認をして札を出す（LINE の表示名）。line-hub の「その人専用のリンク」から開くと `?c=lh-…`（コード）。どちらもないときは何も送らない。
+- LINE の中で開いたときは「ブラウザで開く」で、1回だけ使える受け渡しの札（10分）をつけて Safari・Chrome に開き直せる（LINE の中のブラウザは保存が消えやすいため）。
+- 置き場所：会員サイトの Supabase の専用スキーマ `sensei_usage`（`supabase/sensei_usage.sql`。会員サイトの表には何もさわらない）。利用状況は `usage-admin.html`（管理キー）。
+- 本番のつなぎ方：[docs/LINEとつなぐ手順（アラフォー）.md](docs/LINEとつなぐ手順（アラフォー）.md)（LINE Developers → `supabase/LINEの記録を入れる.command` → `config.js` の `line` に LIFF ID）。
+- 確かめ：`./tools/cloud-local.sh` → `node tools/usage-test.cjs`（サーバー26件＋Chrome・WebKit 各15件）。会員サイトの複製で既存の変更 0・見え方 172 マス一致・やめる SQL で指紋一致（2026-10-20）。
+
 ## 共有のしくみ（サーバーなし）
 
 - 予定・リマインダー・わたしの時間割は「共有リンク」か「共有用のファイル（.json）」で渡せる。リンクの `#share=…` に中身を縮めて入れているので、サーバーに何も残らない（# より後ろはサーバーに送られない）。
@@ -97,6 +106,8 @@ sensei-kit/
 ├── js/apps/*.js            … 道具（1ファイル1道具）
 ├── js/demo.js              … 使い方のデモの土台（砂場への切りかえ・帯・光る囲み・吹き出し・動く指）
 ├── js/tours/*.js           … 道具ごとのデモの手順（1道具1ファイル）
+├── js/usage.js             … 公式LINE の特典として開かれたときの利用の記録（LIFF・リンクのコード）
+├── js/usage-admin.js       … 利用状況の画面（usage-admin.html）
 ├── js/start.js             … 起動
 ├── vendor/qrcode.js        … QRコード（MIT, Kazuhiko Arase。みせびらき と同じもの）
 ├── tools/bundle.cjs        … 1つの HTML にまとめる（all-in-one と Artifact 用）

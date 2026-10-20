@@ -6,7 +6,7 @@ project_id = "sensei-kit"
 [api]
 enabled = true
 port = 57461
-schemas = ["public", "graphql_public", "sensei"]
+schemas = ["public", "graphql_public", "sensei", "sensei_usage"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
@@ -51,7 +51,11 @@ enable_signup = true
 enable_confirmations = false
 
 [edge_runtime]
-enabled = false
+enabled = true
+policy = "per_worker"
+
+[functions.sensei-line]
+verify_jwt = false
 
 [analytics]
 enabled = false

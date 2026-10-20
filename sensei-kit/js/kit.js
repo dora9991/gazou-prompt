@@ -1385,7 +1385,7 @@
       console.error(e);
       if (seq === mountSeq) root.append(h('div', { class: 'empty' }, h('div', { class: 'empty-title' }, 'この画面を開けませんでした'), h('p', { class: 'small mono' }, String((e && e.message) || e))));
     }
-    if (seq === mountSeq) window.scrollTo(0, 0);
+    if (seq === mountSeq) { window.scrollTo(0, 0); if (Kit.usage) Kit.usage.open(def.id); }
   }
   Kit.current = () => (current ? current.id : null);
   Kit.renderNav = () => { if (shell) { renderNav(); for (const a of shell.nav.querySelectorAll('.mb-nav-item')) { if (current && a.dataset.app === current.id) a.setAttribute('aria-current', 'page'); } } };
@@ -1413,6 +1413,7 @@
     window.addEventListener('hashchange', route);
     route();
     if (Kit.cloud && Kit.cloud.start) Kit.cloud.start();   // アカウントに保存しているとき：鍵を開けて、ほかの端末と合わせる
+    if (Kit.usage && Kit.usage.start) Kit.usage.start();   // 公式LINE の特典として開かれたとき：使った道具を記録する（js/usage.js）
     const flush = () => { store.flush(); };
     window.addEventListener('pagehide', flush);
     document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });

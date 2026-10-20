@@ -11,6 +11,10 @@ rm -rf "$W"; mkdir -p "$W/supabase/migrations"
 cp supabase/config.toml "$W/supabase/config.toml"
 cp supabase/test-member-stub.sql "$W/supabase/migrations/20261020000000_member_stub.sql"
 cp supabase/sensei.sql "$W/supabase/migrations/20261020000001_sensei.sql"
-"$SB" start --workdir "$W" -x realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,logflare,vector,supavisor,edge-runtime >/dev/null 2>&1
+cp supabase/sensei_usage.sql "$W/supabase/migrations/20261020000002_sensei_usage.sql"
+# LINE の本人確認の関数（sensei-line）。確かめ先は手元の LINE のまね（tools/fixtures/line-mock.cjs・ポート 57471）
+mkdir -p "$W/supabase/functions" && cp -R supabase/functions/sensei-line "$W/supabase/functions/"
+printf 'SENSEI_LINE_CHANNEL_ID=1234567890\nSENSEI_ALLOWED_ORIGINS=*\nSENSEI_LINE_VERIFY_URL=http://host.docker.internal:57471/verify\n' > "$W/supabase/functions/.env"
+"$SB" start --workdir "$W" -x realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,logflare,vector,supavisor >/dev/null 2>&1
 "$SB" status --workdir "$W" -o json 2>/dev/null > tools/_out/cloud-local.json
 node -e "const s=require('./tools/_out/cloud-local.json'); console.log('手元の Supabase：' + s.API_URL)"

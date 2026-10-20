@@ -533,6 +533,7 @@ body:has(.ru-show) .mb-toasts,body:has(.ru-list) .mb-toasts{z-index:170}
 
       /* ── 回す ── */
       async function spin() {
+        if (Kit.usage) Kit.usage('roulette', 'spin');
         if (S.spinning || !alive) return;
         Snd.unlock();
         closeReveal();
@@ -782,6 +783,7 @@ body:has(.ru-show) .mb-toasts,body:has(.ru-list) .mb-toasts{z-index:170}
         return { head: ['順番', '項目'], rows: list.map((e, i) => [i + 1, e.label]) };
       }
       function doPrint(title, sub) {
+        if (Kit.usage) Kit.usage('roulette', 'print');
         const { head, rows } = rowsOf();
         const table = (part) => h('table', null, h('thead', null, h('tr', null, head.map((x) => h('th', null, x)))),
           h('tbody', null, part.map((r) => h('tr', null, r.map((c, j) => h('td', { class: j === 0 ? 'n' : head[j] === '番号' ? 'no' : null }, String(c)))))));

@@ -259,6 +259,7 @@
     clearTimeout(T.timer);
     const id = T.id;
     T.i = T.steps.length - 1; T.el = null; T.lastKey = ''; T.seq++; T.done = true; T.ready = true;
+    if (Kit.usage) Kit.usage(id, 'demo-done');
     const { card } = T.ui;
     Kit.clear(card);
     Kit.add(card, [
@@ -418,6 +419,7 @@
       } else Kit.remount();
       await Kit.mounted();
       window.scrollTo(0, 0);
+      if (Kit.usage) Kit.usage(id, 'demo-start');
       run(id);
     },
     // デモを終えて、本物のデータに戻る

@@ -812,6 +812,7 @@
 
       /* ── 印刷・写す・消す・開く ── */
       async function print() {
+        if (Kit.usage) Kit.usage('flyer', 'print');
         const f = S.cur;
         if (!f) return;
         if (S.isNew) { S.isNew = false; save(); }

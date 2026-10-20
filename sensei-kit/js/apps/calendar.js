@@ -917,6 +917,7 @@ button.cal-dnum:hover{background:var(--surface-3)}
           Kit.btn('くわしく入力', () => openEvent(null, fill()), { sm: true, kind: 'ghost' })]);
         };
         const go = async () => {
+          if (Kit.usage) Kit.usage('calendar', 'add');
           show();
           if (!parsed || parsed.bad || !parsed.title) { inp.focus(); Kit.toast('「10/20 15:40 学年会」のように、日付・時刻・名前を入れてください', { type: 'bad' }); return; }
           const it = Object.assign(fill(), { place: '', memo: '', repeat: 'none', repeatUntil: '' });

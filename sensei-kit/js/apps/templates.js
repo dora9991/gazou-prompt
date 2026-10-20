@@ -345,12 +345,12 @@
           ta.addEventListener('input', () => { S.out = Object.assign(S.out || {}, { body: ta.value }); });
           ta.addEventListener('change', () => drawOut(slot, t));
           sec.append(h('div', { class: 'small ink-2' }, '件名：' + o.title), ta, h('div', { class: 'btn-row' },
-            Kit.btn('コピー', () => Kit.copy(ta.value, 'コピーしました。連絡アプリ・メール・Classroom に貼れます'), { kind: 'primary', icon: 'copy' }),
+            Kit.btn('コピー', () => { if (Kit.usage) Kit.usage('templates', 'copy'); Kit.copy(ta.value, 'コピーしました。連絡アプリ・メール・Classroom に貼れます'); }, { kind: 'primary', icon: 'copy' }),
             Kit.btn('件名もコピー', () => Kit.copy(o.title + '\n\n' + ta.value, '件名と本文をコピーしました'), { icon: 'copy', kind: 'ghost' }),
             h('a', { class: 'btn ghost', href: 'mailto:?subject=' + encodeURIComponent(o.title) + '&body=' + encodeURIComponent(ta.value.replace(/\n/g, '\r\n')) }, Kit.icon('mail'), h('span', null, 'メールで開く'))));
         } else {
           sec.append(h('div', { class: 'tp-paper' }, letterEl(o)), h('div', { class: 'btn-row' },
-            Kit.btn('印刷', () => School.print({ margin: '20mm', build: () => letterEl(result()) }), { kind: 'primary', icon: 'printer' }),
+            Kit.btn('印刷', () => { if (Kit.usage) Kit.usage('templates', 'print'); School.print({ margin: '20mm', build: () => letterEl(result()) }); }, { kind: 'primary', icon: 'printer' }),
             Kit.btn('Word に書き出す', () => word(), { icon: 'download' }),
             Kit.btn('文章をコピー', () => Kit.copy(L.letterText(result()), '文書の文章をコピーしました'), { icon: 'copy', kind: 'ghost' })));
           const parts = h('div', { class: 'tp-parts' });
@@ -367,6 +367,7 @@
         slot.append(sec);
       }
       async function word() {
+        if (Kit.usage) Kit.usage('templates', 'word');
         const o = result();
         try {
           const bytes = window.Docx.build(L.letterDocx(o));

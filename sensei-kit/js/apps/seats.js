@@ -563,6 +563,7 @@
 
       /* ── 席替え（くじ） ── */
       async function run() {
+        if (Kit.usage) Kit.usage('seats', 'run');
         if (!S.cls || S.busy) return;
         const c = S.cfg, d = S.draft;
         if (!S.cls.students.length) { Kit.toast('名簿に生徒がいません', { type: 'bad' }); return; }
@@ -602,6 +603,7 @@
       }
 
       async function savePlan() {
+        if (Kit.usage) Kit.usage('seats', 'save');
         const d = S.draft;
         if (!Object.keys(d.seats).length) return;
         const title = await Kit.ask({ title: '席を保存', label: '名前（あとで見分けるため）', value: d.title || Kit.fmtDate(Kit.ymd(), 'M月D日') + 'の席替え', ok: '保存する' });
@@ -624,6 +626,7 @@
 
       /* ── 発表（1人ずつめくる） ── */
       function show() {
+        if (Kit.usage) Kit.usage('seats', 'show');
         const d = S.draft;
         if (!Object.keys(d.seats).length) { Kit.toast('先に「席替えする」で席を決めてください', { type: 'bad' }); return; }
         const keys = School.rng().shuffle(Object.keys(d.seats));
@@ -670,6 +673,7 @@
         });
       }
       function doPrint(which, title, sub) {
+        if (Kit.usage) Kit.usage('seats', 'print');
         const d = S.draft, st = stById();
         const blocked = new Set(d.blocked || []);
         const n = d.cols;

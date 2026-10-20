@@ -708,11 +708,13 @@
         for (const b of S.cur.blocks) if (b.type === 'image' && b.src && !S.imgs.has(b.src)) S.imgs.set(b.src, await Kit.img.resolve(b.src));
       }
       async function print() {
+        if (Kit.usage) Kit.usage('newsletter', 'print');
         await ready();
         const x = Kit.clone(S.cur), P = PAPERS[x.paper];
         School.print({ size: P.w + 'mm ' + P.h + 'mm', margin: MARGIN + 'mm', build: () => pageEl(x, S.imgs, { print: true }) });
       }
       async function word() {
+        if (Kit.usage) Kit.usage('newsletter', 'word');
         await ready();
         const x = S.cur;
         try {
@@ -824,6 +826,7 @@
         return norm(Object.assign(o, { id: Kit.uid('nl'), no: maxNo(prev.name) + 1, date: d }));
       }
       async function create(x) {
+        if (Kit.usage) Kit.usage('newsletter', 'create');
         await save.flush();
         await Kit.store.put('newsletters', x);
         await load();

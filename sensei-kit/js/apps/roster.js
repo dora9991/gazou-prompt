@@ -290,6 +290,7 @@
           title: '名簿を貼り付ける', wide: true, body: body2, autofocus: 'input',
           actions: [{ label: 'やめる', kind: 'ghost' }, {
             label: '名簿に入れる', kind: 'primary', onClick: async () => {
+              if (Kit.usage) Kit.usage('roster', 'paste');
               show();
               if (!parsed.length) { Kit.toast('名簿を貼り付けてください', { type: 'bad' }); ta.focus(); return false; }
               if (mode === 'new') {

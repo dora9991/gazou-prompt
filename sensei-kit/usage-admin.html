@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>道具箱の利用状況</title>
+<link rel="stylesheet" href="css/kit.css">
+<style>
+body { background: var(--bg); }
+.ua { max-width: 1180px; margin: 0 auto; padding: 22px var(--gutter-r) 60px var(--gutter-l); }
+.ua h1 { font-family: var(--font-display); font-weight: 600; font-size: 26px; letter-spacing: .04em; }
+.ua .lead { color: var(--ink-2); font-size: 14px; margin-top: 4px; }
+.ua-key { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin: 16px 0; }
+.ua-key .field { flex: 1 1 320px; }
+.ua-kpis { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin: 14px 0; }
+.ua-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 14px; }
+.ua-grid { display: grid; gap: 14px; grid-template-columns: 1fr; }
+@media (min-width: 980px) { .ua-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); } }
+.ua .meterline { display: grid; grid-template-columns: 9em minmax(0, 1fr) 4em; gap: 8px; align-items: center; font-size: 14px; padding: 4px 0; }
+.ua .meterline b { font-variant-numeric: tabular-nums; text-align: right; }
+.ua .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.ua td .who { font-weight: 700; }
+.ua .muted-row td { color: var(--ink-3); }
+.ua .detail { margin-top: 10px; }
+.ua .err { color: var(--bad); font-size: 14px; min-height: 1.4em; }
+</style>
+</head>
+<body>
+<main class="ua" id="ua">
+  <h1>道具箱の利用状況</h1>
+  <p class="lead">公式LINE「アラフォー」の特典として開かれたときの記録です（どの道具で、何をしたか）。生徒の名前や入力した中身は記録していません。</p>
+  <form class="ua-key" id="ua-key">
+    <div class="field"><label for="ua-k">管理キー（su_…）</label><input id="ua-k" type="password" autocomplete="off" placeholder="SQL を流したときに出た管理キー"></div>
+    <button class="btn primary" type="submit">見る</button>
+  </form>
+  <p class="err" id="ua-err" role="alert"></p>
+  <div id="ua-body" hidden></div>
+</main>
+<script src="config.js"></script>
+<script src="js/usage-admin.js"></script>
+</body>
+</html>
