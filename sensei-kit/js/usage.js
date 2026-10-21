@@ -5,6 +5,7 @@
      LINE  … LIFF（https://liff.line.me/<LIFF ID>）から開くと、LINE がページに ID トークンを渡す。
              Edge Function「sensei-line」が LINE に本物か確かめて「記録用の札」を返す（画面が名乗った ID は使わない）。
              LINE の中で開いたときは「ブラウザで開く」で、1回だけ使える受け渡しの札（?h=…）つきで Safari・Chrome に開き直せる。
+             LINE のトークでふつうのリンク（LIFF ではない）を押したときは、ログインに飛ばさない（コードがあればコードで記録）。
      コード … line-hub の「その人専用のリンク」から開くと、?c=lh-… が付いてくる。この端末に覚えて、記録に付ける。
    利用者は「記録を止める」で、いつでも止められる（この端末に覚える）。
    設定：config.js の SENSEI_CONFIG.line = { enabled, liffId, endpoint?, sdkUrl? }。enabled が false か無いときは、まるごと止まっている。
@@ -110,7 +111,12 @@
         const liff = await loadSdk();
         await liff.init({ liffId: L.liffId });
         S.inClient = !!(liff.isInClient && liff.isInClient());
-        if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return S; }   // LINE のログイン → 戻ってきたら続き
+        if (!liff.isLoggedIn()) {
+          // LINE のトークでふつうのリンクを押した（LIFF ではない LINE の中のブラウザ）ときは、ログインに飛ばさない。
+          // 本人確認は、特典のリンク（liff.line.me）から開いたときだけ。開発中のチャネルでは、ほかの人はエラーになるため
+          if (!S.inClient && !viaLiff()) { S.state = S.code ? 'code' : 'off'; return S; }
+          liff.login({ redirectUri: location.href }); return S;   // LINE のログイン → 戻ってきたら続き
+        }
         let dec = null;
         try { dec = liff.getDecodedIDToken && liff.getDecodedIDToken(); } catch (e) { dec = null; }
         if (dec && dec.exp && dec.exp * 1000 < Date.now() + 30000) { try { liff.logout(); } catch (e) { /* noop */ } liff.login({ redirectUri: location.href }); return S; }

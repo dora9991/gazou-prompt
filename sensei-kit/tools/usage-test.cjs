@@ -5,6 +5,7 @@
       札の期限切れ／端末ごとの上限／管理キー（まちがい・集計・消す・記録を止める）／表は直接読めない
    2. 画面（Chrome と WebKit）：line-hub のリンク（?c=lh-…）から開く → 記録される・アドレス欄から合言葉が消える・デモの中の操作は数えない・記録を止める
       LIFF から開く → LINE の本人確認 → 記録に名前 → 「ブラウザで開く」→ 別の端末（ブラウザ）で受け渡しの札 → 同じ人として記録
+      LINE のトークでふつうのリンク（LIFF ではない）→ ログインに飛ばない（コードがあればコードで記録・なければ何もしない）
       利用状況の画面（管理キー）に人と道具が出る・消せる
    node tools/usage-test.cjs [--engines chrome,webkit] */
 const fs = require('fs');
@@ -104,7 +105,7 @@ function serve() {
   const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png' };
   const srv = http.createServer((req, res) => {
     const u = decodeURIComponent(req.url.split('?')[0]);
-    if (u === '/config.js') { res.writeHead(200, { 'Content-Type': TYPES['.js'], 'Cache-Control': 'no-store' }); return res.end(`window.SENSEI_CONFIG = ${J({ cloud: false, supabaseUrl: API, supabaseKey: ANON, line: { enabled: true, liffId: '1234567890-testliff', sdkUrl: '/tools/fixtures/liff-fake.js' } })};`); }
+    if (u === '/config.js') { res.writeHead(200, { 'Content-Type': TYPES['.js'], 'Cache-Control': 'no-store' }); return res.end(`(function(){try{var u=localStorage.getItem('fake-ua');if(u)Object.defineProperty(navigator,'userAgent',{get:function(){return u;},configurable:true});}catch(e){}})();\nwindow.SENSEI_CONFIG = ${J({ cloud: false, supabaseUrl: API, supabaseKey: ANON, line: { enabled: true, liffId: '1234567890-testliff', sdkUrl: '/tools/fixtures/liff-fake.js' } })};`); }
     const f = path.join(ROOT, u === '/' ? 'index.html' : u);
     if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end(); }
     res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
@@ -175,6 +176,28 @@ async function browserTests(engine, site, key) {
     ok(count(`line_user_id = '${UL}' and app = 'roulette' and action = 'open'`) >= 1, '外のブラウザで使った道具も、同じ LINE の人の記録になる');
     ok(psql(`select count(*) from sensei_usage.events where app !~ '^[a-z][a-z0-9-]*$' or action !~ '^[a-z][a-z0-9_.:-]*$'`) === '0', '記録は道具と操作の名前だけ（名前や中身は入る場所がない）');
 
+    // D. LINE のトークで、ふつうのリンク（LIFF ではない LINE の中のブラウザ）を押したとき：ログインに飛ばさない
+    const LINE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Safari Line/14.16.0';
+    const d = await b3.page(site + 'index.html');
+    const codeD = 'lh-talk' + engine + Date.now().toString(36);
+    const fresh = `(localStorage.clear(), localStorage.setItem('fake-ua', ${J(LINE_UA)}), localStorage.setItem('fake-liff-inclient', '0'), localStorage.setItem('fake-liff-loggedin', '0'), 1)`;
+    await d.eval(fresh);
+    await d.goto(site + 'index.html?c=' + codeD + '#roulette');
+    await waitFor(d, `window.Kit && Kit.usage && !!window.__liffInit && Kit.usage.state().state === 'code'`, 15000, 'LINE の中のブラウザ（コードあり）');
+    ok(/Line\//.test(await d.eval('navigator.userAgent')) && !(await d.eval('window.__liffLogin || 0')), 'LINE のトークでリンクを押しても、ログインに飛ばない（コードあり）');
+    await d.eval('Kit.usage.flush().then(() => 1)'); await sleep(500);
+    ok(count(`code = '${codeD}' and app = 'roulette' and action = 'open'`) >= 1, 'そのときは、リンクのコードで記録される');
+    await d.eval(fresh);
+    await d.goto(site + 'index.html?again=1#seats');   // ハッシュだけ変えると読み込み直さないので、別の URL に
+    await waitFor(d, `window.Kit && Kit.usage && !!window.__liffInit && Kit.usage.state().state === 'off'`, 15000, 'LINE の中のブラウザ（コードなし）');
+    await sleep(600);
+    ok(!(await d.eval('window.__liffLogin || 0')) && (await d.eval('Kit.usage.state().queued')) === 0 && !(await d.eval('localStorage.getItem("sensei:usage:queue") || ""')).includes('seats'), 'コードもないときは、ログインに飛ばさず、何も記録しない');
+    // 外のブラウザで特典のリンク（liff.line.me → ?liff.state=）から来たときは、これまでどおり LINE のログインへ
+    await d.eval(`(localStorage.clear(), localStorage.setItem('fake-liff-inclient', '0'), localStorage.setItem('fake-liff-loggedin', '0'), 1)`);
+    await d.goto(site + 'index.html?liff.state=%2F');
+    await waitFor(d, `window.Kit && Kit.usage && (window.__liffLogin || 0) > 0`, 15000, '特典のリンクから外のブラウザ');
+    ok(true, '特典のリンクから外のブラウザで開いたときは、これまでどおり LINE のログインへ進む');
+
     // C. 利用状況の画面
     const a = await b1.page(site + 'usage-admin.html');
     await a.eval(`(document.getElementById('ua-k').value = ${J(key)}, 1)`);
@@ -182,7 +205,7 @@ async function browserTests(engine, site, key) {
     await waitFor(a, `!!document.querySelector('#ua-body:not([hidden]) .ua-kpis')`, 10000, '利用状況');
     const txt = await a.eval(`document.getElementById('ua-body').textContent`);
     ok(txt.includes('LINEの先生') && txt.includes('リンク ' + code) && txt.includes('チラシ') && txt.includes('席替えをした'), '利用状況の画面に、人（LINE の名前・リンクのコード）と道具・操作が出る');
-    const errs = p.errors().concat(q.errors(), r3.errors(), a.errors()).filter((l) => !/Failed to load resource|favicon/.test(l.text));
+    const errs = p.errors().concat(q.errors(), r3.errors(), d.errors(), a.errors()).filter((l) => !/Failed to load resource|favicon/.test(l.text));
     ok(errs.length === 0, 'コンソールにエラーがない', errs.map((l) => l.text.slice(0, 120)).join(' / '));
   } finally { await b1.close(); await b2.close(); await b3.close(); }
 }
