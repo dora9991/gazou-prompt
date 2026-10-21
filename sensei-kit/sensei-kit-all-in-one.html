@@ -4222,7 +4222,7 @@ var qrcode = function() {
     { id: 'lesson', label: '授業' },
     { id: 'plan', label: '予定' },
     { id: 'write', label: '通信・連絡' },
-    { id: 'beta', label: 'β版（会員限定）' },
+    { id: 'beta', label: 'β版（試しの段階）' },
   ];
   const apps = [];
   const appMap = new Map();
@@ -4236,7 +4236,7 @@ var qrcode = function() {
     store.declare('colls', def.colls);
   };
   Kit.apps = () => apps.slice().sort((a, b) => (a.order || 99) - (b.order || 99));
-  // メニューとホームに出す道具（hidden() が true の道具は出さない。β版の会員限定など）
+  // メニューとホームに出す道具（hidden() が true の道具は出さない。会員限定の動画編集（β）など）
   Kit.visibleApps = () => Kit.apps().filter((a) => { try { return !(a.hidden && a.hidden()); } catch (e) { return true; } });
   Kit.appDef = (id) => appMap.get(id);
 
@@ -4822,7 +4822,7 @@ var qrcode = function() {
     }
     if (!backend()) await Kit.store.reopen();                       // この端末だけ → アカウントに切りかえる
     await start();
-    if (Kit.renderNav) Kit.renderNav();                              // β版（会員限定）の道具をメニューに出す
+    if (Kit.renderNav) Kit.renderNav();                              // 会員限定の道具（動画編集（β））をメニューに出す
     await Kit.remount();
     Kit.toast(state.locked ? '合言葉を確かめられませんでした' : 'アカウントに保存します（鍵つき）');
   }
@@ -8098,8 +8098,6 @@ ${NEW} .nl-tbl th{background:var(--acw)}
 
   // すでにある道具（作り直さずに、つなぐ）
   const OTHER_TOOLS = [
-    { title: 'かんたん成績', url: 'https://dora9991.github.io/kantan-seiseki/', icon: 'chart', desc: '観点別のA・B・Cと5段階評定。名簿は「番号と氏名をコピー」で、宿題の提出は「かんたん成績へ（CSV）」で入れられます。' },
-    { title: '面談スケジューラ', url: 'https://dora9991.github.io/mendan-scheduler/', icon: 'clock', desc: '三者・二者面談の日程を、空き枠から自動で組みます。決まった日程はカレンダーへ。' },
     { title: '数学ポータル（先生用）', url: 'https://math-portal.pages.dev/portal/teacher.html', icon: 'school', desc: '小テストの配布・生徒の学習記録（Classi のような入口）。公開していれば開けます。' },
   ];
 
@@ -8341,7 +8339,7 @@ ${NEW} .nl-tbl th{background:var(--acw)}
           calendar: () => { let n = 0; for (let i = 0; i < 7; i++) { const d = Kit.rel(i); n += events.filter((e) => occursOn(e, d)).length; } return 'この7日の予定 ' + n + '件'; },
           reminders: () => { const open = reminders.filter((r) => !r.done); return open.length ? 'のこり ' + open.length + '件' : 'やることはありません'; },
         };
-        const LABEL = { class: 'クラス', lesson: '授業', plan: '予定', write: '通信・連絡', beta: 'β版（会員限定・試しの段階）' };
+        const LABEL = { class: 'クラス', lesson: '授業', plan: '予定', write: '通信・連絡', beta: 'β版（試しの段階）' };
         const tools = h('section', { style: { marginTop: '24px' }, 'aria-label': '道具箱' }, h('h2', { class: 'section-title' }, '道具箱'));
         for (const g of ['class', 'lesson', 'plan', 'write', 'beta']) {
           const apps = Kit.visibleApps().filter((a) => a.group === g);
@@ -16234,34 +16232,50 @@ body:has(.ru-show) .mb-toasts,body:has(.ru-list) .mb-toasts{z-index:170}
   window.SenseiFlyer = { pageEl, fitPage, applyFit, norm, qrOf, motifSvg };
 })();
 
-/* ---- js/apps/beta.js ---- */
-// β版の道具（会員限定）：成績・面談の日程・動画編集
-// ジーニー会員のアカウントでログインしている人にだけ、メニューとホームに出す（Kit.cloud。設定 config.js の cloud が true のとき）。
-// 中身は別に作ったアプリ（かんたん成績・面談スケジューラ・おまかせ動画エディタの Web 版）を、この画面の中に開く。
-// ※「会員限定」は画面の上でのしぼり込み。アプリそのものの URL は公開の置き場所にあるので、URL を知っていれば開ける。
-//   有料にするときは、アプリ本体を会員だけが取り出せる置き場所に移す（README の「β版」）。
+/* ---- js/apps/embeds.js ---- */
+// 別に作った道具を、この画面の中に開く（iframe）。どれも dora9991.github.io の同じ置き場所にある。
+//   授業     … 指導案（学習指導案サポート）
+//   通信・連絡 … 画像生成プロンプト（プロンプト処方箋）
+//   β版      … 成績（かんたん成績）・面談の日程（面談スケジューラ）・動画編集（おまかせ動画エディタの Web 版）
+// β版の成績と面談は、いまはだれでも使える（2026-10-21 kazu。会員だけに絞るのは、アカウント保存を本番に入れてから）。
+// 動画編集はまだ公開していない（GitHub のプッシュ保護の誤検知）ので、会員のアカウントでログインしたときだけ出す。
+// ※ アプリそのものの URL は公開の置き場所にあるので、URL を知っていればだれでも開ける。有料にするときは README の「β版」。
 (function () {
   'use strict';
   const { h } = Kit;
   const member = () => !!(Kit.cloud && Kit.cloud.enabled && Kit.cloud.user() && Kit.cloud.state().error !== 'not_member');
 
-  const BETA = [
+  const TOOLS = [
     {
-      id: 'beta-grades', title: '成績（β）', icon: 'chart', order: 91, embed: true,
+      id: 'lesson-plan', title: '指導案', group: 'lesson', icon: 'book', order: 35, embed: true,
+      url: 'https://dora9991.github.io/shidoan-sakusei/',
+      desc: '単元・目標・本時の展開を選んで、学習指導案をつくる。Word・印刷も',
+      note: '入れた内容は、この端末（ブラウザ）の中だけに保存されます。',
+      tip: '仕上げは「AI清書プロンプトをコピー」で、生成AIに整えてもらえます。',
+    },
+    {
+      id: 'image-prompt', title: '画像生成プロンプト', group: 'write', icon: 'image', order: 75, embed: true,
+      url: 'https://dora9991.github.io/gazou-prompt/',
+      desc: '学級通信やチラシのイラストを、生成AIに頼む指示文を選ぶだけでつくる',
+      note: '選んだ内容から、ChatGPT・Gemini などにそのまま貼れる指示文をつくります。',
+      tip: 'できた絵は、学級通信やチラシの「画像を入れる」で使えます。',
+    },
+    {
+      id: 'beta-grades', title: '成績（β）', group: 'beta', icon: 'chart', order: 91, embed: true, beta: true,
       url: 'https://dora9991.github.io/kantan-seiseki/',
       desc: '観点別のA・B・Cと5段階評定。Excel・写真から取り込みも',
-      note: '成績のデータは、この端末（ブラウザ）の中だけに保存されます。アカウントには入りません。ときどき「保存ファイル」に書き出してください。',
+      note: '成績のデータは、この端末（ブラウザ）の中だけに保存されます。ときどき「保存ファイル」に書き出してください。',
       tip: '名簿は「名簿」の道具の「番号と氏名をコピー」で、そのまま貼れます。',
     },
     {
-      id: 'beta-mendan', title: '面談の日程（β）', icon: 'clock', order: 92, embed: true,
+      id: 'beta-mendan', title: '面談の日程（β）', group: 'beta', icon: 'clock', order: 92, embed: true, beta: true,
       url: 'https://dora9991.github.io/mendan-scheduler/',
       desc: '三者・二者面談の日程を、空き枠から自動で組む',
-      note: '入れた内容は、この端末（ブラウザ）の中だけに保存されます。アカウントには入りません。',
+      note: '入れた内容は、この端末（ブラウザ）の中だけに保存されます。',
       tip: '決まった日程は、カレンダーの「まとめて貼り付け」で予定に入れられます。',
     },
     {
-      id: 'beta-video', title: '動画編集（β）', icon: 'film', order: 93, embed: false,
+      id: 'beta-video', title: '動画編集（β）', group: 'beta', icon: 'film', order: 93, embed: false, beta: true, membersOnly: true,
       url: 'beta/video/index.html',
       desc: '写真と動画を入れるだけで、見どころ・字幕・BGM まで自動で編集',
       note: '写真や動画は、どこにも送りません（この端末の中だけで編集します）。字幕を使うときだけ、はじめに字幕のしくみ（数百MB）を読み込みます。',
@@ -16269,11 +16283,12 @@ body:has(.ru-show) .mb-toasts,body:has(.ru-list) .mb-toasts{z-index:170}
     },
   ];
 
-  Kit.css('beta', `
+  Kit.css('embeds', `
 .bt-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px var(--gutter-r) 10px var(--gutter-l);border-bottom:1px solid var(--line);background:var(--surface)}
 .bt-bar h1{font-family:var(--font-display);font-weight:600;font-size:20px;letter-spacing:.03em;display:flex;align-items:center;gap:10px}
 .bt-chip{display:inline-flex;align-items:center;padding:1px 10px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.06em;background:var(--demo-wash);color:var(--ink);border:1px solid color-mix(in srgb,var(--demo) 70%,var(--line))}
 .bt-note{flex:1 1 280px;min-width:0;font-size:13px;color:var(--ink-2);line-height:1.5}
+@media (max-width:599px){.bt-bar{padding-top:8px;padding-bottom:8px;gap:4px 10px}.bt-bar h1{font-size:18px}.bt-note{font-size:12.5px}.bt-note .bt-tip{display:none}}
 .bt-frame{display:block;width:100%;height:calc(100dvh - var(--bt-top,64px));min-height:480px;border:0;background:var(--surface)}
 @media (max-width:999px){.bt-frame{height:calc(100dvh - var(--bt-top,64px) - var(--top-h))}}
 .bt-gate{max-width:640px;margin:32px auto;padding:0 var(--gutter-r) 0 var(--gutter-l)}
@@ -16290,21 +16305,22 @@ body:has(.ru-show) .mb-toasts,body:has(.ru-list) .mb-toasts{z-index:170}
       h('div', null, h('span', { class: 'bt-chip' }, 'β版・会員限定')),
       h('h2', null, b.title.replace('（β）', '')),
       h('p', { class: 'ink-2' }, b.desc + '。'),
-      h('p', null, logged ? 'このアカウントでは使えません。ジーニー会員のアカウントでログインしてください。' : 'β版の道具は、ジーニー会員のアカウントでログインすると使えます（いまは試しの段階です）。'),
+      h('p', null, logged ? 'このアカウントでは使えません。ジーニー会員のアカウントでログインしてください。' : 'この道具は、ジーニー会員のアカウントでログインすると使えます（いまは試しの段階です）。'),
       Kit.cloud && Kit.cloud.enabled ? h('div', { class: 'btn-row' }, Kit.btn(logged ? 'アカウント' : 'ログインする', () => Kit.cloud.open(), { kind: 'primary', icon: 'lock' })) : h('p', { class: 'small muted' }, 'まだ準備中です。'))));
   }
 
-  for (const b of BETA) {
+  for (const b of TOOLS) {
     Kit.app({
-      id: b.id, title: b.title, group: 'beta', icon: b.icon, order: b.order, desc: b.desc, wide: b.embed,
-      hidden: () => !member(),
+      id: b.id, title: b.title, group: b.group, icon: b.icon, order: b.order, desc: b.desc, wide: b.embed,
+      hidden: () => !!b.membersOnly && !member(),
       mount(root) {
-        if (!member()) { gate(root, b); return; }
+        if (b.membersOnly && !member()) { gate(root, b); return; }
+        const name = b.title.replace('（β）', '');
         if (b.embed) {
-          const frame = h('iframe', { class: 'bt-frame', src: b.url, title: b.title, allow: 'clipboard-write; fullscreen', referrerpolicy: 'no-referrer' });
+          const frame = h('iframe', { class: 'bt-frame', src: b.url, title: name, allow: 'clipboard-write; fullscreen', referrerpolicy: 'no-referrer' });
           const bar = h('header', { class: 'bt-bar' },
-            h('h1', null, b.title.replace('（β）', ''), h('span', { class: 'bt-chip' }, 'β版')),
-            h('p', { class: 'bt-note' }, b.note + ' ' + b.tip),
+            h('h1', null, name, b.beta ? h('span', { class: 'bt-chip' }, 'β版') : null),
+            h('p', { class: 'bt-note' }, b.note, h('span', { class: 'bt-tip' }, ' ' + b.tip)),
             h('a', { class: 'btn ghost sm', href: b.url, target: '_blank', rel: 'noopener' }, Kit.icon('external'), h('span', null, '新しいタブで開く')));
           root.append(bar, frame);
           const fit = () => { frame.style.setProperty('--bt-top', Math.round(bar.getBoundingClientRect().height + 2) + 'px'); };
@@ -16313,11 +16329,11 @@ body:has(.ru-show) .mb-toasts,body:has(.ru-list) .mb-toasts{z-index:170}
           return () => window.removeEventListener('resize', fit);
         }
         // 動画編集は重いので、新しいタブで開く
-        root.append(Kit.appHead({ title: b.title.replace('（β）', ''), desc: b.desc + '。', demo: false }),
+        root.append(Kit.appHead({ title: name, desc: b.desc + '。', demo: false }),
           h('div', { class: 'bt-open' }, h('section', { class: 'card' },
-            h('div', null, h('span', { class: 'bt-chip' }, 'β版・会員限定')),
+            h('div', null, h('span', { class: 'bt-chip' }, b.membersOnly ? 'β版・会員限定' : 'β版')),
             h('ul', null, h('li', null, b.note), h('li', null, b.tip), h('li', null, 'まだ試しの段階です。うまく動かないときは、気づいたことを教えてください。')),
-            h('div', { class: 'btn-row' }, h('a', { class: 'btn primary', href: b.url, target: '_blank', rel: 'noopener' }, Kit.icon('film'), h('span', null, '動画編集を開く（新しいタブ）'))))));
+            h('div', { class: 'btn-row' }, h('a', { class: 'btn primary', href: b.url, target: '_blank', rel: 'noopener' }, Kit.icon(b.icon), h('span', null, name + 'を開く（新しいタブ）'))))));
       },
     });
   }

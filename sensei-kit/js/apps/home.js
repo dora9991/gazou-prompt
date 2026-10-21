@@ -5,8 +5,6 @@
 
   // すでにある道具（作り直さずに、つなぐ）
   const OTHER_TOOLS = [
-    { title: 'かんたん成績', url: 'https://dora9991.github.io/kantan-seiseki/', icon: 'chart', desc: '観点別のA・B・Cと5段階評定。名簿は「番号と氏名をコピー」で、宿題の提出は「かんたん成績へ（CSV）」で入れられます。' },
-    { title: '面談スケジューラ', url: 'https://dora9991.github.io/mendan-scheduler/', icon: 'clock', desc: '三者・二者面談の日程を、空き枠から自動で組みます。決まった日程はカレンダーへ。' },
     { title: '数学ポータル（先生用）', url: 'https://math-portal.pages.dev/portal/teacher.html', icon: 'school', desc: '小テストの配布・生徒の学習記録（Classi のような入口）。公開していれば開けます。' },
   ];
 
@@ -248,7 +246,7 @@
           calendar: () => { let n = 0; for (let i = 0; i < 7; i++) { const d = Kit.rel(i); n += events.filter((e) => occursOn(e, d)).length; } return 'この7日の予定 ' + n + '件'; },
           reminders: () => { const open = reminders.filter((r) => !r.done); return open.length ? 'のこり ' + open.length + '件' : 'やることはありません'; },
         };
-        const LABEL = { class: 'クラス', lesson: '授業', plan: '予定', write: '通信・連絡', beta: 'β版（会員限定・試しの段階）' };
+        const LABEL = { class: 'クラス', lesson: '授業', plan: '予定', write: '通信・連絡', beta: 'β版（試しの段階）' };
         const tools = h('section', { style: { marginTop: '24px' }, 'aria-label': '道具箱' }, h('h2', { class: 'section-title' }, '道具箱'));
         for (const g of ['class', 'lesson', 'plan', 'write', 'beta']) {
           const apps = Kit.visibleApps().filter((a) => a.group === g);

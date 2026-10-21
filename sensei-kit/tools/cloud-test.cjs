@@ -135,9 +135,9 @@ async function browserTests(engine, site) {
     const p1 = await d1.page(site);
     await waitFor(p1, 'window.Kit && Kit.current && Kit.current() === "home"');
     ok(await p1.eval('!!(Kit.cloud && Kit.cloud.enabled && !Kit.cloud.user())'), '設定が cloud: true なら、ログインの入口が使える（まだログインしていない）');
-    ok(await p1.eval(`!Kit.visibleApps().some((a) => a.group === 'beta') && !document.querySelector('.mb-nav-item[data-app^="beta-"]')`), 'ログインしていないときは、β版の道具はメニューに出ない');
-    await p1.eval(`(location.hash = '#beta-grades', 1)`); await sleep(700);
-    ok(await p1.eval(`!!document.querySelector('.bt-gate') && !document.querySelector('.bt-frame')`), 'β版の道具を URL で直接開いても、ログインの案内だけ（中身は開かない）');
+    ok(await p1.eval(`['beta-grades','beta-mendan'].every((id) => !!document.querySelector('.mb-nav-item[data-app="' + id + '"]')) && !document.querySelector('.mb-nav-item[data-app="beta-video"]')`), 'ログインしていなくても、成績・面談（β）はメニューに出る。動画編集（β）は出ない');
+    await p1.eval(`(location.hash = '#beta-video', 1)`); await sleep(700);
+    ok(await p1.eval(`!!document.querySelector('.bt-gate') && !document.querySelector('a.btn[href="beta/video/index.html"]')`), '動画編集（β）を URL で直接開いても、ログインの案内だけ');
     await p1.eval(`(location.hash = '#home', 1)`); await sleep(500);
     // この端末だけで使っていたデータ
     await p1.eval(`(async () => { await Kit.store.samplesOff(); await School.classes.save({ id: 'real-1', name: '本物1組', students: [{ id: 'r1', no: 1, name: '本物 たろう', gender: 'm' }, { id: 'r2', no: 2, name: '秘密 はなこ', gender: 'f', note: '配慮メモ' }] }); School.classes.setCurrent('real-1'); await Kit.store.flush(); return 1; })()`);
@@ -240,7 +240,7 @@ async function browserTests(engine, site) {
     await waitFor(p1, 'window.Kit && Kit.current && !!Kit.current() && Kit.store.mode === "local"', 15000, 'ログアウトして、この端末だけに戻る');
     const left = await p1.eval(`(() => { let n = 0; for (let i = 0; i < localStorage.length; i++) if (localStorage.key(i).startsWith('sensei:u:')) n++; return { n, session: !!localStorage.getItem('sensei:cloud:session') }; })()`);
     ok(left.n === 0 && !left.session, 'ログアウトで、アカウントの写しとログインの記録が消える', J(left));
-    ok(await p1.eval(`!document.querySelector('.mb-nav-item[data-app^="beta-"]')`), 'ログアウトすると、β版の道具はメニューから消える');
+    ok(await p1.eval(`!document.querySelector('.mb-nav-item[data-app="beta-video"]') && !!document.querySelector('.mb-nav-item[data-app="beta-grades"]')`), 'ログアウトすると、動画編集（β）はメニューから消える（成績は残る）');
     ok((await classNames(p1)).includes('本物1組'), 'この端末だけのデータは残る（ログインしないで使っていた分）');
     // 端末2 で合言葉を作り直す（写しで入れ直す）
     const PASS2 = PASS + '-new';

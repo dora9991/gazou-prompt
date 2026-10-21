@@ -6,7 +6,7 @@
   const BASE = String(CFG.supabaseUrl || '').replace(/\/+$/, '');
   const $ = (s) => document.querySelector(s);
   const el = (tag, attrs, ...kids) => { const e = document.createElement(tag); for (const k in attrs || {}) { const v = attrs[k]; if (v == null || v === false) continue; if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v === true ? '' : v); } for (const c of kids.flat(Infinity)) if (c != null && c !== false) e.append(c instanceof Node ? c : String(c)); return e; };
-  const APPS = { kit: '道具箱を開いた', home: 'ホーム', roster: '名簿', seats: '席替え', roulette: 'ルーレット', roles: '係決め', duty: '当番表', timetable: '時間割', homework: '宿題・提出', calendar: 'カレンダー', reminders: 'リマインダー', newsletter: '学級通信', templates: '連絡テンプレート', flyer: 'チラシ', 'beta-grades': '成績（β）', 'beta-mendan': '面談の日程（β）', 'beta-video': '動画編集（β）' };
+  const APPS = { kit: '道具箱を開いた', home: 'ホーム', roster: '名簿', seats: '席替え', roulette: 'ルーレット', roles: '係決め', duty: '当番表', timetable: '時間割', homework: '宿題・提出', calendar: 'カレンダー', reminders: 'リマインダー', newsletter: '学級通信', templates: '連絡テンプレート', flyer: 'チラシ', 'lesson-plan': '指導案', 'image-prompt': '画像生成プロンプト', 'beta-grades': '成績（β）', 'beta-mendan': '面談の日程（β）', 'beta-video': '動画編集（β）' };
   const ACTS = { open: '開いた', start: '開いた', run: '席替えをした', save: '保存した', print: '印刷', word: 'Word に書き出し', create: '新しく作った', spin: '回した', copy: 'コピー', paste: '名簿を入れた', add: '追加した', backup: 'バックアップ', move: 'ほかの端末へ移す', show: '発表した', 'demo-start': '使い方のデモを見た', 'demo-done': 'デモを最後まで見た' };
   const appName = (a) => APPS[a] || a;
   const actName = (a) => ACTS[a] || a;

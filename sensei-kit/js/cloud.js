@@ -434,7 +434,7 @@
     }
     if (!backend()) await Kit.store.reopen();                       // この端末だけ → アカウントに切りかえる
     await start();
-    if (Kit.renderNav) Kit.renderNav();                              // β版（会員限定）の道具をメニューに出す
+    if (Kit.renderNav) Kit.renderNav();                              // 会員限定の道具（動画編集（β））をメニューに出す
     await Kit.remount();
     Kit.toast(state.locked ? '合言葉を確かめられませんでした' : 'アカウントに保存します（鍵つき）');
   }

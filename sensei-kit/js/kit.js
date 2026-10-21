@@ -1257,7 +1257,7 @@
     { id: 'lesson', label: '授業' },
     { id: 'plan', label: '予定' },
     { id: 'write', label: '通信・連絡' },
-    { id: 'beta', label: 'β版（会員限定）' },
+    { id: 'beta', label: 'β版（試しの段階）' },
   ];
   const apps = [];
   const appMap = new Map();
@@ -1271,7 +1271,7 @@
     store.declare('colls', def.colls);
   };
   Kit.apps = () => apps.slice().sort((a, b) => (a.order || 99) - (b.order || 99));
-  // メニューとホームに出す道具（hidden() が true の道具は出さない。β版の会員限定など）
+  // メニューとホームに出す道具（hidden() が true の道具は出さない。会員限定の動画編集（β）など）
   Kit.visibleApps = () => Kit.apps().filter((a) => { try { return !(a.hidden && a.hidden()); } catch (e) { return true; } });
   Kit.appDef = (id) => appMap.get(id);
 
