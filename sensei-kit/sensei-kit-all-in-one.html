@@ -16234,6 +16234,7 @@ body:has(.ru-show) .mb-toasts,body:has(.ru-list) .mb-toasts{z-index:170}
 
 /* ---- js/apps/embeds.js ---- */
 // 別に作った道具を、この画面の中に開く（iframe）。どれも dora9991.github.io の同じ置き場所にある。
+//   クラス   … 生徒指導ナビ（生徒指導の場面ごとの、クリックで分岐する対応マニュアルの例。math-dialogue の seitoshido-navi/）
 //   授業     … 指導案（学習指導案サポート）
 //   通信・連絡 … 画像生成プロンプト（プロンプト処方箋）
 //   β版      … 成績（かんたん成績）・面談の日程（面談スケジューラ）・動画編集（おまかせ動画エディタの Web 版）
@@ -16246,6 +16247,13 @@ body:has(.ru-show) .mb-toasts,body:has(.ru-list) .mb-toasts{z-index:170}
   const member = () => !!(Kit.cloud && Kit.cloud.enabled && Kit.cloud.user() && Kit.cloud.state().error !== 'not_member');
 
   const TOOLS = [
+    {
+      id: 'guidance-navi', title: '生徒指導ナビ', group: 'class', icon: 'hand', order: 38, embed: true,
+      url: 'https://dora9991.github.io/math-dialogue/seitoshido-navi/',
+      desc: 'いじめ・自傷・虐待・不登校・保護者対応など15の場面を、クリックで分岐しながら対応の手順と声かけまで確かめる',
+      note: '生徒指導の対応の「例」です。実際の対応は、学校の規程と管理職の判断に合わせてください。このページは何も保存しません。',
+      tip: '上の検索で「LINE」「リストカット」「189」などの言葉からも探せます。',
+    },
     {
       id: 'lesson-plan', title: '指導案', group: 'lesson', icon: 'book', order: 35, embed: true,
       url: 'https://dora9991.github.io/shidoan-sakusei/',

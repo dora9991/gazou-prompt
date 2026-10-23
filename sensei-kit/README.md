@@ -59,6 +59,7 @@
 ## 中で開く道具（指導案・画像生成プロンプト・β版）
 
 - 別に作ったアプリを、この画面の中（iframe）に開く（`js/apps/embeds.js`）。どれも dora9991.github.io の同じ置き場所。
+  - クラス：生徒指導ナビ（`https://dora9991.github.io/math-dialogue/seitoshido-navi/`。15の場面・分かれ道149。何も保存しない。math-dialogue の `seitoshido-navi/` から公開している）
   - 授業：指導案（`https://dora9991.github.io/shidoan-sakusei/`）／通信・連絡：画像生成プロンプト（`https://dora9991.github.io/gazou-prompt/`）
   - β版：成績（かんたん成績）・面談の日程（面談スケジューラ）は**だれでも使える**（2026-10-21 kazu。会員だけに絞るのは、アカウント保存を本番に入れてから。`membersOnly: true` にすると会員だけ）。動画編集（`beta/video/`）は未公開なので、ログインした会員にだけ出す。
 - 「会員限定」は画面の上でのしぼり込み。アプリ本体の URL は公開の置き場所にあるので、URL を知っていれば開ける。有料にするときは、本体を会員だけが取り出せる置き場所（会員サイトのストレージの署名つき URL など）に移す。
