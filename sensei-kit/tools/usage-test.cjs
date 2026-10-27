@@ -198,6 +198,14 @@ async function browserTests(engine, site, key) {
     await waitFor(d, `window.Kit && Kit.usage && (window.__liffLogin || 0) > 0`, 15000, '特典のリンクから外のブラウザ');
     ok(true, '特典のリンクから外のブラウザで開いたときは、これまでどおり LINE のログインへ進む');
 
+    // E. 簡易版（lite）から開いた人：「簡易版を開いた」（kit/start-lite）と、開いた道具が記録される。フル版の kit/start とは分かれる
+    const codeL = 'lh-lite' + engine + Date.now().toString(36);
+    const lt = await b3.page(site + 'lite/index.html?c=' + codeL + '#seats');
+    await waitFor(lt, `window.Kit && Kit.current && Kit.current() === 'seats' && Kit.usage.state().state === 'code'`, 15000, '簡易版をリンクから開く');
+    await lt.eval('Kit.usage.flush().then(() => 1)'); await sleep(600);
+    ok(count(`code = '${codeL}' and app = 'kit' and action = 'start-lite'` ) === 1 && count(`code = '${codeL}' and app = 'kit' and action = 'start'`) === 0, '簡易版から開くと「簡易版を開いた」と記録される（フル版の「開いた」とは分かれる）');
+    ok(count(`code = '${codeL}' and app = 'seats' and action = 'open'`) >= 1, '簡易版でも、開いた道具（席替え）が記録される');
+
     // C. 利用状況の画面
     const a = await b1.page(site + 'usage-admin.html');
     await a.eval(`(document.getElementById('ua-k').value = ${J(key)}, 1)`);
@@ -205,7 +213,7 @@ async function browserTests(engine, site, key) {
     await waitFor(a, `!!document.querySelector('#ua-body:not([hidden]) .ua-kpis')`, 10000, '利用状況');
     const txt = await a.eval(`document.getElementById('ua-body').textContent`);
     ok(txt.includes('LINEの先生') && txt.includes('リンク ' + code) && txt.includes('チラシ') && txt.includes('席替えをした'), '利用状況の画面に、人（LINE の名前・リンクのコード）と道具・操作が出る');
-    const errs = p.errors().concat(q.errors(), r3.errors(), d.errors(), a.errors()).filter((l) => !/Failed to load resource|favicon/.test(l.text));
+    const errs = p.errors().concat(q.errors(), r3.errors(), d.errors(), lt.errors(), a.errors()).filter((l) => !/Failed to load resource|favicon/.test(l.text));
     ok(errs.length === 0, 'コンソールにエラーがない', errs.map((l) => l.text.slice(0, 120)).join(' / '));
   } finally { await b1.close(); await b2.close(); await b3.close(); }
 }

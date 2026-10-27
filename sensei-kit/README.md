@@ -22,6 +22,19 @@
 
 > ブラウザに保存しているときは、ブラウザのデータを消すと消える。ホームの「バックアップを書き出す」で、ときどき JSON に書き出しておく（「バックアップから戻す」で戻せる）。
 
+## 簡易版（`lite/index.html`）
+
+**▶ https://dora9991.github.io/gazou-prompt/sensei-kit/lite/**
+
+席替え・チラシ・画像生成プロンプトの3つだけ（席替えに使う名簿は付き物として入れている）。いまの全部入りは、そのまま「フル版（有料版にする予定）」として残してある。
+
+- 作り：フル版と**同じ部品**（`js/kit.js`・`js/apps/seats.js`・`flyer.js` など）を `lite/index.html` が必要なものだけ読む。ホームだけ簡易版用の `js/apps/home-lite.js`。直したら両方に効く。
+- 設定は `lite/index.html` の中の `SENSEI_CONFIG`：`only`（中で開く道具のうち出すもの）・`brand`（見出し）・`theme: 'light'`（利用者が選ぶまで明るい表示。端末が暗い表示でも暗くしない）・`lite: true`（利用の記録に `kit/start-lite` と付く）。
+- 入れていないもの：アカウント保存（`cloud.js`）・バックアップ・ほかの道具。保存先は、フル版と同じブラウザの中（同じ `sensei:` の保存場所なので、フル版で入れた名簿はそのまま見える）。
+- フル版への案内は `home-lite.js` の `FULL_URL` の1か所。有料にするときは、ここを差し替える（または消す）。
+- 公式LINE の特典に使うとき：LIFF の「エンドポイント URL」を `.../sensei-kit/lite/` に変える（LINE Developers）。line-hub のリンクの行き先も同じ URL に。
+- 確かめ：`node tools/lite-check.cjs`（Chrome・WebKit × パソコン・スマホ）・`node tools/demo-check.cjs --html lite/index.html`（使い方のデモ 12 通り）。
+
 ## 道具
 
 | 道具 | ファイル | できること |

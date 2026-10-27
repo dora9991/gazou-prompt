@@ -56,10 +56,12 @@
     colls: ['classes'],
     async mount(root, params) {
       let classes = [], cur = null, showAnyway = false;
+      // 係決め・当番表・宿題が入っていないとき（簡易版）は、文からその名前を外す
+      const more = !!(Kit.appDef('roles') && Kit.appDef('duty') && Kit.appDef('homework'));
       const sampleSlot = h('div'), tabs = h('div', { class: 'ro-tabs', role: 'group', 'aria-label': 'クラス' }), body = h('div');
       root.append(Kit.appHead({
         title: '名簿',
-        desc: '1回入れると、席替え・係・当番・宿題で使えます。番号だけでも使えます。',
+        desc: more ? '1回入れると、席替え・係・当番・宿題で使えます。番号だけでも使えます。' : '1回入れると、席替えで使えます。番号だけでも使えます。',
         actions: [Kit.btn('クラスを追加', () => addClass(), { icon: 'plus' }), Kit.btn('名簿を貼り付ける', () => openPaste(), { kind: 'primary', icon: 'copy' })],
       }), sampleSlot, tabs, body);
 
@@ -77,7 +79,7 @@
         sampleSlot.append(Kit.sampleBar('「2年3組」は架空のクラスです。名簿を貼り付けると、自分のクラスで使えます。', clearSamples));
       }
       async function clearSamples() {
-        const ok = await Kit.confirm({ title: 'サンプルを片付けますか？', body: 'すべての道具から、架空のクラス（2年3組）とその席・係・宿題などの例を消します。自分で入れたものは消えません。', ok: '片付ける' });
+        const ok = await Kit.confirm({ title: 'サンプルを片付けますか？', body: more ? 'すべての道具から、架空のクラス（2年3組）とその席・係・宿題などの例を消します。自分で入れたものは消えません。' : '架空のクラス（2年3組）と、その席などの例を消します。自分で入れたものは消えません。', ok: '片付ける' });
         if (!ok) return;
         await Kit.store.samplesOff();
         Kit.toast('サンプルを片付けました');
@@ -235,7 +237,7 @@
         return saved;
       }
       async function removeClass() {
-        const ok = await Kit.confirm({ title: '「' + (cur.name || 'このクラス') + '」を消しますか？', body: '名簿と、このクラスの席・係・宿題の記録をすべて消します。元に戻せません（心配なら、先にホームからバックアップを書き出してください）。', ok: '消す', danger: true });
+        const ok = await Kit.confirm({ title: '「' + (cur.name || 'このクラス') + '」を消しますか？', body: more ? '名簿と、このクラスの席・係・宿題の記録をすべて消します。元に戻せません（心配なら、先にホームからバックアップを書き出してください）。' : '名簿と、このクラスの席の記録をすべて消します。元に戻せません。', ok: '消す', danger: true });
         if (!ok) return;
         await School.classes.remove(cur.id);
         cur = null;
@@ -282,7 +284,7 @@
         show();
         // 名前を入れなくても使える（学校の決まりで名前を入れにくいとき）
         const numOnly = h('div', { class: 'ro-numonly' },
-          h('span', null, h('b', null, '名前を入れなくても使えます。'), '番号だけの名簿でも、席替え・係・当番・宿題はそのまま使えます。'),
+          h('span', null, h('b', null, '名前を入れなくても使えます。'), more ? '番号だけの名簿でも、席替え・係・当番・宿題はそのまま使えます。' : '番号だけの名簿でも、席替えはそのまま使えます。'),
           Kit.btn('番号だけで作る', () => { pm.close(); addClass(); }, { sm: true, icon: 'plus' }));
         const body2 = h('div', { class: 'stack' }, numOnly, Kit.field({ label: '名簿（Excel からコピーして貼り付け）', input: ta }), prev, Kit.field({ label: '入れ方', input: modeSeg }), nameF,
           h('p', { class: 'small muted' }, '置きかえるときは、同じ名前（名前がなければ同じ番号）の人の席・係・提出の記録を引き継ぎます。'));

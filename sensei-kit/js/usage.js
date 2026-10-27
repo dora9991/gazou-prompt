@@ -170,7 +170,7 @@
     S.state = had ? 'line' : S.code ? 'code' : 'off';
     if (!had && L.liffId && (inLineApp() || viaLiff())) await startLine();
     emit();
-    if (active()) { record('kit', 'start'); if (Kit.current && Kit.current()) record(Kit.current(), 'open'); }
+    if (active()) { record('kit', CFG.lite ? 'start-lite' : 'start'); if (Kit.current && Kit.current()) record(Kit.current(), 'open'); }
     window.addEventListener('pagehide', () => { flush({ keepalive: true }); });
     document.addEventListener('visibilitychange', () => { if (document.hidden) flush({ keepalive: true }); });
   }

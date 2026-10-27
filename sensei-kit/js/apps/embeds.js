@@ -9,6 +9,8 @@
 (function () {
   'use strict';
   const { h } = Kit;
+  // 簡易版（lite/index.html）は、config の only に並べた道具だけを出す
+  const ONLY = ((window.SENSEI_CONFIG || {}).only) || null;
   const member = () => !!(Kit.cloud && Kit.cloud.enabled && Kit.cloud.user() && Kit.cloud.state().error !== 'not_member');
 
   const TOOLS = [
@@ -83,6 +85,7 @@
   }
 
   for (const b of TOOLS) {
+    if (ONLY && !ONLY.includes(b.id)) continue;
     Kit.app({
       id: b.id, title: b.title, group: b.group, icon: b.icon, order: b.order, desc: b.desc, wide: b.embed,
       hidden: () => !!b.membersOnly && !member(),

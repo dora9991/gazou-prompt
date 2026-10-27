@@ -620,7 +620,7 @@
             h('div', { class: 'fl-g2' }, inp('start', '始まり', { type: 'time' }), inp('end', '終わり', { type: 'time' })),
             inp('place', '場所', { maxlength: 60, placeholder: '例：図書室' }),
             inp('whenNote', '日時のひとこと（なくてもよい）', { maxlength: 40, placeholder: '例：雨の場合は次の日に延期' }),
-            h('div', { class: 'btn-row' }, Kit.btn('カレンダーの予定から入れる', fromCalendar, { icon: 'calendar', sm: true })),
+            Kit.appDef('calendar') ? h('div', { class: 'btn-row' }, Kit.btn('カレンダーの予定から入れる', fromCalendar, { icon: 'calendar', sm: true })) : null,
             h('details', { class: 'fl-more' }, h('summary', null, '項目の名前を変える（「日時」→「期間」など）'),
               h('div', { class: 'fl-tbl' }, h('div', { class: 'fl-tr' }, h('span', { class: 'small ink-2' }, '日時'), labelIn('when')), h('div', { class: 'fl-tr' }, h('span', { class: 'small ink-2' }, '場所'), labelIn('place'))))),
           sec('fl-sec-head', '見出し', '',

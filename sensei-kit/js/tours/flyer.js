@@ -38,11 +38,14 @@
       before: write, el: when, title: 'まず日時と場所', text: '日時と場所を変えるだけで出せます。日付を変えると、申込みの締切も同じだけずれます。', doLabel: '書きかえてみる',
       do: async (d) => { await d.type(D.q('#fl-in-place'), '2年1組の教室'); }, after: 700,
     },
+    // カレンダーの道具が入っているとき（フル版）だけ、予定から入れる手順を見せる
+    ...(Kit.appDef('calendar') ? [
     { before: write, el: D.btn('カレンダーの予定から入れる', '.fl-ed'), title: 'カレンダーから入れる', text: 'カレンダーに入れた行事から選ぶと、日時と場所が入ります。', doLabel: '開いてみる', do: async (d) => { await d.click(D.btn('カレンダーの予定から入れる', '.fl-ed')); }, after: 600 },
     {
       before: calendar, el: D.modal('.fl-evs'), title: '予定を選ぶ', text: 'これから4か月の予定が出ます。押すと、その日時（と場所）が入ります。', doLabel: '選んでみる',
       do: async (d) => { await d.click(D.modal('.fl-ev')); }, after: 900,
     },
+    ] : []),
     {
       before: write, el: fieldOf('fl-in-head'), title: '見出しを書きかえる', text: '見出しの大きさは、紙の幅に合わせて自動で決まります。Enter で改行できます。', doLabel: '書きかえてみる',
       do: async (d) => { await d.type(D.q('#fl-in-head'), 'テスト前の\n数学 学習会'); }, after: 900,

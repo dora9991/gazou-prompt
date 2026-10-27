@@ -3098,10 +3098,12 @@ var qrcode = function() {
   // 表示の明るさ（自動＝端末の設定に合わせる／明るい／暗い）。端末ごとの好み。デモ中でも本物の好みを使う
   const THEME_KEY = 'sensei:theme';
   const THEMES = [{ v: 'auto', label: '表示：自動', icon: 'contrast' }, { v: 'light', label: '表示：明るい', icon: 'sun' }, { v: 'dark', label: '表示：暗い', icon: 'moon' }];
+  // 何も選んでいないときの表示：フル版は「自動」。簡易版は config の theme: 'light'（明るい）。選んだあとは、選んだものを覚える
+  const THEME_DEFAULT = (window.SENSEI_CONFIG || {}).theme === 'light' ? 'light' : 'auto';
   Kit.theme = {
-    get() { try { const v = localStorage.getItem(THEME_KEY); return v === 'light' || v === 'dark' ? v : 'auto'; } catch (e) { return 'auto'; } },
+    get() { try { const v = localStorage.getItem(THEME_KEY); return v === 'light' || v === 'dark' || v === 'auto' ? v : THEME_DEFAULT; } catch (e) { return THEME_DEFAULT; } },
     set(v) {
-      try { if (v === 'light' || v === 'dark') localStorage.setItem(THEME_KEY, v); else localStorage.removeItem(THEME_KEY); } catch (e) { /* 保存できなくても、いまの画面は切りかわる */ }
+      try { if (v === THEME_DEFAULT || (v !== 'light' && v !== 'dark' && v !== 'auto')) localStorage.removeItem(THEME_KEY); else localStorage.setItem(THEME_KEY, v); } catch (e) { /* 保存できなくても、いまの画面は切りかわる */ }
       Kit.theme.apply(v);
     },
     apply(v) { const r = document.documentElement; if (v === 'light' || v === 'dark') r.dataset.theme = v; else delete r.dataset.theme; },
@@ -4257,17 +4259,19 @@ var qrcode = function() {
   Kit.mounted = () => mounting;
   let mounting = Promise.resolve();
 
+  // 見出しの文字。簡易版（lite/index.html）は config の brand で変える
+  const BRAND = Object.assign({ name: '先生の道具箱', sub: '学級・授業・予定', top: '' }, (window.SENSEI_CONFIG || {}).brand);
   function buildShell() {
     const root = document.getElementById('kit') || document.body.appendChild(h('div', { id: 'kit' }));
     const mb = h('div', { class: 'mb' });
     const top = h('header', { class: 'mb-top' },
       h('button', { type: 'button', class: 'mb-menu-btn', 'aria-label': 'メニューを開く', onclick: () => drawer(true) }, Kit.icon('menu', 22)),
-      h('span', { class: 'mb-top-brand' }, '先生の道具箱'),
+      h('span', { class: 'mb-top-brand' }, BRAND.top || BRAND.name),
       h('span', { class: 'mb-top-app' }));
     const nav = h('nav', { class: 'mb-nav', 'aria-label': 'ツール' });
     const side = h('aside', { class: 'mb-side' },
       h('a', { class: 'kokuban', href: '#home', onclick: (e) => { e.preventDefault(); Kit.go('home'); } },
-        h('span', { class: 'kokuban-name' }, '先生の道具箱'), h('span', { class: 'kokuban-sub' }, '学級・授業・予定'),
+        h('span', { class: 'kokuban-name' }, BRAND.name), h('span', { class: 'kokuban-sub' }, BRAND.sub),
         h('span', { class: 'kokuban-tray', 'aria-hidden': 'true' }, h('i', { class: 'c1' }), h('i', { class: 'c2' }), h('i', { class: 'c3' }))),
       nav,
       h('div', { class: 'mb-side-foot' }, h('button', { type: 'button', class: 'mb-save-state', 'data-mode': 'local', title: '保存のしかた（この端末だけ／アカウント）', onclick: () => { if (Kit.cloud && Kit.cloud.enabled) Kit.cloud.open(); else Kit.go('home'); } }, '読み込み中…'), themeBtn(), h('span', { class: 'mb-save-where' })));
@@ -4323,7 +4327,8 @@ var qrcode = function() {
       : store.mode === 'db' ? 'ほかの端末で開いても同じ内容です。'
       : env.artifact ? '共有で開いているため、このブラウザだけに保存されます。'
         : store.mode === 'memory' ? 'ページを閉じると消えます。バックアップを書き出してください。'
-          : 'ときどきホームからバックアップを。';
+          : (window.SENSEI_CONFIG || {}).lite ? 'この端末（ブラウザ）だけに保存します。'
+            : 'ときどきホームからバックアップを。';
   }
 
   function mount(id) { mounting = mountNow(id); return mounting; }
@@ -5067,7 +5072,7 @@ var qrcode = function() {
     S.state = had ? 'line' : S.code ? 'code' : 'off';
     if (!had && L.liffId && (inLineApp() || viaLiff())) await startLine();
     emit();
-    if (active()) { record('kit', 'start'); if (Kit.current && Kit.current()) record(Kit.current(), 'open'); }
+    if (active()) { record('kit', CFG.lite ? 'start-lite' : 'start'); if (Kit.current && Kit.current()) record(Kit.current(), 'open'); }
     window.addEventListener('pagehide', () => { flush({ keepalive: true }); });
     document.addEventListener('visibilitychange', () => { if (document.hidden) flush({ keepalive: true }); });
   }
@@ -8551,10 +8556,12 @@ if (Kit.usage) Kit.usage('home', 'move');
     colls: ['classes'],
     async mount(root, params) {
       let classes = [], cur = null, showAnyway = false;
+      // 係決め・当番表・宿題が入っていないとき（簡易版）は、文からその名前を外す
+      const more = !!(Kit.appDef('roles') && Kit.appDef('duty') && Kit.appDef('homework'));
       const sampleSlot = h('div'), tabs = h('div', { class: 'ro-tabs', role: 'group', 'aria-label': 'クラス' }), body = h('div');
       root.append(Kit.appHead({
         title: '名簿',
-        desc: '1回入れると、席替え・係・当番・宿題で使えます。番号だけでも使えます。',
+        desc: more ? '1回入れると、席替え・係・当番・宿題で使えます。番号だけでも使えます。' : '1回入れると、席替えで使えます。番号だけでも使えます。',
         actions: [Kit.btn('クラスを追加', () => addClass(), { icon: 'plus' }), Kit.btn('名簿を貼り付ける', () => openPaste(), { kind: 'primary', icon: 'copy' })],
       }), sampleSlot, tabs, body);
 
@@ -8572,7 +8579,7 @@ if (Kit.usage) Kit.usage('home', 'move');
         sampleSlot.append(Kit.sampleBar('「2年3組」は架空のクラスです。名簿を貼り付けると、自分のクラスで使えます。', clearSamples));
       }
       async function clearSamples() {
-        const ok = await Kit.confirm({ title: 'サンプルを片付けますか？', body: 'すべての道具から、架空のクラス（2年3組）とその席・係・宿題などの例を消します。自分で入れたものは消えません。', ok: '片付ける' });
+        const ok = await Kit.confirm({ title: 'サンプルを片付けますか？', body: more ? 'すべての道具から、架空のクラス（2年3組）とその席・係・宿題などの例を消します。自分で入れたものは消えません。' : '架空のクラス（2年3組）と、その席などの例を消します。自分で入れたものは消えません。', ok: '片付ける' });
         if (!ok) return;
         await Kit.store.samplesOff();
         Kit.toast('サンプルを片付けました');
@@ -8730,7 +8737,7 @@ if (Kit.usage) Kit.usage('home', 'move');
         return saved;
       }
       async function removeClass() {
-        const ok = await Kit.confirm({ title: '「' + (cur.name || 'このクラス') + '」を消しますか？', body: '名簿と、このクラスの席・係・宿題の記録をすべて消します。元に戻せません（心配なら、先にホームからバックアップを書き出してください）。', ok: '消す', danger: true });
+        const ok = await Kit.confirm({ title: '「' + (cur.name || 'このクラス') + '」を消しますか？', body: more ? '名簿と、このクラスの席・係・宿題の記録をすべて消します。元に戻せません（心配なら、先にホームからバックアップを書き出してください）。' : '名簿と、このクラスの席の記録をすべて消します。元に戻せません。', ok: '消す', danger: true });
         if (!ok) return;
         await School.classes.remove(cur.id);
         cur = null;
@@ -8777,7 +8784,7 @@ if (Kit.usage) Kit.usage('home', 'move');
         show();
         // 名前を入れなくても使える（学校の決まりで名前を入れにくいとき）
         const numOnly = h('div', { class: 'ro-numonly' },
-          h('span', null, h('b', null, '名前を入れなくても使えます。'), '番号だけの名簿でも、席替え・係・当番・宿題はそのまま使えます。'),
+          h('span', null, h('b', null, '名前を入れなくても使えます。'), more ? '番号だけの名簿でも、席替え・係・当番・宿題はそのまま使えます。' : '番号だけの名簿でも、席替えはそのまま使えます。'),
           Kit.btn('番号だけで作る', () => { pm.close(); addClass(); }, { sm: true, icon: 'plus' }));
         const body2 = h('div', { class: 'stack' }, numOnly, Kit.field({ label: '名簿（Excel からコピーして貼り付け）', input: ta }), prev, Kit.field({ label: '入れ方', input: modeSeg }), nameF,
           h('p', { class: 'small muted' }, '置きかえるときは、同じ名前（名前がなければ同じ番号）の人の席・係・提出の記録を引き継ぎます。'));
@@ -15963,7 +15970,7 @@ body:has(.ru-show) .mb-toasts,body:has(.ru-list) .mb-toasts{z-index:170}
             h('div', { class: 'fl-g2' }, inp('start', '始まり', { type: 'time' }), inp('end', '終わり', { type: 'time' })),
             inp('place', '場所', { maxlength: 60, placeholder: '例：図書室' }),
             inp('whenNote', '日時のひとこと（なくてもよい）', { maxlength: 40, placeholder: '例：雨の場合は次の日に延期' }),
-            h('div', { class: 'btn-row' }, Kit.btn('カレンダーの予定から入れる', fromCalendar, { icon: 'calendar', sm: true })),
+            Kit.appDef('calendar') ? h('div', { class: 'btn-row' }, Kit.btn('カレンダーの予定から入れる', fromCalendar, { icon: 'calendar', sm: true })) : null,
             h('details', { class: 'fl-more' }, h('summary', null, '項目の名前を変える（「日時」→「期間」など）'),
               h('div', { class: 'fl-tbl' }, h('div', { class: 'fl-tr' }, h('span', { class: 'small ink-2' }, '日時'), labelIn('when')), h('div', { class: 'fl-tr' }, h('span', { class: 'small ink-2' }, '場所'), labelIn('place'))))),
           sec('fl-sec-head', '見出し', '',
@@ -16244,6 +16251,8 @@ body:has(.ru-show) .mb-toasts,body:has(.ru-list) .mb-toasts{z-index:170}
 (function () {
   'use strict';
   const { h } = Kit;
+  // 簡易版（lite/index.html）は、config の only に並べた道具だけを出す
+  const ONLY = ((window.SENSEI_CONFIG || {}).only) || null;
   const member = () => !!(Kit.cloud && Kit.cloud.enabled && Kit.cloud.user() && Kit.cloud.state().error !== 'not_member');
 
   const TOOLS = [
@@ -16318,6 +16327,7 @@ body:has(.ru-show) .mb-toasts,body:has(.ru-list) .mb-toasts{z-index:170}
   }
 
   for (const b of TOOLS) {
+    if (ONLY && !ONLY.includes(b.id)) continue;
     Kit.app({
       id: b.id, title: b.title, group: b.group, icon: b.icon, order: b.order, desc: b.desc, wide: b.embed,
       hidden: () => !!b.membersOnly && !member(),
@@ -16893,7 +16903,7 @@ body:has(.ru-show) .mb-toasts,body:has(.ru-list) .mb-toasts{z-index:170}
     },
     {
       el: firstRow, title: '番号だけの名簿',
-      text: '1番から30番までの名簿ができました。名前が空のままでも、席替え・係決め・当番表を番号で使えます。',
+      text: Kit.appDef('roles') && Kit.appDef('duty') ? '1番から30番までの名簿ができました。名前が空のままでも、席替え・係決め・当番表を番号で使えます。' : '1番から30番までの名簿ができました。名前が空のままでも、席替えを番号で使えます。',
     },
   ]);
 })();
@@ -17487,11 +17497,14 @@ body:has(.ru-show) .mb-toasts,body:has(.ru-list) .mb-toasts{z-index:170}
       before: write, el: when, title: 'まず日時と場所', text: '日時と場所を変えるだけで出せます。日付を変えると、申込みの締切も同じだけずれます。', doLabel: '書きかえてみる',
       do: async (d) => { await d.type(D.q('#fl-in-place'), '2年1組の教室'); }, after: 700,
     },
+    // カレンダーの道具が入っているとき（フル版）だけ、予定から入れる手順を見せる
+    ...(Kit.appDef('calendar') ? [
     { before: write, el: D.btn('カレンダーの予定から入れる', '.fl-ed'), title: 'カレンダーから入れる', text: 'カレンダーに入れた行事から選ぶと、日時と場所が入ります。', doLabel: '開いてみる', do: async (d) => { await d.click(D.btn('カレンダーの予定から入れる', '.fl-ed')); }, after: 600 },
     {
       before: calendar, el: D.modal('.fl-evs'), title: '予定を選ぶ', text: 'これから4か月の予定が出ます。押すと、その日時（と場所）が入ります。', doLabel: '選んでみる',
       do: async (d) => { await d.click(D.modal('.fl-ev')); }, after: 900,
     },
+    ] : []),
     {
       before: write, el: fieldOf('fl-in-head'), title: '見出しを書きかえる', text: '見出しの大きさは、紙の幅に合わせて自動で決まります。Enter で改行できます。', doLabel: '書きかえてみる',
       do: async (d) => { await d.type(D.q('#fl-in-head'), 'テスト前の\n数学 学習会'); }, after: 900,

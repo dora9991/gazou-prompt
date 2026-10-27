@@ -133,10 +133,12 @@
   // 表示の明るさ（自動＝端末の設定に合わせる／明るい／暗い）。端末ごとの好み。デモ中でも本物の好みを使う
   const THEME_KEY = 'sensei:theme';
   const THEMES = [{ v: 'auto', label: '表示：自動', icon: 'contrast' }, { v: 'light', label: '表示：明るい', icon: 'sun' }, { v: 'dark', label: '表示：暗い', icon: 'moon' }];
+  // 何も選んでいないときの表示：フル版は「自動」。簡易版は config の theme: 'light'（明るい）。選んだあとは、選んだものを覚える
+  const THEME_DEFAULT = (window.SENSEI_CONFIG || {}).theme === 'light' ? 'light' : 'auto';
   Kit.theme = {
-    get() { try { const v = localStorage.getItem(THEME_KEY); return v === 'light' || v === 'dark' ? v : 'auto'; } catch (e) { return 'auto'; } },
+    get() { try { const v = localStorage.getItem(THEME_KEY); return v === 'light' || v === 'dark' || v === 'auto' ? v : THEME_DEFAULT; } catch (e) { return THEME_DEFAULT; } },
     set(v) {
-      try { if (v === 'light' || v === 'dark') localStorage.setItem(THEME_KEY, v); else localStorage.removeItem(THEME_KEY); } catch (e) { /* 保存できなくても、いまの画面は切りかわる */ }
+      try { if (v === THEME_DEFAULT || (v !== 'light' && v !== 'dark' && v !== 'auto')) localStorage.removeItem(THEME_KEY); else localStorage.setItem(THEME_KEY, v); } catch (e) { /* 保存できなくても、いまの画面は切りかわる */ }
       Kit.theme.apply(v);
     },
     apply(v) { const r = document.documentElement; if (v === 'light' || v === 'dark') r.dataset.theme = v; else delete r.dataset.theme; },
@@ -1292,17 +1294,19 @@
   Kit.mounted = () => mounting;
   let mounting = Promise.resolve();
 
+  // 見出しの文字。簡易版（lite/index.html）は config の brand で変える
+  const BRAND = Object.assign({ name: '先生の道具箱', sub: '学級・授業・予定', top: '' }, (window.SENSEI_CONFIG || {}).brand);
   function buildShell() {
     const root = document.getElementById('kit') || document.body.appendChild(h('div', { id: 'kit' }));
     const mb = h('div', { class: 'mb' });
     const top = h('header', { class: 'mb-top' },
       h('button', { type: 'button', class: 'mb-menu-btn', 'aria-label': 'メニューを開く', onclick: () => drawer(true) }, Kit.icon('menu', 22)),
-      h('span', { class: 'mb-top-brand' }, '先生の道具箱'),
+      h('span', { class: 'mb-top-brand' }, BRAND.top || BRAND.name),
       h('span', { class: 'mb-top-app' }));
     const nav = h('nav', { class: 'mb-nav', 'aria-label': 'ツール' });
     const side = h('aside', { class: 'mb-side' },
       h('a', { class: 'kokuban', href: '#home', onclick: (e) => { e.preventDefault(); Kit.go('home'); } },
-        h('span', { class: 'kokuban-name' }, '先生の道具箱'), h('span', { class: 'kokuban-sub' }, '学級・授業・予定'),
+        h('span', { class: 'kokuban-name' }, BRAND.name), h('span', { class: 'kokuban-sub' }, BRAND.sub),
         h('span', { class: 'kokuban-tray', 'aria-hidden': 'true' }, h('i', { class: 'c1' }), h('i', { class: 'c2' }), h('i', { class: 'c3' }))),
       nav,
       h('div', { class: 'mb-side-foot' }, h('button', { type: 'button', class: 'mb-save-state', 'data-mode': 'local', title: '保存のしかた（この端末だけ／アカウント）', onclick: () => { if (Kit.cloud && Kit.cloud.enabled) Kit.cloud.open(); else Kit.go('home'); } }, '読み込み中…'), themeBtn(), h('span', { class: 'mb-save-where' })));
@@ -1358,7 +1362,8 @@
       : store.mode === 'db' ? 'ほかの端末で開いても同じ内容です。'
       : env.artifact ? '共有で開いているため、このブラウザだけに保存されます。'
         : store.mode === 'memory' ? 'ページを閉じると消えます。バックアップを書き出してください。'
-          : 'ときどきホームからバックアップを。';
+          : (window.SENSEI_CONFIG || {}).lite ? 'この端末（ブラウザ）だけに保存します。'
+            : 'ときどきホームからバックアップを。';
   }
 
   function mount(id) { mounting = mountNow(id); return mounting; }
