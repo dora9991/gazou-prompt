@@ -3787,7 +3787,8 @@ var qrcode = function() {
   ];
   Kit.LEVELS = LEVELS;
   Kit.levelLabel = (v) => (LEVELS.find((x) => x.value === v) || LEVELS[1]).label;
-  const PROFILE_SAMPLE = { teacher: 'かず先生', school: 'ひかり中学校（架空）', level: 'jhs', year: Kit.schoolYear(), terms: 3, subject: '数学' };
+  // サンプルの設定。実在の人の名前は入れない（呼び名は空＝あいさつは「おつかれさまです」だけ）
+  const PROFILE_SAMPLE = { teacher: '', school: 'ひかり中学校（架空）', level: 'jhs', year: Kit.schoolYear(), terms: 3, subject: '数学' };
   const PROFILE_BLANK = { teacher: '', school: '', level: 'jhs', year: Kit.schoolYear(), terms: 3, subject: '' };
   Kit.PROFILE_SAMPLE = PROFILE_SAMPLE;
   const normProfile = (p) => {
@@ -3807,7 +3808,7 @@ var qrcode = function() {
     async edit() {
       const p = await Kit.profile.get();
       const f = {
-        teacher: h('input', { type: 'text', placeholder: '例：かず先生', maxlength: 40 }),
+        teacher: h('input', { type: 'text', placeholder: '例：山田先生', maxlength: 40 }),
         school: h('input', { type: 'text', placeholder: '空欄でも使えます', maxlength: 60 }),
         subject: h('input', { type: 'text', placeholder: '例：数学（担任だけなら空欄）', maxlength: 40 }),
         year: h('input', { type: 'number', min: 1990, max: 2199, step: 1, inputmode: 'numeric' }),
@@ -12997,7 +12998,7 @@ button.cal-dnum:hover{background:var(--surface-3)}
     .forEach(([t, n], i) => { if (!sRows[i].text) Object.assign(sRows[i], { text: t, note: n }); });
   Kit.store.sample('newsletters', [{
     id: 'nl-' + SC.id + '-12', classId: SC.id, name: 'かけはし', catch: '学級目標：やさしく、まっすぐ、おもしろく', no: 12, date: Kit.ymd(),
-    school: 'ひかり中学校（架空）', from: '2年3組 担任 かず先生', paper: 'a4', cols: 2, look: 'line', font: 'goth', era: 'wareki',
+    school: 'ひかり中学校（架空）', from: '2年3組 担任', paper: 'a4', cols: 2, look: 'line', font: 'goth', era: 'wareki',
     blocks: [
       nb('text', { id: 'nl-sb1', head: '体育祭、おつかれさまでした', body: L.jiko(month()).soft + '。\n先日の体育祭では、温かいご声援をありがとうございました。\n学級リレーは4位でしたが、バトンを落とした仲間に「だいじょうぶ！」と声がかかり、最後まで全員で走りきりました。練習でうまくいかなかった日に、自分たちで話し合って走る順番を決め直したのも、このクラスの力です。' }),
       nb('schedule', { id: 'nl-sb2', head: '来週の予定', rows: sRows }),

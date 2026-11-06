@@ -52,7 +52,7 @@ section('テンプレート');
 section('差し込みと日付');
 {
   const ctxs = [
-    { name: '学校の設定あり', c: { school: 'ひかり中学校', teacher: 'かず先生', cls: '2年3組' } },
+    { name: '学校の設定あり', c: { school: 'ひかり中学校', teacher: '山田先生', cls: '2年3組' } },
     { name: '学校の設定なし', c: {} },
   ];
   for (const today of ['2026-10-20', '2027-01-04', '2027-06-30', '2027-12-24']) {
@@ -73,8 +73,8 @@ section('差し込みと日付');
       }
     }
   }
-  const full = FT.make('school-info', { today: '2026-10-20', school: 'ひかり中学校', teacher: 'かず先生', cls: '2年3組' });
-  ok(full.sub.includes('ひかり中学校') && full.contact.includes('かず先生') && full.org === 'ひかり中学校', '学校名・先生の名前が入る');
+  const full = FT.make('school-info', { today: '2026-10-20', school: 'ひかり中学校', teacher: '山田先生', cls: '2年3組' });
+  ok(full.sub.includes('ひかり中学校') && full.contact.includes('山田先生') && full.org === 'ひかり中学校', '学校名・先生の名前が入る');
   ok(FT.make('study-test', { today: '2026-10-20', cls: '2年3組' }).target === '2年の希望者', 'クラスから学年（2年）を入れる');
   const none = FT.make('school-info', { today: '2026-10-20' });
   ok(none.org === '' && none.sub.includes('本校') && !/\{/.test(none.contact), '学校名がないときは「本校」、発行の欄は空');
@@ -222,7 +222,7 @@ async function browser() {
       const out = [];
       const box = document.createElement('div'); box.style.cssText = 'position:absolute;left:-5000px;top:0'; document.body.append(box);
       for (const t of FlyerTemplates.TEMPLATES) for (const paper of ['a4', 'a4l', 'b5']) {
-        const f = SenseiFlyer.norm(Object.assign(FlyerTemplates.make(t.id, { today: Kit.ymd(), school: 'ひかり中学校（架空）', teacher: 'かず先生', cls: '2年3組', isOff: School.isOff }), { paper }));
+        const f = SenseiFlyer.norm(Object.assign(FlyerTemplates.make(t.id, { today: Kit.ymd(), school: 'ひかり中学校（架空）', teacher: '山田先生', cls: '2年3組', isOff: School.isOff }), { paper }));
         const pg = SenseiFlyer.pageEl(f, {}); box.append(pg);
         const r = SenseiFlyer.fitPage(pg, f);
         const text = pg.textContent;

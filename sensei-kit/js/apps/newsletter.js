@@ -83,7 +83,7 @@
     .forEach(([t, n], i) => { if (!sRows[i].text) Object.assign(sRows[i], { text: t, note: n }); });
   Kit.store.sample('newsletters', [{
     id: 'nl-' + SC.id + '-12', classId: SC.id, name: 'かけはし', catch: '学級目標：やさしく、まっすぐ、おもしろく', no: 12, date: Kit.ymd(),
-    school: 'ひかり中学校（架空）', from: '2年3組 担任 かず先生', paper: 'a4', cols: 2, look: 'line', font: 'goth', era: 'wareki',
+    school: 'ひかり中学校（架空）', from: '2年3組 担任', paper: 'a4', cols: 2, look: 'line', font: 'goth', era: 'wareki',
     blocks: [
       nb('text', { id: 'nl-sb1', head: '体育祭、おつかれさまでした', body: L.jiko(month()).soft + '。\n先日の体育祭では、温かいご声援をありがとうございました。\n学級リレーは4位でしたが、バトンを落とした仲間に「だいじょうぶ！」と声がかかり、最後まで全員で走りきりました。練習でうまくいかなかった日に、自分たちで話し合って走る順番を決め直したのも、このクラスの力です。' }),
       nb('schedule', { id: 'nl-sb2', head: '来週の予定', rows: sRows }),

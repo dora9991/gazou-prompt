@@ -52,7 +52,7 @@ function xmlOk(s) {
 /* ───────── Node：テンプレートと題字 ───────── */
 section('テンプレート（10）と題字（11）');
 const ctx = {
-  month: 10, jiko: Letters.jiko(10), teacher: 'かず', cls: '2年3組',
+  month: 10, jiko: Letters.jiko(10), teacher: '山田', cls: '2年3組',
   at: (n) => '2026-11-' + String(n).padStart(2, '0'), day: (n) => '11月' + n + '日(水)',
   week: () => ['2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29', '2026-10-30'].map((d) => ({ date: d, text: '', note: '' })),
 };
@@ -73,7 +73,7 @@ const ctx = {
     ok(bs.filter((b) => b.head).length >= 3 && bs.some((b) => String(b.body || '').length > 40), t.label + '：見出しと、そのまま使える例文がある');
     ok(bs.filter((b) => b.type === 'schedule').every((b) => b.rows.length && b.rows.every((r) => /^\d{4}-\d{2}-\d{2}$/.test(r.date))), t.label + '：予定表の行に日付が入る');
   }
-  ok(JSON.stringify(NL.blocksOf(NL.TEMPLATE_MAP.start, ctx)).includes('担任になりました、かずです'), '新学期のあいさつに、担任の名前が入る');
+  ok(JSON.stringify(NL.blocksOf(NL.TEMPLATE_MAP.start, ctx)).includes('担任になりました、山田です'), '新学期のあいさつに、担任の名前が入る');
   ok(!JSON.stringify(NL.blocksOf(NL.TEMPLATE_MAP.start, Object.assign({}, ctx, { teacher: '' }))).includes('、です'), '担任の名前がないときも、文が切れない');
   ok(JSON.stringify(NL.blocksOf(NL.TEMPLATE_MAP.parents, ctx)).includes('2年3組の教室') && NL.blocksOf(NL.TEMPLATE_MAP.parents, ctx).some((b) => b.type === 'reply'), '保護者会のご案内：クラスの名前と、切り取りの出欠票が入る');
   ok(JSON.stringify(NL.blocksOf(NL.TEMPLATE_MAP.parents, ctx)).includes(Letters.jiko(10).formal), '保護者会のご案内：時候のあいさつ（' + Letters.jiko(10).formal + '）');
@@ -188,7 +188,7 @@ section('Word の組み立て（docx.js）');
     const lay = await page.evaluate(async () => {
       const NL = window.NLTemplates, MM = 96 / 25.4;
       const base = (await Kit.store.list('newsletters'))[0];
-      const ctx = { month: 10, jiko: Letters.jiko(10), teacher: 'かず', cls: '2年3組', at: (n) => Kit.ymd(Kit.addDays('2026-10-20', n)), day: (n) => Kit.fmtDate(Kit.ymd(Kit.addDays('2026-10-20', n)), 'M月D日(W)'), week: () => [0, 1, 2, 3, 4].map((i) => ({ date: Kit.ymd(Kit.addDays('2026-10-26', i)), text: i === 1 ? '避難訓練（3校時）' : '', note: '' })) };
+      const ctx = { month: 10, jiko: Letters.jiko(10), teacher: '山田', cls: '2年3組', at: (n) => Kit.ymd(Kit.addDays('2026-10-20', n)), day: (n) => Kit.fmtDate(Kit.ymd(Kit.addDays('2026-10-20', n)), 'M月D日(W)'), week: () => [0, 1, 2, 3, 4].map((i) => ({ date: Kit.ymd(Kit.addDays('2026-10-26', i)), text: i === 1 ? '避難訓練（3校時）' : '', note: '' })) };
       const P = { a4: [210, 297], b4: [257, 364], a4l: [297, 210] };
       const host = document.createElement('div'); host.style.cssText = 'position:absolute;left:0;top:0;'; document.body.append(host);
       const out = [];
@@ -214,7 +214,7 @@ section('Word の組み立て（docx.js）');
 
     // 2) 前からある号は、見た目も Word も変わらない（2026-10-20 の前のコードで作った Word の指紋）
     const legacy = await page.evaluate(async () => {
-      const L = (look, paper, cols, font) => ({ id: 'legacy-1', classId: '', name: 'かけはし', catch: '学級目標：やさしく、まっすぐ、おもしろく', no: 12, date: '2026-10-20', school: 'ひかり中学校（架空）', from: '2年3組 担任 かず先生', paper, cols, look, font, era: 'wareki',
+      const L = (look, paper, cols, font) => ({ id: 'legacy-1', classId: '', name: 'かけはし', catch: '学級目標：やさしく、まっすぐ、おもしろく', no: 12, date: '2026-10-20', school: 'ひかり中学校（架空）', from: '2年3組 担任 山田先生', paper, cols, look, font, era: 'wareki',
         blocks: [
           { id: 'l1', type: 'text', head: '体育祭、おつかれさまでした', body: '朝夕はめっきり涼しくなってまいりました。\n先日の体育祭では、温かいご声援をありがとうございました。\n\n学級リレーは4位でしたが、最後まで全員で走りきりました。' },
           { id: 'l2', type: 'schedule', head: '来週の予定', col3: '持ち物・連絡', rows: [{ date: '2026-10-26', text: '委員会（放課後）', note: '' }, { date: '2026-10-27', text: '避難訓練（3校時）', note: '上ばきをそろえておく' }, { date: '2026-10-28', text: '中間テスト（1日目）\n国語・数学・理科', note: '提出：数学ワーク' }] },
@@ -231,7 +231,7 @@ section('Word の組み立て（docx.js）');
       res.dom = pg.querySelector('.nl-mast').className + '|' + pg.querySelectorAll('.nl-sep,.nl-ho,.nl-orn').length + '|' + pg.className;
       return res;
     });
-    const WANT = { 'line-a4-1-goth': 'f90eb53d0540050391f2da35eb10aa9fe5967915', 'bar-b4-2-mincho': '497216c738ae099dcabb602c6dee5a8d2950036c', 'round-a4l-2-hand': '927c0ce7d1be879858c83331efe9dac0046f5acf', 'line-a4-2-goth': 'c182bddbe4b53626313480306a74195f9c2f3244' };
+    const WANT = { 'line-a4-1-goth': '92ed0190dbda907400eb148b47fcca9447675b64', 'bar-b4-2-mincho': '063fad233581a09a3064a0a29a87a51e989c47a5', 'round-a4l-2-hand': '9ac0a2673b14e454ea83882ae2152626a7f60955', 'line-a4-2-goth': 'dafc0207a2602e456985de3b92a54ce793181743' };
     for (const k of Object.keys(WANT)) ok(legacy[k] === WANT[k], '前からある号の Word が前と同じ（' + k + '）');
     ok(legacy.dom === 'nl-mast b-bar|0|nl-page k-bar ac-k', '前からある号の紙面：題字は見出しと同じ形・新しい飾りは入らない（' + legacy.dom + '）');
 
@@ -299,7 +299,7 @@ section('Word の組み立て（docx.js）');
     // 7) Word：10のテンプレート × 黒・えんじ で XML が正しい
     const wd = await page.evaluate(async () => {
       const NL = window.NLTemplates, base = (await Kit.store.list('newsletters')).find((y) => y.no === 13 && !y.sample);
-      const ctx = { month: 10, jiko: Letters.jiko(10), teacher: 'かず', cls: '2年3組', at: (n) => Kit.ymd(Kit.addDays('2026-10-20', n)), day: (n) => Kit.fmtDate(Kit.ymd(Kit.addDays('2026-10-20', n)), 'M月D日(W)'), week: () => [0, 1, 2].map((i) => ({ date: Kit.ymd(Kit.addDays('2026-10-26', i)), text: '', note: '' })) };
+      const ctx = { month: 10, jiko: Letters.jiko(10), teacher: '山田', cls: '2年3組', at: (n) => Kit.ymd(Kit.addDays('2026-10-20', n)), day: (n) => Kit.fmtDate(Kit.ymd(Kit.addDays('2026-10-20', n)), 'M月D日(W)'), week: () => [0, 1, 2].map((i) => ({ date: Kit.ymd(Kit.addDays('2026-10-26', i)), text: '', note: '' })) };
       const bad = [];
       for (const t of NL.TEMPLATES) for (const accent of ['k', 'red']) {
         const x = Object.assign(JSON.parse(JSON.stringify(base)), NL.applyTemplate(base, t.id), { accent });

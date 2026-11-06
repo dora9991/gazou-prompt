@@ -822,7 +822,8 @@
   ];
   Kit.LEVELS = LEVELS;
   Kit.levelLabel = (v) => (LEVELS.find((x) => x.value === v) || LEVELS[1]).label;
-  const PROFILE_SAMPLE = { teacher: 'かず先生', school: 'ひかり中学校（架空）', level: 'jhs', year: Kit.schoolYear(), terms: 3, subject: '数学' };
+  // サンプルの設定。実在の人の名前は入れない（呼び名は空＝あいさつは「おつかれさまです」だけ）
+  const PROFILE_SAMPLE = { teacher: '', school: 'ひかり中学校（架空）', level: 'jhs', year: Kit.schoolYear(), terms: 3, subject: '数学' };
   const PROFILE_BLANK = { teacher: '', school: '', level: 'jhs', year: Kit.schoolYear(), terms: 3, subject: '' };
   Kit.PROFILE_SAMPLE = PROFILE_SAMPLE;
   const normProfile = (p) => {
@@ -842,7 +843,7 @@
     async edit() {
       const p = await Kit.profile.get();
       const f = {
-        teacher: h('input', { type: 'text', placeholder: '例：かず先生', maxlength: 40 }),
+        teacher: h('input', { type: 'text', placeholder: '例：山田先生', maxlength: 40 }),
         school: h('input', { type: 'text', placeholder: '空欄でも使えます', maxlength: 60 }),
         subject: h('input', { type: 'text', placeholder: '例：数学（担任だけなら空欄）', maxlength: 40 }),
         year: h('input', { type: 'number', min: 1990, max: 2199, step: 1, inputmode: 'numeric' }),
