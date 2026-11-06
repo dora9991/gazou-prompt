@@ -45,6 +45,7 @@
       const rerender = Kit.debounce(() => { if (alive) render(); }, 120);
       const off = Kit.store.on('*', rerender);
       const offC = School.onClassChange(rerender);
+      const offU = Kit.usage && Kit.usage.on ? Kit.usage.on(() => rerender()) : () => {};   // LINE の本人確認が済んだら、「記録しています」のお知らせを出す
 
       async function render() {
         const [profile, classes, cur] = await Promise.all([Kit.profile.get(), School.classes.list(), School.classes.current()]);
@@ -85,6 +86,7 @@
           h('ul', null,
             h('li', null, '名簿やチラシの内容は、このブラウザの中だけに保存します（サーバーには送りません）。ブラウザのデータを消すと消えます。'),
             h('li', null, '学校の共用パソコンで使ったときは、使い終わったら下のボタンで消してください。')),
+          Kit.usage && Kit.usage.note ? Kit.usage.note() : null,   // 公式LINE から開いたときだけ：どの道具を使ったかを記録している説明と、止めるボタン
           h('div', { class: 'btn-row', style: { marginTop: '10px' } }, Kit.btn('すべて消して最初から', wipe, { icon: 'trash', kind: 'danger' }))));
 
         root.append(h('section', { class: 'card', style: { marginTop: '16px' }, 'aria-label': 'フル版' },
@@ -112,7 +114,7 @@
       }
 
       await render();
-      return () => { alive = false; off(); offC(); rerender.cancel(); };
+      return () => { alive = false; off(); offC(); offU(); rerender.cancel(); };
     },
   });
 })();
